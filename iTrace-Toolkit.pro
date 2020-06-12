@@ -14,6 +14,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        backend.cpp \
         main.cpp
 
 RESOURCES += qml.qrc
@@ -22,7 +23,7 @@ TRANSLATIONS += \
     iTrace-Toolkit_en_US.ts
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
+QML_IMPORT_PATH = $$PWD
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
 QML_DESIGNER_IMPORT_PATH =
@@ -34,3 +35,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # ICON
 RC_ICONS = iTrace.ico
+
+HEADERS += \
+    backend.h
+
+CONFIG += qmltypes
+QML_IMPORT_NAME = io.qt.examples.backend
+QML_IMPORT_MAJOR_VERSION = 1
