@@ -1,10 +1,12 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Dialogs 1.2
 import io.qt.examples.backend 1.0
 
 Window {
     property var menuHeight: 40
+    property var margin: 10
     visible: true
     width: 640
     height: 480 + menuHeight
@@ -36,10 +38,27 @@ Window {
         x: 10; y: 10 + menuHeight
         color: "red"
         Text { x: 5; y: 5; text: "Database and XML Import Area" }
+
         Button {
             id: button1
-            x: 15; y: 30; text: "Red"
-            onClicked: buttonHandler.value = button1.text
+            x: margin; y: 30; text: "Import XML"
+            onClicked: {
+                buttonHandler.value = button1.text
+                fileDialog.open()
+            }
+        }
+
+        Rectangle {
+            id: fileTab
+            width: parent.width - 2 * margin; height: 60
+            x: button1.x; y: parent.height - height - margin
+            color: "yellow"
+            Text {
+                id: filesLoaded
+                x: 5; y: 5
+                text: "No Files Loaded"
+            }
+
         }
     }
 
@@ -69,6 +88,13 @@ Window {
         }
     }
 
-
+    FileDialog {
+        id: fileDialog
+        nameFilters: ["Database Files (*.db)", "iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        onAccepted: {
+            buttonHandler.fileURL = this.fileUrl
+            filesLoaded.text = buttonHandler.getFiles()
+        }
+    }
 
 }
