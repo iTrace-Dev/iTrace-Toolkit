@@ -38,14 +38,22 @@ Window {
 
     // Other Components
     FileDialog {
-        id: fileDialog
-        //nameFilters: ["Database Files (*.db)", "iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        id: databaseFileDialog
+        nameFilters: ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)", "All Files (*.*)"]
         onAccepted: {
             fileImportHandler.fileURL = this.fileUrl
             filesLoaded.text = fileImportHandler.getFiles()
         }
     }
-
+    FileDialog {
+        id: xmlFileDialog
+        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        onAccepted: {
+            fileImportHandler.fileURL = this.fileUrl
+            filesLoaded.text = fileImportHandler.getFiles()
+        }
+    }
+//"
     //Database Tab
     Rectangle {
         id: databaseTab
@@ -61,8 +69,7 @@ Window {
             text: "Import Database"
             onClicked: {
                 fileImportHandler.value = text
-                fileDialog.nameFilters = ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)","All Files (*.*)"]
-                fileDialog.open()
+                databaseFileDialog.open()
             }
         }
         // Create New Database File Button
@@ -83,8 +90,7 @@ Window {
             text: "Load XML File"
             onClicked: {
                 fileImportHandler.value = text;
-                fileDialog.nameFilters = ["XML Files (*.xml)","All Files (*.*)"]
-                fileDialog.open()
+                xmlFileDialog.open()
             }
         }
 
