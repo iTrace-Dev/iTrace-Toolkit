@@ -4,9 +4,12 @@ import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
 import io.qt.examples.backend 1.0
 
+
+// Main iTrace_Toolkit Window
 Window {
+    id: main
     property var menuHeight: 40
-    property var margin: 10
+    property var margin: 15
     visible: true
     width: 640
     height: 480 + menuHeight
@@ -29,9 +32,21 @@ Window {
         }
     }
 
+    // Backend Components
     BackEnd { id: buttonHandler }
+    FileImporter { id: fileImportHandler }
 
+    // Other Components
+    FileDialog {
+        id: fileDialog
+        //nameFilters: ["Database Files (*.db)", "iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        onAccepted: {
+            fileImportHandler.fileURL = this.fileUrl
+            filesLoaded.text = fileImportHandler.getFiles()
+        }
+    }
 
+    //Database Tab
     Rectangle {
         id: databaseTab
         width: 300; height: 460;
@@ -39,29 +54,60 @@ Window {
         color: "red"
         Text { x: 5; y: 5; text: "Database and XML Import Area" }
 
+        // Load Database File Button
         Button {
-            id: button1
-            x: margin; y: 30; text: "Import XML"
+            id: databaseLoadButton
+            x: margin; y: 30;
+            text: "Import Database"
             onClicked: {
-                buttonHandler.value = button1.text
+                fileImportHandler.value = text
+                fileDialog.nameFilters = ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)","All Files (*.*)"]
+                fileDialog.open()
+            }
+        }
+        // Create New Database File Button
+        Button {
+            id: databaseCreateButton
+            x: parent.width - margin - width; y: 30; text: "Create Empty Database"
+            onClicked: {
+                var component = Qt.createComponent("FileCreator.qml")
+                var window = component.createObject(main)
+                window.show()
+            }
+        }
+
+        // Load XML File Button
+        Button {
+            id: xmlLoadButton
+            x: margin; y: databaseLoadButton.y + databaseLoadButton.height + margin;
+            text: "Load XML File"
+            onClicked: {
+                fileImportHandler.value = text;
+                fileDialog.nameFilters = ["XML Files (*.xml)","All Files (*.*)"]
                 fileDialog.open()
             }
         }
 
+        // Loaded Files Area
         Rectangle {
             id: fileTab
             width: parent.width - 2 * margin; height: 60
-            x: button1.x; y: parent.height - height - margin
+            x: margin; y: parent.height - height - margin
             color: "yellow"
             Text {
-                id: filesLoaded
                 x: 5; y: 5
+                font.bold: true
+                text: "Loaded Files:"
+            }
+            Text {
+                id: filesLoaded
+                x: 5; y: 20
                 text: "No Files Loaded"
             }
-
         }
     }
 
+    // Token Tab
     Rectangle {
         id: tokenTab
         width: 300; height: 220;
@@ -70,11 +116,12 @@ Window {
         Text { x: 5; y: 5; text: "Token Analysis Area" }
         Button {
             id: button2
-            x: 15; y: 30; text: "Blue"
-            onClicked: buttonHandler.value = button2.text
+            x: margin; y: 30; text: "Blue"
+            onClicked: buttonHandler.value = text
         }
     }
 
+    // Fixation Tab
     Rectangle {
         id: fixationTab
         width: 300; height: 220;
@@ -83,18 +130,8 @@ Window {
         Text { x: 5; y: 5; text: "Fixation Data Area" }
         Button {
             id: button3
-            x: 15; y: 30; text: "Green"
-            onClicked: buttonHandler.value = button3.text
+            x: margin; y: 30; text: "Green"
+            onClicked: buttonHandler.value = text
         }
     }
-
-    FileDialog {
-        id: fileDialog
-        nameFilters: ["Database Files (*.db)", "iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
-        onAccepted: {
-            buttonHandler.fileURL = this.fileUrl
-            filesLoaded.text = buttonHandler.getFiles()
-        }
-    }
-
 }

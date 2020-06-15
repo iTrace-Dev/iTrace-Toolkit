@@ -6,22 +6,49 @@
 #include <qqml.h>
 #include <iostream>
 #include <vector>
+#include <string>
 
 
+// Helper Functions
+
+std::string qStrToStr(const QString&);
+
+
+/* Parent BackEnd Class, should be used as parent of all other backended classes
+TODO:
+    N/A
+*/
 class BackEnd : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString value WRITE output)
 
-    Q_PROPERTY(QString fileURL WRITE appendFile NOTIFY fileImported)
-
+    Q_PROPERTY(QString value WRITE outputToConsole)
 
     QML_ELEMENT
-
 public:
     explicit BackEnd(QObject* parent = nullptr);
+    void outputToConsole(const QString&);
+};
 
-    void output(const QString&);
+
+/* FileImporter, used for when the user needs to import the path of certain files.
+TODO:
+    -Switch from a vector to a more organized system: allowing for tree structure
+    -Save path AND name of file
+        -Prevent duplicate loading
+    -Added label - might not be needed? doesn't hurt for now
+*/
+class FileImporter : public BackEnd {
+    Q_OBJECT
+
+    Q_PROPERTY(QString fileURL WRITE appendFile NOTIFY fileImported)
+    Q_PROPERTY(QString displayLabel WRITE setLabel)
+
+    QML_ELEMENT
+public:
+    explicit FileImporter(QObject* parent = nullptr);
+
     void appendFile(const QString&);
+    void setLabel(const QString&);
 
     Q_INVOKABLE QString getFiles();
 
@@ -29,8 +56,29 @@ signals:
     void fileImported();
 
 private:
+    QString label;
     std::vector<QString> files;
+};
 
+
+/* FileCreator, used for creating empty files
+TODO:
+    -When creating file, check for already existing file, and provide confirmation box
+*/
+class FileCreator : public BackEnd {
+    Q_OBJECT
+
+    Q_PROPERTY(QString fileExtension WRITE setFileExtension)
+    Q_PROPERTY(QString fileName WRITE saveFile)
+
+    QML_ELEMENT
+public:
+    explicit FileCreator(QObject* parent = nullptr);
+
+    void setFileExtension(const QString&);
+    void saveFile(const QString&);
+private:
+    QString extension;
 };
 
 #endif // BACKEND_H
