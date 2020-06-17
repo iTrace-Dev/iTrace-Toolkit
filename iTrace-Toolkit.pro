@@ -16,7 +16,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         backend.cpp \
-        main.cpp
+        main.cpp \
+        participants.cpp \
+        participantsmodel.cpp
 
 RESOURCES += qml.qrc
 
@@ -38,7 +40,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = iTrace.ico
 
 HEADERS += \
-    backend.h
+    backend.h \
+    participants.h \
+    participantsmodel.h
 
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend

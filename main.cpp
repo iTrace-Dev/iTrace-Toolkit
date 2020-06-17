@@ -1,11 +1,15 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 
+#include "participantsmodel.h"
+
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QApplication app(argc, argv);
+
+    qmlRegisterType<ParticipantsModel>("Participants", 1, 0, "ParticipantsModel");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

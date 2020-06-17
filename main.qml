@@ -53,63 +53,25 @@ Window {
             filesLoaded.text = fileImportHandler.getFiles()
         }
     }
-//"
+
     //Database Tab
     Rectangle {
         id: databaseTab
-        width: 300; height: 460;
-        x: 10; y: 10 + menuHeight
+        width: (parent.width - margin) / 2; height: 460;
+        x: margin; y: margin + menuHeight
         color: "red"
-        Text { x: 5; y: 5; text: "Database and XML Import Area" }
-
-        // Load Database File Button
-        Button {
-            id: databaseLoadButton
-            x: margin; y: 30;
-            text: "Import Database"
-            onClicked: {
-                fileImportHandler.value = text
-                databaseFileDialog.open()
-            }
-        }
-        // Create New Database File Button
-        Button {
-            id: databaseCreateButton
-            x: parent.width - margin - width; y: 30; text: "Create Empty Database"
-            onClicked: {
-                var component = Qt.createComponent("FileCreator.qml")
-                var window = component.createObject(main)
-                window.show()
-            }
-        }
-
-        // Load XML File Button
-        Button {
-            id: xmlLoadButton
-            x: margin; y: databaseLoadButton.y + databaseLoadButton.height + margin;
-            text: "Load XML File"
-            onClicked: {
-                fileImportHandler.value = text;
-                xmlFileDialog.open()
-            }
-        }
 
         // Loaded Files Area
-        Rectangle {
-            id: fileTab
-            width: parent.width - 2 * margin; height: 60
-            x: margin; y: parent.height - height - margin
-            color: "yellow"
-            Text {
-                x: 5; y: 5
-                font.bold: true
-                text: "Loaded Files:"
-            }
-            Text {
-                id: filesLoaded
-                x: 5; y: 20
-                text: "No Files Loaded"
-            }
+        Text {
+            x: margin; y: margin
+            font.bold: true
+            text: "Loaded Files:"
+        }
+        Participant {
+            x: margin; y: 2 * margin
+            height: parent.height - 3 * margin
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 5
         }
     }
 
