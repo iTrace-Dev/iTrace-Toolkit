@@ -1,7 +1,10 @@
 QT += quick
 QT += widgets
+QT += sql
+QT += core
 
 CONFIG += c++11
+CONFIG += sql
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -16,6 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         backend.cpp \
+        database.cpp \
         main.cpp
 
 RESOURCES += qml.qrc
@@ -38,7 +42,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = iTrace.ico
 
 HEADERS += \
-    backend.h
+    backend.h \
+    database.h
 
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend

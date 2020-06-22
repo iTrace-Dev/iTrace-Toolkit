@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
-import io.qt.examples.backend 1.0
+import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly fine
 
 
 // Main iTrace_Toolkit Window
@@ -22,7 +22,55 @@ Window {
     MenuBar {
         Menu {
             title: qsTr("File")
-            Action { text: "Export Fixation Highlighting" }
+            Action {
+                text: "Export Token Highlighting"
+            }
+            Action {
+                text: "Export Fixation Highlighting"
+            }
+        }
+
+        // Database Menu
+        Menu {
+            title: qsTr("Database")
+            // Create New Database File
+            Action {
+                text: "Create New Database"
+                onTriggered: {
+                    var file = databaseCreator.saveFile()
+                    database.filePath = file
+                    fileImportHandler.fileURL = file
+                    filesLoaded.text = fileImportHandler.getFiles()
+                }
+            }
+            // Open Database File
+            Action {
+                text: "Open Database"
+                onTriggered: {
+                    fileImportHandler.value = text
+                    databaseFileDialog.open()
+                }
+            }
+            // Load XML File(s) Submenu
+            Menu {
+                title: qsTr("Load XML")
+                // Load Individual XML
+                Action {
+                    text: "Load XML File"
+                    onTriggered: {
+                        fileImportHandler.value = text;
+                        xmlFileDialog.open()
+                    }
+                }
+                // Batch Load XML From File
+                Action {
+                    text: "Load XML From Folder"
+                }
+            }
+
+        }
+        Menu {
+            title: qsTr("Analyze")
         }
         Menu {
             title: qsTr("Help")
@@ -32,28 +80,36 @@ Window {
         }
     }
 
+    Database { id: database }
+
     // Backend Components
-    BackEnd { id: buttonHandler }
+    Backend { id: buttonHandler }
     FileImporter { id: fileImportHandler }
+    FileCreator { id: databaseCreator }
 
     // Other Components
     FileDialog {
         id: databaseFileDialog
         nameFilters: ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)", "All Files (*.*)"]
         onAccepted: {
+            //database.filePath = "file:///C:/Users/Joshu/Desktop/iTrace/TestDatabase/Test.db3"
+            database.filePath = fileUrl
             fileImportHandler.fileURL = this.fileUrl
             filesLoaded.text = fileImportHandler.getFiles()
+
         }
     }
     FileDialog {
         id: xmlFileDialog
         nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
         onAccepted: {
+            database.addXMLFile(fileUrl)
             fileImportHandler.fileURL = this.fileUrl
             filesLoaded.text = fileImportHandler.getFiles()
         }
     }
-//"
+
+
     //Database Tab
     Rectangle {
         id: databaseTab
@@ -62,37 +118,6 @@ Window {
         color: "red"
         Text { x: 5; y: 5; text: "Database and XML Import Area" }
 
-        // Load Database File Button
-        Button {
-            id: databaseLoadButton
-            x: margin; y: 30;
-            text: "Import Database"
-            onClicked: {
-                fileImportHandler.value = text
-                databaseFileDialog.open()
-            }
-        }
-        // Create New Database File Button
-        Button {
-            id: databaseCreateButton
-            x: parent.width - margin - width; y: 30; text: "Create Empty Database"
-            onClicked: {
-                var component = Qt.createComponent("FileCreator.qml")
-                var window = component.createObject(main)
-                window.show()
-            }
-        }
-
-        // Load XML File Button
-        Button {
-            id: xmlLoadButton
-            x: margin; y: databaseLoadButton.y + databaseLoadButton.height + margin;
-            text: "Load XML File"
-            onClicked: {
-                fileImportHandler.value = text;
-                xmlFileDialog.open()
-            }
-        }
 
         // Loaded Files Area
         Rectangle {
@@ -120,11 +145,6 @@ Window {
         x: 330; y: 10 + menuHeight
         color: "blue"
         Text { x: 5; y: 5; text: "Token Analysis Area" }
-        Button {
-            id: button2
-            x: margin; y: 30; text: "Blue"
-            onClicked: buttonHandler.value = text
-        }
     }
 
     // Fixation Tab
@@ -134,10 +154,5 @@ Window {
         x: 330; y: 250 + menuHeight
         color: "green"
         Text { x: 5; y: 5; text: "Fixation Data Area" }
-        Button {
-            id: button3
-            x: margin; y: 30; text: "Green"
-            onClicked: buttonHandler.value = text
-        }
     }
 }
