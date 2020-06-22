@@ -1,7 +1,9 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 
 #include "participantsmodel.h"
+#include "participantslist.h"
 
 int main(int argc, char *argv[])
 {
@@ -10,6 +12,9 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     qmlRegisterType<ParticipantsModel>("Participants", 1, 0, "ParticipantsModel");
+    qmlRegisterUncreatableType<ParticipantsList>("Participants", 1, 0, "ParticipantsList", QStringLiteral("Participants should not be created in QML"));
+
+    ParticipantsList participants;
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));
@@ -18,6 +23,7 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
+    engine.rootContext()->setContextProperty("participants", &participants);
     engine.load(url);
 
     return app.exec();

@@ -3,9 +3,12 @@
 
 #include <QAbstractListModel>
 
+class ParticipantsList;
+
 class ParticipantsModel : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(ParticipantsList* list READ getModelList WRITE setModelList)
 
 public:
     explicit ParticipantsModel(QObject *parent = nullptr);
@@ -28,7 +31,11 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
+    ParticipantsList *getModelList() const;
+    void setModelList(ParticipantsList *value);
+
 private:
+    ParticipantsList* modelList;
 };
 
 #endif // PARTICIPANTSMODEL_H

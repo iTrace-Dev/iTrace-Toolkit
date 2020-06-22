@@ -6,14 +6,14 @@
 
 struct Task {
     bool selected;
-    QString name;
+    QString sessionID;
 };
 
-class Participants : public QObject
+class ParticipantsList : public QObject
 {
     Q_OBJECT
 public:
-    explicit Participants(QObject *parent = nullptr);
+    explicit ParticipantsList(QObject *parent = nullptr);
 
     QVector<Task> items() const;
 
@@ -24,8 +24,12 @@ signals:
     void preItemAppended();
     void postItemAppended();
 
+    void preItemRemoved(int);
+    void postItemRemoved();
+
 public slots:
-    void appendTask(/*const QString& session*/);
+    void appendTask(const QString& sessionId);
+    void removeTask(const QString& sessionId);
 
 private:
     QVector<Task> nTasks;

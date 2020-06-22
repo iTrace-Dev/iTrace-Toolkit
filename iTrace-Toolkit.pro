@@ -17,7 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         backend.cpp \
         main.cpp \
-        participants.cpp \
+        participantslist.cpp \
         participantsmodel.cpp
 
 RESOURCES += qml.qrc
@@ -41,7 +41,7 @@ RC_ICONS = iTrace.ico
 
 HEADERS += \
     backend.h \
-    participants.h \
+    participantslist.h \
     participantsmodel.h
 
 CONFIG += qmltypes
