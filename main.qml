@@ -40,7 +40,7 @@ Window {
                     var file = databaseCreator.saveFile()
                     database.filePath = file
                     fileImportHandler.fileURL = file
-                    filesLoaded.text = fileImportHandler.getFiles()
+                    // TODO - Add update participant list
                 }
             }
             // Open Database File
@@ -88,6 +88,8 @@ Window {
     FileCreator { id: databaseCreator }
 
     // Other Components
+
+    // TODO - may remove these and port functionality to Database class
     FileDialog {
         id: databaseFileDialog
         nameFilters: ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)", "All Files (*.*)"]
@@ -95,7 +97,7 @@ Window {
             //database.filePath = "file:///C:/Users/Joshu/Desktop/iTrace/TestDatabase/Test.db3"
             database.filePath = fileUrl
             fileImportHandler.fileURL = this.fileUrl
-            filesLoaded.text = fileImportHandler.getFiles()
+            // TODO - Add update participant list
 
         }
     }
@@ -105,11 +107,13 @@ Window {
         onAccepted: {
             database.addXMLFile(fileUrl)
             fileImportHandler.fileURL = this.fileUrl
-            filesLoaded.text = fileImportHandler.getFiles()
+            // TODO - Add update participant list
         }
     }
 
     //Database Tab
+
+    // TODO - Rectangle looks weird now?
     Rectangle {
         id: databaseTab
         width: (parent.width - margin) / 2; height: 460;
