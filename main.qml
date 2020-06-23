@@ -109,32 +109,24 @@ Window {
         }
     }
 
-
     //Database Tab
     Rectangle {
         id: databaseTab
-        width: 300; height: 460;
-        x: 10; y: 10 + menuHeight
+        width: (parent.width - margin) / 2; height: 460;
+        x: margin; y: margin + menuHeight
         color: "red"
-        Text { x: 5; y: 5; text: "Database and XML Import Area" }
-
 
         // Loaded Files Area
-        Rectangle {
-            id: fileTab
-            width: parent.width - 2 * margin; height: 60
-            x: margin; y: parent.height - height - margin
-            color: "yellow"
-            Text {
-                x: 5; y: 5
-                font.bold: true
-                text: "Loaded Files:"
-            }
-            Text {
-                id: filesLoaded
-                x: 5; y: 20
-                text: "No Files Loaded"
-            }
+        Text {
+            x: margin; y: margin
+            font.bold: true
+            text: "Loaded Files:"
+        }
+        Participant {
+            x: margin; y: 2 * margin
+            height: parent.height - 3 * margin
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 5
         }
     }
 
