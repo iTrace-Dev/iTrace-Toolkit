@@ -9,6 +9,7 @@
 #include <string>
 
 
+
 // Helper Functions
 
 std::string qStrToStr(const QString&);
@@ -18,14 +19,14 @@ std::string qStrToStr(const QString&);
 TODO:
     N/A
 */
-class BackEnd : public QObject {
+class Backend : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(QString value WRITE outputToConsole)
 
     QML_ELEMENT
 public:
-    explicit BackEnd(QObject* parent = nullptr);
+    explicit Backend(QObject* parent = nullptr);
     void outputToConsole(const QString&);
 };
 
@@ -37,7 +38,7 @@ TODO:
         -Prevent duplicate loading
     -Added label - might not be needed? doesn't hurt for now
 */
-class FileImporter : public BackEnd {
+class FileImporter : public Backend {
     Q_OBJECT
 
     Q_PROPERTY(QString fileURL WRITE appendFile NOTIFY fileImported)
@@ -65,18 +66,17 @@ private:
 TODO:
     -When creating file, check for already existing file, and provide confirmation box
 */
-class FileCreator : public BackEnd {
+class FileCreator : public Backend {
     Q_OBJECT
 
     Q_PROPERTY(QString fileExtension WRITE setFileExtension)
-    Q_PROPERTY(QString fileName WRITE saveFile)
 
     QML_ELEMENT
 public:
     explicit FileCreator(QObject* parent = nullptr);
 
     void setFileExtension(const QString&);
-    void saveFile(const QString&);
+    Q_INVOKABLE QString saveFile();
 private:
     QString extension;
 };

@@ -12,16 +12,16 @@ std::string qStrToStr(const QString& qstr) { return qstr.toUtf8().constData(); }
 
 // BackEnd
 
-BackEnd::BackEnd(QObject* parent) : QObject(parent) {}
+Backend::Backend(QObject* parent) : QObject(parent) {}
 
-void BackEnd::outputToConsole(const QString& value) {
+void Backend::outputToConsole(const QString& value) {
     std::cout << value.toUtf8().constData() << std::endl;
 }
 
 
 // FileImporter
 
-FileImporter::FileImporter(QObject* parent) : BackEnd(parent) {}
+FileImporter::FileImporter(QObject* parent) : Backend(parent) {}
 
 void FileImporter::appendFile(const QString& file) {
     files.push_back(file);
@@ -44,13 +44,21 @@ QString FileImporter::getFiles() { // Gets file names (not URLs) from files vect
 
 // FileCreator
 
-FileCreator::FileCreator(QObject* parent) : BackEnd(parent) {}
+FileCreator::FileCreator(QObject* parent) : Backend(parent) {}
 
 void FileCreator::setFileExtension(const QString& ext) { extension = ext; }
-
+/*
 void FileCreator::saveFile(const QString& fileName) {
     std::string dir(qStrToStr(QFileDialog::getExistingDirectory(0, "Choose location")) + std::string("/"));
     std::ofstream newDatabase(dir + qStrToStr(fileName+extension));
     std::cout << "Dir: " << dir + qStrToStr(fileName+extension) << std::endl;
     newDatabase.close();
+}*/
+
+QString FileCreator::saveFile() {
+    QString fileName = QFileDialog::getSaveFileName(nullptr,"Save as","./","SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3);;All Files (*.*)");
+    std::cout << "|||" << fileName.toUtf8().constData() << std::endl;
+    std::ofstream file(fileName.toUtf8().constData());
+    file.close();
+    return fileName;
 }

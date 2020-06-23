@@ -1,7 +1,10 @@
 QT += quick
 QT += widgets
+QT += sql
+QT += core
 
 CONFIG += c++11
+CONFIG += sql
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -18,7 +21,9 @@ SOURCES += \
         backend.cpp \
         main.cpp \
         participantslist.cpp \
-        participantsmodel.cpp
+        participantsmodel.cpp \
+        database.cpp \
+
 
 RESOURCES += qml.qrc
 
@@ -42,7 +47,8 @@ RC_ICONS = iTrace.ico
 HEADERS += \
     backend.h \
     participantslist.h \
-    participantsmodel.h
+    participantsmodel.h \
+    database.h
 
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend
