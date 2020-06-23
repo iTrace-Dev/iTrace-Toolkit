@@ -77,6 +77,8 @@ bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
 
     bool skipCalibration = false;
 
+    db.exec("BEGIN"); // Begins a transaction to speed up the process of inserting.
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //   The QStrings for this section are gonna be long and ugly. Any solution to shortening them will be appreciated
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,8 +117,7 @@ bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
                 db.exec(QString("INSERT INTO calibration_sample(calibration_point_id,left_x,left_y,left_validation,right_x,right_y,right_validation) VALUES(\"%1\",%2,%3,%4,%5,%6,%7)").arg(calibration_point_id).arg(attr.value("left_x")).arg(attr.value("left_y")).arg(attr.value("left_validity")).arg(attr.value("right_x")).arg(attr.value("right_y")).arg(attr.value("right_validity")));
             }
             else if(tag == "response") {
-                // TODO - Takes FOREVER to run - ~16000 gaze entries take ~30 minutes to add - find problem and/or optimize
-                //db.exec(QString("INSERT INTO gaze(event_time,session_id,calibration_id,participant_id,tracker_time,system_time,x,y,left_x,left_y,left_pupil_diameter,left_validation,right_x,right_y,right_pupil_diameter,right_validation,user_left_x,user_left_y,user_left_z,user_right_x,user_right_y,user_right_z) VALUES(%1,%2,%3,\"%4\",\"%5\",\"%6\",\"%7\",\"%8\",\"%9\",\"%10\",\"%11\",\"%12\",\"%13\",\"%14\",\"%15\",\"%16\",\"%17\",\"%18\",\"%19\",\"%20\",\"%21\",\"%22\")").arg(attr.value("event_id")).arg(session_id).arg(calibration_id).arg(participant_id).arg(attr.value("tracker_time")).arg(attr.value("core_time")).arg(attr.value("x")).arg(attr.value("y")).arg(attr.value("left_x")).arg(attr.value("left_y")).arg(attr.value("left_pupil_diameter")).arg(attr.value("left_validation")).arg(attr.value("right_x")).arg(attr.value("right_y")).arg(attr.value("right_pupil_diameter")).arg(attr.value("right_validation")).arg(attr.value("user_left_x")).arg(attr.value("user_left_y")).arg(attr.value("user_left_z")).arg(attr.value("user_right_x")).arg(attr.value("user_right_y")).arg(attr.value("user_right_z")));
+                db.exec(QString("INSERT INTO gaze(event_time,session_id,calibration_id,participant_id,tracker_time,system_time,x,y,left_x,left_y,left_pupil_diameter,left_validation,right_x,right_y,right_pupil_diameter,right_validation,user_left_x,user_left_y,user_left_z,user_right_x,user_right_y,user_right_z) VALUES(%1,%2,%3,\"%4\",\"%5\",\"%6\",\"%7\",\"%8\",\"%9\",\"%10\",\"%11\",\"%12\",\"%13\",\"%14\",\"%15\",\"%16\",\"%17\",\"%18\",\"%19\",\"%20\",\"%21\",\"%22\")").arg(attr.value("event_id")).arg(session_id).arg(calibration_id).arg(participant_id).arg(attr.value("tracker_time")).arg(attr.value("core_time")).arg(attr.value("x")).arg(attr.value("y")).arg(attr.value("left_x")).arg(attr.value("left_y")).arg(attr.value("left_pupil_diameter")).arg(attr.value("left_validation")).arg(attr.value("right_x")).arg(attr.value("right_y")).arg(attr.value("right_pupil_diameter")).arg(attr.value("right_validation")).arg(attr.value("user_left_x")).arg(attr.value("user_left_y")).arg(attr.value("user_left_z")).arg(attr.value("user_right_x")).arg(attr.value("user_right_y")).arg(attr.value("user_right_z")));
             }
             else { std::cout << "UNRECONGIZED TAG NAME: " << tag.toUtf8().constData() << std::endl; }
             QString report =  db.lastError().text();
@@ -130,7 +131,7 @@ bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
         std::cout << xml.errorString().toUtf8().constData() << std::endl;
     }
 
-    db.commit();
+    db.exec("COMMIT");
 
     std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
 
