@@ -3,9 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ParticipantsList
-ParticipantsList::ParticipantsList(QObject *parent) : QObject(parent) {
-    nTasks.append({true, "This is a session ID"});
-}
+ParticipantsList::ParticipantsList(QObject *parent) : QObject(parent) {}
 
 QVector<Task> ParticipantsList::items() const {
     return nTasks;
