@@ -155,6 +155,9 @@ bool Database::addCoreXMLFile(const QString& filePath) {
     db.exec("COMMIT");
     file.close();
 
+    // Adding Participant to the participant list
+    emit taskAdded(session_id);
+
     std::cout << "CORE FILE IMPORTED" << std::endl;
     std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
 

@@ -43,6 +43,9 @@ public:
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);
 
+signals:
+    void taskAdded(const QString& sessionID);
+
 private:
     QSqlDatabase db;
     QString path;
