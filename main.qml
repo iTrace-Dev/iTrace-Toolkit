@@ -82,7 +82,7 @@ Window {
 
     Database {
         id: database
-        onTaskAdded: participantList.appendTask(sessionID);
+        onTaskAdded: participantList.model.appendTask(sessionID);
     }
 
     // Backend Components
