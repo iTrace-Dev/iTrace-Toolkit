@@ -35,10 +35,11 @@ public:
     void backupDatabase();
 
     Q_INVOKABLE bool addXMLFile(QString);
-    bool addCoreXMLFile(QXmlStreamReader&);
-    bool addPluginXMLFile(QXmlStreamReader&);
+    bool addCoreXMLFile(const QString&);
+    bool addPluginXMLFile(const QString&);
 
     bool isDatabaseOpen();
+    bool fileExists(const QString&);
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);
 

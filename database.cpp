@@ -38,6 +38,16 @@ bool Database::addXMLFile(QString filePath) {
     if(!isDatabaseOpen()) { return false; }
     filePath.remove("file:///");
     std::cout << "XML FILE: " << filePath.toUtf8().constData() << std::endl;
+
+    // Check if file is already in database
+    QString filehash = QCryptographicHash::hash(filePath.toUtf8().constData(),QCryptographicHash::Sha1).toHex();
+    if(fileExists(filehash)) {
+        return false;
+    }
+    else {
+        db.exec(QString("INSERT INTO files(file_hash,file_full_path) VALUES(\"%1\",\"%2\")").arg(filehash).arg(filePath));
+    }
+
     QFile file(filePath);
     if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
 
@@ -52,28 +62,36 @@ bool Database::addXMLFile(QString filePath) {
     To get element's text
         xml.readElementText()
     */
-    bool rtn;
+    bool rtn = false;
 
     xml.readNextStartElement();
-    if(xml.name() == "itrace_core") {
-        rtn = addCoreXMLFile(xml);
+    if(xml.name() == "itrace_core") { // Core File
+        file.close();
+        rtn = addCoreXMLFile(filePath);
     }
+    else if(xml.name() == "itrace_plugin") { // Plugin File
+        file.close();
+        rtn = addPluginXMLFile(filePath);
+    }
+    else {} // Unregognized File
 
-
-    file.close();
     return rtn;
 }
 
-bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
+bool Database::addCoreXMLFile(const QString& filePath) {
     QElapsedTimer time;
     time.start();
 
-    QString session_id = xml.attributes().value("session_id").toUtf8().constData(),
+    QFile file(filePath);
+    if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
+    QXmlStreamReader xml(&file);
+
+    QString session_id,
             calibration_id,
             calibration_point_id,
             calibration_x,
             calibration_y,
-            participant_id = xml.attributes().value("participant_id").toUtf8().constData();
+            participant_id;
 
     bool skipCalibration = false;
 
@@ -82,21 +100,24 @@ bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //   The QStrings for this section are gonna be long and ugly. Any solution to shortening them will be appreciated
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    QString session_time = xml.attributes().value("session_date_time").toUtf8().constData();
-    db.exec(QString("INSERT INTO session(session_id,participant_id,session_date,session_time,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\")").arg(session_id).arg(participant_id).arg(session_time).arg(session_time).arg(xml.attributes().value("task_name")));
 
-    if(!participantExists(participant_id)) {
-        db.exec(QString("INSERT INTO participant(participant_id,session_length) VALUES(\"%1\",null)").arg(participant_id));
-        QString report =  db.lastError().text();
-        if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
-    }
     while(!xml.atEnd()) {
         if(xml.readNextStartElement()) {
             QStringRef tag = xml.name();
-
             QXmlStreamAttributes attr = xml.attributes();
 
-            if(tag == "environment") {
+            if(tag == "itrace_core") {
+                session_id = xml.attributes().value("session_id").toUtf8().constData();
+                participant_id = xml.attributes().value("participant_id").toUtf8().constData();
+                QString session_time = xml.attributes().value("session_date_time").toUtf8().constData();
+                db.exec(QString("INSERT INTO session(session_id,participant_id,session_date,session_time,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\")").arg(session_id).arg(participant_id).arg(session_time).arg(session_time).arg(xml.attributes().value("task_name")));
+                if(!participantExists(participant_id)) {
+                    db.exec(QString("INSERT INTO participant(participant_id,session_length) VALUES(\"%1\",null)").arg(participant_id));
+                    QString report =  db.lastError().text();
+                    if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+                }
+            }
+            else if(tag == "environment") {
                 db.exec(QString("UPDATE session SET screen_width = %1,screen_height = %2,tracker_type = \"%3\",tracker_serial_number = \"%4\",screen_recording_start = %5 WHERE session_id = %6").arg(attr.value("screen_width")).arg(attr.value("screen_height")).arg(attr.value("tracker_type")).arg(attr.value("tracker_serial_number")).arg(attr.value("screen_recording_start")).arg(session_id));
             }
             else if(tag == "calibration") {
@@ -132,15 +153,69 @@ bool Database::addCoreXMLFile(QXmlStreamReader& xml) {
     }
 
     db.exec("COMMIT");
+    file.close();
 
+    std::cout << "CORE FILE IMPORTED" << std::endl;
     std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
 
     return true;
+}
 
+bool Database::addPluginXMLFile(const QString& filePath) {
+    QElapsedTimer time;
+    time.start();
+
+    QFile file(filePath);
+    if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
+    QXmlStreamReader xml(&file);
+
+    QString ide_plugin_type;
+
+    db.exec("BEGIN");
+
+    while(!xml.atEnd()) {
+        if(xml.readNextStartElement()) {
+            QStringRef tag = xml.name();
+            QXmlStreamAttributes attr = xml.attributes();
+
+            if(tag == "environment") {
+                ide_plugin_type = attr.value("plugin_type").toUtf8().constData();
+            }
+            else if(tag == "response") {
+                db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12)").arg(attr.value("event_id")).arg(attr.value("plugin_time")).arg(ide_plugin_type).arg(attr.value("gaze_target")).arg(attr.value("gaze_target_type")).arg(attr.value("source_file_path")).arg(attr.value("source_file_line")).arg(attr.value("source_file_col")).arg((attr.value("editor_line_height") == "") ? "null" : attr.value("editor_line_height").toUtf8().constData()).arg((attr.value("editor_font_height") == "") ? "null" : attr.value("editor_font_height").toUtf8().constData()).arg((attr.value("editor_line_base_x") == "") ? "null" : attr.value("editor_line_base_x").toUtf8().constData()).arg((attr.value("editor_line_base_y") == "") ? "null" : attr.value("editor_line_base_y").toUtf8().constData()));
+            }
+            else { std::cout << "UNRECONGIZED TAG NAME: " << tag.toUtf8().constData() << std::endl; }
+            QString report =  db.lastError().text();
+            if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+        }
+    }
+
+    if(xml.hasError()) {
+        std::cout << "An error occured" << std::endl;
+        std::cout << xml.error() << std::endl;
+        std::cout << xml.errorString().toUtf8().constData() << std::endl;
+    }
+
+    db.exec("COMMIT");
+    file.close();
+
+    std::cout << "PLUGIN FILE IMPORTED" << std::endl;
+    std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
+
+    return true;
 }
 
 bool Database::isDatabaseOpen() {
     return db.isOpen();
+}
+
+// Maybe consolidate these into one function? Where the arguments are function parameters
+// Issues with this: how to know whether selecting text or number data?
+
+bool Database::fileExists(const QString& hash) {
+    QSqlQuery qry = db.exec(QString("SELECT file_hash FROM files WHERE file_hash = \"%1\"").arg(hash));
+    qry.last();
+    return qry.at() + 1 > 0;
 }
 
 bool Database::participantExists(const QString& id) {
