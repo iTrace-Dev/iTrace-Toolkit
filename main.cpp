@@ -3,7 +3,7 @@
 #include <QQmlContext>
 
 #include "participantsmodel.h"
-#include "participantslist.h"
+#include "database.h"
 
 int main(int argc, char *argv[])
 {

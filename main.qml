@@ -80,7 +80,10 @@ Window {
         }
     }
 
-    Database { id: database }
+    Database {
+        id: database
+        onTaskAdded: participantList.model.appendTask(sessionID);
+    }
 
     // Backend Components
     Backend { id: buttonHandler }
@@ -127,6 +130,7 @@ Window {
             text: "Loaded Files:"
         }
         Participant {
+            id: participantList
             x: margin; y: 2 * margin
             height: parent.height - 3 * margin
             anchors.horizontalCenter: parent.horizontalCenter
