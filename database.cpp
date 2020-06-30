@@ -31,6 +31,7 @@ void Database::openDatabase(QString filePath) {
         db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
         db.commit();
     }
+    emit outputToScreen("Database file opened: " + filePath);
 }
 
 void Database::backupDatabase() {
@@ -111,7 +112,10 @@ void Database::batchAddXMLFiles() {
         if(i.second.size() == 2) { for (auto j : i.second) { addXMLFile(j); } }
         else { warning += i.second[0] + "\n"; }
     }
-    if(warning != "") { emit outputToScreen("The following file(s) had no pair:\n"+warning); }
+    if(warning != "") {
+        emit outputToScreen("The following file(s) had no pair:\n"+warning);
+        QApplication::processEvents();
+    }
 
 }
 
@@ -189,6 +193,7 @@ bool Database::addCoreXMLFile(const QString& filePath) {
             else { std::cout << "UNRECONGIZED TAG NAME: " << tag.toUtf8().constData() << std::endl; }
             QString report =  db.lastError().text();
             if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+            QApplication::processEvents();
         }
     }
 
@@ -205,7 +210,8 @@ bool Database::addCoreXMLFile(const QString& filePath) {
     emit taskAdded(participant_id + " - " + task_id);
 
     emit outputToScreen("CORE FILE IMPORTED: " + filePath);
-    emit outputToScreen(QString("ELAPSED TIME in ms: ") + time.elapsed());
+    emit outputToScreen(QString("ELAPSED TIME in ms: ") + QString::number(time.elapsed(),10));
+    QApplication::processEvents();
 
     return true;
 }
@@ -245,6 +251,7 @@ bool Database::addPluginXMLFile(const QString& filePath) {
             else { std::cout << "UNRECONGIZED TAG NAME: " << tag.toUtf8().constData() << std::endl; }
             QString report =  db.lastError().text();
             if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+            QApplication::processEvents();
         }
     }
 
@@ -258,7 +265,8 @@ bool Database::addPluginXMLFile(const QString& filePath) {
     file.close();
 
     emit outputToScreen("PLUGIN FILE IMPORTED: " + filePath);
-    emit outputToScreen(QString("ELAPSED TIME in ms: ") + time.elapsed());
+    emit outputToScreen(QString("ELAPSED TIME in ms: ") + QString::number(time.elapsed(),10));
+    QApplication::processEvents();
 
     return true;
 }

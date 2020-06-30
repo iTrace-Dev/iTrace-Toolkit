@@ -2,6 +2,7 @@
 #define DATABASE_H
 
 #include <QObject>
+#include <QApplication>
 #include <QString>
 #include <QFile>
 #include <QXmlStreamReader>

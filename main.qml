@@ -86,7 +86,12 @@ Window {
     Database {
         id: database
         onTaskAdded: participantList.model.appendTask(sessionID);
-        onOutputToScreen: output.text += "\n" + text
+        //onOutputToScreen: output.text += "\n" + text
+        onOutputToScreen: {
+            output.append(text)
+            outputFlick.contentY += 1
+        }
+
     }
 
     // Backend Components
@@ -166,9 +171,22 @@ Window {
         width: parent.width - (margin*2); height: 90
         x: margin; y: parent.height - height - margin
         border.color: "black"
-        ScrollView {
+        /*ScrollView {
             anchors.fill: parent
             TextArea {
+                id: output
+                anchors.fill: parent
+                text: "Output:"
+                color: "black"
+                readOnly: true
+            }
+        }*/
+        Flickable {
+            id: outputFlick
+            anchors.fill: parent
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ScrollBar {}
+            TextArea.flickable: TextArea {
                 id: output
                 anchors.fill: parent
                 text: "Output:"
