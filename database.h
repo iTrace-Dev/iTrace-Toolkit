@@ -10,9 +10,13 @@
 #include <QSqlError>
 #include <QCryptographicHash>
 #include <QElapsedTimer>
+#include <QFileDialog>
+#include <QDirIterator>
 #include <qqml.h>
 #include <iostream>
 #include <string>
+#include <utility>
+#include <map>
 
 
 
@@ -35,6 +39,7 @@ public:
     void backupDatabase();
 
     Q_INVOKABLE bool addXMLFile(QString);
+    Q_INVOKABLE void batchAddXMLFiles();
     bool addCoreXMLFile(const QString&);
     bool addPluginXMLFile(const QString&);
 
@@ -45,6 +50,7 @@ public:
 
 signals:
     void taskAdded(const QString& sessionID);
+    void outputToScreen(const QString& text);
 
 private:
     QSqlDatabase db;

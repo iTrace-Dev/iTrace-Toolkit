@@ -4,6 +4,9 @@
 Database::Database(QObject* parent) : QObject(parent) {}
 
 void Database::openDatabase(QString filePath) {
+    //TODO
+    // Check if provided database isn't an iTrace database, and reject if it isn't?
+
     if(filePath == "") { return; }
     if(db.isOpen()) { db.close(); }
     path = filePath;
@@ -13,7 +16,7 @@ void Database::openDatabase(QString filePath) {
     db.open();
     if(!db.isOpen()) { std::cout << "Can't open DB" << std::endl; }
     else {
-        //QSqlQuery query(db);
+        // Create the database if it already doesn't exist
         db.exec("CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER)");
         db.exec("CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
         db.exec("CREATE TABLE IF NOT EXISTS session(session_id INTEGER PRIMARY KEY,participant_id TEXT,screen_width INTEGER, screen_height INTEGER,tracker_type TEXT, tracker_serial_number TEXT,session_date INTEGER, session_time INTEGER,screen_recording_start INTEGER,task_name TEXT,FOREIGN KEY (participant_id) REFERENCES participant(participant_id))");
@@ -25,7 +28,7 @@ void Database::openDatabase(QString filePath) {
         db.exec("CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
         db.exec("CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
         db.exec("CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gazes(event_time))");
-        db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,file_full_path TEXT)");
+        db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
         db.commit();
     }
 }
@@ -37,16 +40,7 @@ void Database::backupDatabase() {
 bool Database::addXMLFile(QString filePath) {
     if(!isDatabaseOpen()) { return false; }
     filePath.remove("file:///");
-    std::cout << "XML FILE: " << filePath.toUtf8().constData() << std::endl;
-
-    // Check if file is already in database
-    QString filehash = QCryptographicHash::hash(filePath.toUtf8().constData(),QCryptographicHash::Sha1).toHex();
-    if(fileExists(filehash)) {
-        return false;
-    }
-    else {
-        db.exec(QString("INSERT INTO files(file_hash,file_full_path) VALUES(\"%1\",\"%2\")").arg(filehash).arg(filePath));
-    }
+    //std::cout << "XML FILE: " << filePath.toUtf8().constData() << std::endl;
 
     QFile file(filePath);
     if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
@@ -65,22 +59,71 @@ bool Database::addXMLFile(QString filePath) {
     bool rtn = false;
 
     xml.readNextStartElement();
+    file.close();
     if(xml.name() == "itrace_core") { // Core File
-        file.close();
         rtn = addCoreXMLFile(filePath);
     }
     else if(xml.name() == "itrace_plugin") { // Plugin File
-        file.close();
         rtn = addPluginXMLFile(filePath);
     }
-    else {} // Unregognized File
+    else { // Unregognized File
+         emit outputToScreen("NOT AN iTRACE XML FILE: " + filePath);
+    }
 
     return rtn;
+}
+
+void Database::batchAddXMLFiles() {
+    if(!isDatabaseOpen()) { return; }
+
+    QString dir = QFileDialog::getExistingDirectory(nullptr, "Select folder","");
+
+    emit outputToScreen("Batch importing folder: " + dir);
+
+    dir.remove("file:///");
+    QDirIterator dirItr(dir);
+    //std::vector<std::pair<QString,QString>> possibleFiles;
+    std::map<QString,std::vector<QString>> files;
+    while(dirItr.hasNext()) {
+        QString fileName = dirItr.next().toUtf8().constData();
+        if(fileName.endsWith(".xml")) {
+            fileName.remove("file:///");
+            QFile file(fileName);
+            file.open(QFile::ReadOnly | QFile::Text);
+            QXmlStreamReader xml(&file);
+            xml.readNextStartElement();
+            file.close();
+            if(xml.name() == "itrace_core" || xml.name() == "itrace_plugin") {
+                QString id = xml.attributes().value("session_id").toUtf8().constData();
+                if(files.count(id) == 0) {
+                    auto insert = files.insert(std::make_pair(id,std::vector<QString>()));
+                    insert.first->second.push_back(fileName);
+                }
+                else {
+                    auto insert = files.find(id);
+                    insert->second.push_back(fileName);
+                }
+            }
+        }
+    }
+    QString warning;
+    for(auto i : files) {
+        if(i.second.size() == 2) { for (auto j : i.second) { addXMLFile(j); } }
+        else { warning += i.second[0] + "\n"; }
+    }
+    if(warning != "") { emit outputToScreen("The following file(s) had no pair:\n"+warning); }
+
 }
 
 bool Database::addCoreXMLFile(const QString& filePath) {
     QElapsedTimer time;
     time.start();
+
+    // Check if file is already in database
+    QString filehash = QCryptographicHash::hash(filePath.toUtf8().constData(),QCryptographicHash::Sha1).toHex();
+    if(fileExists(filehash)) {
+        return false;
+    }
 
     QFile file(filePath);
     if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
@@ -91,7 +134,8 @@ bool Database::addCoreXMLFile(const QString& filePath) {
             calibration_point_id,
             calibration_x,
             calibration_y,
-            participant_id;
+            participant_id,
+            task_id;
 
     bool skipCalibration = false;
 
@@ -109,13 +153,15 @@ bool Database::addCoreXMLFile(const QString& filePath) {
             if(tag == "itrace_core") {
                 session_id = xml.attributes().value("session_id").toUtf8().constData();
                 participant_id = xml.attributes().value("participant_id").toUtf8().constData();
+                task_id = xml.attributes().value("task_name").toUtf8().constData();
                 QString session_time = xml.attributes().value("session_date_time").toUtf8().constData();
-                db.exec(QString("INSERT INTO session(session_id,participant_id,session_date,session_time,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\")").arg(session_id).arg(participant_id).arg(session_time).arg(session_time).arg(xml.attributes().value("task_name")));
+                db.exec(QString("INSERT INTO session(session_id,participant_id,session_date,session_time,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\")").arg(session_id).arg(participant_id).arg(session_time).arg(session_time).arg(task_id));
                 if(!participantExists(participant_id)) {
                     db.exec(QString("INSERT INTO participant(participant_id,session_length) VALUES(\"%1\",null)").arg(participant_id));
                     QString report =  db.lastError().text();
                     if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
                 }
+                db.exec(QString("INSERT INTO files(file_hash,session_id,file_full_path,file_type) VALUES(\"%1\",%2,\"%3\",\"core\")").arg(filehash).arg(session_id).arg(filePath));
             }
             else if(tag == "environment") {
                 db.exec(QString("UPDATE session SET screen_width = %1,screen_height = %2,tracker_type = \"%3\",tracker_serial_number = \"%4\",screen_recording_start = %5 WHERE session_id = %6").arg(attr.value("screen_width")).arg(attr.value("screen_height")).arg(attr.value("tracker_type")).arg(attr.value("tracker_serial_number")).arg(attr.value("screen_recording_start")).arg(session_id));
@@ -156,10 +202,10 @@ bool Database::addCoreXMLFile(const QString& filePath) {
     file.close();
 
     // Adding Participant to the participant list
-    emit taskAdded(session_id);
+    emit taskAdded(participant_id + " - " + task_id);
 
-    std::cout << "CORE FILE IMPORTED" << std::endl;
-    std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
+    emit outputToScreen("CORE FILE IMPORTED: " + filePath);
+    emit outputToScreen(QString("ELAPSED TIME in ms: ") + time.elapsed());
 
     return true;
 }
@@ -167,6 +213,12 @@ bool Database::addCoreXMLFile(const QString& filePath) {
 bool Database::addPluginXMLFile(const QString& filePath) {
     QElapsedTimer time;
     time.start();
+
+    // Check if file is already in database
+    QString filehash = QCryptographicHash::hash(filePath.toUtf8().constData(),QCryptographicHash::Sha1).toHex();
+    if(fileExists(filehash)) {
+        return false;
+    }
 
     QFile file(filePath);
     if(!file.open(QFile::ReadOnly | QFile::Text)) { std::cout << "Cannot read file" << file.errorString().constData() << std::endl; }
@@ -181,7 +233,10 @@ bool Database::addPluginXMLFile(const QString& filePath) {
             QStringRef tag = xml.name();
             QXmlStreamAttributes attr = xml.attributes();
 
-            if(tag == "environment") {
+            if(tag == "itrace_plugin") {
+                db.exec(QString("INSERT INTO files(file_hash,session_id,file_full_path,file_type) VALUES(\"%1\",%2,\"%3\",\"plugin\")").arg(filehash).arg(attr.value("session_id")).arg(filePath));
+            }
+            else if(tag == "environment") {
                 ide_plugin_type = attr.value("plugin_type").toUtf8().constData();
             }
             else if(tag == "response") {
@@ -202,8 +257,8 @@ bool Database::addPluginXMLFile(const QString& filePath) {
     db.exec("COMMIT");
     file.close();
 
-    std::cout << "PLUGIN FILE IMPORTED" << std::endl;
-    std::cout << "ELAPSED TIME in ms: " << time.elapsed() << std::endl;
+    emit outputToScreen("PLUGIN FILE IMPORTED: " + filePath);
+    emit outputToScreen(QString("ELAPSED TIME in ms: ") + time.elapsed());
 
     return true;
 }

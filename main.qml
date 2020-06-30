@@ -12,7 +12,7 @@ Window {
     property var margin: 15
     visible: true
     width: 640
-    height: 480 + menuHeight
+    height: 580 + menuHeight
     maximumHeight: height
     maximumWidth: width
     minimumHeight: height
@@ -65,6 +65,9 @@ Window {
                 // Batch Load XML From File
                 Action {
                     text: "Load XML From Folder"
+                    onTriggered: {
+                        database.batchAddXMLFiles()
+                    }
                 }
             }
 
@@ -83,6 +86,7 @@ Window {
     Database {
         id: database
         onTaskAdded: participantList.model.appendTask(sessionID);
+        onOutputToScreen: output.text += "\n" + text
     }
 
     // Backend Components
@@ -119,7 +123,7 @@ Window {
     // TODO - Rectangle looks weird now?
     Rectangle {
         id: databaseTab
-        width: (parent.width - margin) / 2; height: 460;
+        width: (parent.width - margin) / 2; height: 460 - margin;
         x: margin; y: margin + menuHeight
         color: "red"
 
@@ -127,7 +131,7 @@ Window {
         Text {
             x: margin; y: margin
             font.bold: true
-            text: "Loaded Files:"
+            text: "Loaded Participants:"
         }
         Participant {
             id: participantList
@@ -155,4 +159,23 @@ Window {
         color: "green"
         Text { x: 5; y: 5; text: "Fixation Data Area" }
     }
+
+    // Output TextArea
+    Rectangle {
+        id: outputTab
+        width: parent.width - (margin*2); height: 90
+        x: margin; y: parent.height - height - margin
+        border.color: "black"
+        ScrollView {
+            anchors.fill: parent
+            TextArea {
+                id: output
+                anchors.fill: parent
+                text: "Output:"
+                color: "black"
+                readOnly: true
+            }
+        }
+    }
 }
+
