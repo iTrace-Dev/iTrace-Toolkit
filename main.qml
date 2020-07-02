@@ -37,9 +37,7 @@ Window {
             Action {
                 text: "Create New Database"
                 onTriggered: {
-                    var file = databaseCreator.saveFile()
-                    database.filePath = file
-                    fileImportHandler.fileURL = file
+                    database.createNewDatabase();
                     // TODO - Add update participant list
                 }
             }
@@ -47,8 +45,7 @@ Window {
             Action {
                 text: "Open Database"
                 onTriggered: {
-                    fileImportHandler.value = text
-                    databaseFileDialog.open()
+                    database.openDatabase()
                 }
             }
             // Load XML File(s) Submenu
@@ -58,8 +55,7 @@ Window {
                 Action {
                     text: "Load XML File"
                     onTriggered: {
-                        fileImportHandler.value = text;
-                        xmlFileDialog.open()
+                        database.importXML()
                     }
                 }
                 // Batch Load XML From File
@@ -92,35 +88,6 @@ Window {
             outputFlick.contentY += 1
         }
 
-    }
-
-    // Backend Components
-    Backend { id: buttonHandler }
-    FileImporter { id: fileImportHandler }
-    FileCreator { id: databaseCreator }
-
-    // Other Components
-
-    // TODO - may remove these and port functionality to Database class
-    FileDialog {
-        id: databaseFileDialog
-        nameFilters: ["SQLite Files (*.db;*.db3;*.sqlite;*.sqlite3)", "All Files (*.*)"]
-        onAccepted: {
-            //database.filePath = "file:///C:/Users/Joshu/Desktop/iTrace/TestDatabase/Test.db3"
-            database.filePath = fileUrl
-            fileImportHandler.fileURL = this.fileUrl
-            // TODO - Add update participant list
-
-        }
-    }
-    FileDialog {
-        id: xmlFileDialog
-        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
-        onAccepted: {
-            database.addXMLFile(fileUrl)
-            fileImportHandler.fileURL = this.fileUrl
-            // TODO - Add update participant list
-        }
     }
 
     //Database Tab

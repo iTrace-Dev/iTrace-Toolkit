@@ -18,7 +18,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        backend.cpp \
         main.cpp \
         participantsmodel.cpp \
         database.cpp \
@@ -44,7 +43,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = iTrace.ico
 
 HEADERS += \
-    backend.h \
     participantsmodel.h \
     database.h
 

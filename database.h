@@ -15,6 +15,7 @@
 #include <QDirIterator>
 #include <qqml.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <utility>
 #include <map>
@@ -30,13 +31,16 @@ class Database: public QObject {
 public:
     Q_OBJECT
 
-    Q_PROPERTY(QString filePath WRITE openDatabase)
+    Q_PROPERTY(QString filePath WRITE loadDatabase)
 
     QML_ELEMENT
 public:
     explicit Database(QObject* parent = nullptr);
 
-    void openDatabase(QString);
+    Q_INVOKABLE void createNewDatabase();
+    Q_INVOKABLE void openDatabase();
+    Q_INVOKABLE void importXML();
+    void loadDatabase(QString);
     void backupDatabase();
 
     Q_INVOKABLE bool addXMLFile(QString);

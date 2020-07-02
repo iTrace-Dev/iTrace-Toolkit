@@ -1,11 +1,35 @@
 #include "database.h"
 
 
+//
+
+
 Database::Database(QObject* parent) : QObject(parent) {}
 
-void Database::openDatabase(QString filePath) {
+void Database::createNewDatabase() {
+    QString fileName = QFileDialog::getSaveFileName(nullptr,"Save as","./","SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3);;All Files (*.*)");
+    if(fileName == "") { return; }
+    std::ofstream file(fileName.toUtf8().constData());
+    file.close();
+    loadDatabase(fileName);
+}
+
+void Database::openDatabase() {
+    QString fileName = QFileDialog::getOpenFileName(nullptr,"Open Database file","./","SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3);;All Files (*.*)");
+    if(fileName == "") { return; }
+    loadDatabase(fileName);
+}
+
+void Database::importXML() {
+    QString fileName = QFileDialog::getOpenFileName(nullptr,"Import iTrace XML","./","SrcML Files (*.xml;*.srcml;);;All Files (*.*)");
+    if(fileName == "") { return; }
+    addXMLFile(fileName);
+}
+
+void Database::loadDatabase(QString filePath) {
     //TODO
     // Check if provided database isn't an iTrace database, and reject if it isn't?
+    //
 
     if(filePath == "") { return; }
     if(db.isOpen()) { db.close(); }
@@ -83,7 +107,12 @@ void Database::batchAddXMLFiles() {
 
     dir.remove("file:///");
     QDirIterator dirItr(dir);
-    //std::vector<std::pair<QString,QString>> possibleFiles;
+
+
+    //TODO
+    // Multiple plugins can be associated with 1 core - ensure 1 core and at LEAST 1 plugin are grouped together
+    //
+    // Find cores first, then check the plugins
     std::map<QString,std::vector<QString>> files;
     while(dirItr.hasNext()) {
         QString fileName = dirItr.next().toUtf8().constData();
@@ -109,7 +138,7 @@ void Database::batchAddXMLFiles() {
     }
     QString warning;
     for(auto i : files) {
-        if(i.second.size() == 2) { for (auto j : i.second) { addXMLFile(j); } }
+        if(i.second.size() >= 2) { for (auto j : i.second) { addXMLFile(j); } }
         else { warning += i.second[0] + "\n"; }
     }
     if(warning != "") {
@@ -217,6 +246,9 @@ bool Database::addCoreXMLFile(const QString& filePath) {
 }
 
 bool Database::addPluginXMLFile(const QString& filePath) {
+    //TODO
+    // For database, store the type of pluign under filetype - i.e., "chrome-plugin", "msvs-plugin"
+
     QElapsedTimer time;
     time.start();
 
