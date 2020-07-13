@@ -70,6 +70,12 @@ Window {
         }
         Menu {
             title: qsTr("Analyze")
+            Action {
+                text: "Generate Fixation Data"
+                onTriggered: {
+                    database.generateFixations()
+                }
+            }
         }
         Menu {
             title: qsTr("Help")

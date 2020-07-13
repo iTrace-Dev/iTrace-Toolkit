@@ -1,7 +1,10 @@
 #include "database.h"
 
 
-//
+//TODO
+// - This DESPERATELY needs to be broken up into smaller classes.
+//   Database has access to way too much
+// - Make error report function
 
 
 Database::Database(QObject* parent) : QObject(parent) {}
@@ -11,34 +14,13 @@ void Database::createNewDatabase() {
     if(fileName == "") { return; }
     std::ofstream file(fileName.toUtf8().constData());
     file.close();
-    loadDatabase(fileName);
-}
-
-void Database::openDatabase() {
-    QString fileName = QFileDialog::getOpenFileName(nullptr,"Open Database file","./","SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3);;All Files (*.*)");
-    if(fileName == "") { return; }
-    loadDatabase(fileName);
-}
-
-void Database::importXML() {
-    QString fileName = QFileDialog::getOpenFileName(nullptr,"Import iTrace XML","./","SrcML Files (*.xml;*.srcml;);;All Files (*.*)");
-    if(fileName == "") { return; }
-    addXMLFile(fileName);
-}
-
-void Database::loadDatabase(QString filePath) {
-    //TODO
-    // Check if provided database isn't an iTrace database, and reject if it isn't?
-    //
-
-    if(filePath == "") { return; }
     if(db.isOpen()) { db.close(); }
-    path = filePath;
-    filePath.remove("file:///");                         // This might cause problems with cross compatability
+    path = fileName;
+    fileName.remove("file:///");                         // This might cause problems with cross compatability
     db = QSqlDatabase::addDatabase("QSQLITE");           //
-    db.setDatabaseName((filePath.toUtf8().constData())); //
+    db.setDatabaseName((fileName.toUtf8().constData())); //
     db.open();
-    if(!db.isOpen()) { std::cout << "Can't open DB" << std::endl; }
+    if(!db.isOpen()) { std::cout << "Can't open DB" << std::endl; return; }
     else {
         // Create the database if it already doesn't exist
         db.exec("CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER)");
@@ -55,7 +37,38 @@ void Database::loadDatabase(QString filePath) {
         db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
         db.commit();
     }
-    emit outputToScreen("Database file opened: " + filePath);
+    emit outputToScreen("New Database file created: " + fileName);
+}
+
+void Database::openDatabase() {
+    //TODO
+    // Check if provided database isn't an iTrace database, and reject if it isn't
+
+    QString fileName = QFileDialog::getOpenFileName(nullptr,"Open Database file","./","SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3);;All Files (*.*)");
+    if(fileName == "") { return; }
+
+    path = fileName;
+    fileName.remove("file:///");                         // This might cause problems with cross compatability
+    db = QSqlDatabase::addDatabase("QSQLITE");           //
+    db.setDatabaseName((fileName.toUtf8().constData())); //
+    db.open();
+    if(!db.isOpen()) { std::cout << "Can't open DB" << std::endl; return; }
+
+    QSqlQuery sessions = db.exec("SELECT session_id FROM session");
+    while(sessions.next()) {
+        QString session_id = sessions.value(0).toString();
+        QSqlQuery task_info = db.exec(QString("SELECT participant_id, task_name from session WHERE session_id = %1").arg(session_id));
+        task_info.first();
+        emit taskAdded(task_info.value(0).toString() + " - " + (task_info.value(1).toString()));
+    }
+
+    emit outputToScreen("Database file loaded: " + fileName);
+}
+
+void Database::importXML() {
+    QString fileName = QFileDialog::getOpenFileName(nullptr,"Import iTrace XML","./","SrcML Files (*.xml;*.srcml;);;All Files (*.*)");
+    if(fileName == "") { return; }
+    addXMLFile(fileName);
 }
 
 void Database::backupDatabase() {
@@ -303,12 +316,188 @@ bool Database::addPluginXMLFile(const QString& filePath) {
     return true;
 }
 
+void Database::generateFixations() {
+    // TODO
+    // - This function is massive and will be even more massive as new algorithms are added.
+    //      Move to a different file; maybe
+    // - Add comments explainging the algorithms
+
+    // HARDCODED VALUES - will change later as popup window is made
+    QString algorithm = "BASIC";
+    int window_size = 4, radius = 35, peak = 40;
+
+    db.exec("BEGIN");
+    QSqlQuery sessions = db.exec("SELECT session_id FROM session");
+    sessions.first();
+    do {
+        std::vector<Fixation> session_fixations;
+        QString session_id = sessions.value(0).toString();
+        QSqlQuery gazes = db.exec(QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context JOIN gaze ON gaze.event_time=ide_context.event_time WHERE ide_context.gaze_target != \"\" AND gaze.session_id = %1").arg(session_id));
+        gazes.first();
+        do {
+            QString gaze_target = gazes.value(0).toString();
+            QSqlQuery session_gazes = db.exec(QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC").arg(session_id).arg(gaze_target));
+
+            if(algorithm == "BASIC") {
+            //buildRawGazeVector - olsson step 1
+                // First, create vector of raw Gazes
+                std::vector<Gaze> raw;
+                // Keep track of last known valid
+                Gaze last_valid = Gaze();
+                session_gazes.first();
+                while(session_gazes.next()) {
+                    Gaze data(session_gazes);
+                    if(data.isValid()) {
+                        raw.push_back(data);
+                        last_valid = data;
+                    }
+                    else { if(last_valid.isValid()) { raw.push_back(last_valid); } }
+                }
+                std::cout << "Raw Size: " << raw.size() << std::endl;
+            //calculateDifferenceVector - olsson step 2
+                std::vector<float> differences;
+                for(int i = window_size; i < int(raw.size()) + 1 - window_size; ++i) {
+                    float before[2] = {0,0},
+                          after[2] = {0,0};
+                    for(int j = 0; j < window_size; ++j) {
+                        before[0] += raw[i - (j + 1)].x;
+                        before[1] += raw[i - (j + 1)].y;
+                        after[0] += raw[i + j].x;
+                        after[1] += raw[i + j].y;
+                    }
+                    before[0] /= window_size;
+                    before[1] /= window_size;
+                    after[0] /= window_size;
+                    after[1] /= window_size;
+                    differences.push_back(pow(after[0] - before[0],2) + pow(after[1] - before[1],2));
+                }
+                std::cout << "Differences Size: " << differences.size() << std::endl;
+            //calculatePeakIndices - olsson step 3-5
+                //step 3
+                std::vector<float> peaks(differences.size());
+                for(int i = 0; i < int(differences.size()); ++i) { peaks[i] = 0.0; }
+                for(int i = 1; i < int(differences.size()) - 1; ++i) {
+                    if(differences[i] > differences[i-1] && differences[i] > differences[i+1]) {
+                        peaks[i] = differences[i];
+                    }
+                }
+                std::cout << "Peaks Size: " << peaks.size() << std::endl;
+                //step 4
+                for(int i = window_size-1; i < int(peaks.size()); ++i) {
+                    int start = i - (window_size - 1),
+                        end = i;
+                    while(start != end) {
+                        if(peaks[start] >= peaks[end]) {
+                            peaks[end] = 0.0;
+                            --end;
+                        }
+                        else {
+                            peaks[start] = 0.0;
+                            ++start;
+                        }
+                    }
+                }
+                //std::cout << "olsson step 5" << std::endl;
+                //step 5
+                std::vector<int> indicies;
+                for(int i = 0; i < int(peaks.size()); ++i) {
+                    if(peaks[i] >= peak) {
+                        indicies.push_back(i);
+                    }
+                }
+                std::cout << "PEAK THRESHOLD: " << peak << std::endl;
+                std::cout << "Indicies Size: " << indicies.size() << std::endl;
+             //calculateSpaitialFixations
+                float shortest_dis = 0;
+                std::vector<Fixation> fixations;
+
+                while(shortest_dis < radius) {
+                    //std::cout << "olsson step 6 loop" << std::endl;
+                    fixations.clear();
+                    int start_peak_index = 0;
+
+                    for(auto index : indicies) {
+                        std::vector<Gaze> slice;
+                        auto start = raw.begin() + start_peak_index;
+                        auto end = raw.begin() + index;
+                        copy(start, end, std::back_inserter(slice));
+                        //computerFixationEstimate
+                        Fixation fix = Fixation();
+                        fix.computeFixationEstimate(slice);
+                        //end computerFixationEstimate
+                        fixations.push_back(fix);
+                        start_peak_index = index;
+                    }
+                    //std::cout << "olsson step 6 2nd loop done" << std::endl;
+                    Fixation fix = Fixation();
+                    std::vector<Gaze> slice;
+                    copy(raw.begin() + start_peak_index, raw.end(), std::back_inserter(slice));
+                    fix.computeFixationEstimate(slice);
+                    fixations.push_back(fix);
+
+                    shortest_dis = INFINITY;
+                    Fixation* previous_estimate = nullptr;
+                    int peak_index = -1, peak_removal_index = -1;
+                    auto crnt = fixations.begin();
+                    for(; crnt != fixations.end(); ++crnt) {
+                        if(previous_estimate != nullptr) {
+                            float distance = sqrt(pow((*crnt).x - (*previous_estimate).x,2) + pow((*crnt).y - (*previous_estimate).y,2));
+                            if(distance < shortest_dis) {
+                                shortest_dis = distance;
+                                peak_removal_index = peak_index;
+                            }
+                        }
+                        previous_estimate = &*crnt;
+                        ++peak_removal_index;
+                    }
+                    if(shortest_dis < radius) { indicies.erase(indicies.begin() + peak_removal_index); }
+                }
+                std::cout << "Fixations Size: " << fixations.size() << std::endl;
+                //std::cout << "fixations done" << std::endl;
+                //fixations are done
+                //copy(fixations.begin(), fixations.end(), fixationsToAdd.begin());
+                for(auto i : fixations) { session_fixations.push_back(i); }
+            }
+        } while(gazes.next());
+        std::cout << "Session Fixations Size: " << session_fixations.size() << std::endl;
+        for(auto item : session_fixations) { item.calculateDatabaseFields(); }
+        std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+        QString fixation_filter_settings = algorithm + "," + QString::number(window_size) + "," + QString::number(radius) + "," + QString::number(peak);
+
+        //Insert into database
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        long long fixation_run_id = ms.count();
+        long long fixation_date_time = fixation_run_id; // This will probably be changed in the future
+        db.exec(QString("INSERT INTO fixation_run (fixation_run_id, session_id, date_time, filter) VALUES(%1,%2,%3,\"%4\")").arg(fixation_run_id).arg(session_id).arg(fixation_date_time).arg(fixation_filter_settings));
+        QString report =  db.lastError().text();
+        if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+        int fixation_order = 1;
+        for(auto fix : session_fixations) {
+            QString fixation_id = QUuid::createUuid().toString();
+            fixation_id.remove("{"); fixation_id.remove("}");
+            db.exec(QString("INSERT INTO fixation (fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,\"%10\",\"%11\",\"%12\",%13,%14,%15)").arg(fixation_id).arg(fixation_run_id).arg(fix.fixation_event_time).arg(fixation_order).arg(fix.x).arg(fix.y).arg(fix.target).arg(fix.source_file_line).arg(fix.source_file_col).arg(fix.token).arg(fix.syntactic_category).arg(fix.xpath).arg(fix.left_pupil_diameter).arg(fix.right_pupil_diameter).arg(fix.duration));
+            QString report =  db.lastError().text();
+            if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+            ++fixation_order;
+            std::set<long long> unique_gazes;
+            for(auto gaze : fix.gaze_vec) {
+                if(unique_gazes.find(gaze.event_time) != unique_gazes.end()) { continue; }
+                db.exec(QString("INSERT INTO fixation_gaze (fixation_id, event_time) VALUES (\"%1\",%2)").arg(fixation_id).arg(gaze.event_time));
+                QString report =  db.lastError().text();
+                if(report != "") { std::cout << "ERROR:" << report.toUtf8().constData() << std::endl; }
+            }
+        }
+    } while(sessions.next());
+    db.exec("COMMIT");
+    emit outputToScreen("Fixation Data Generated");
+}
+
 bool Database::isDatabaseOpen() {
     return db.isOpen();
 }
 
 // Maybe consolidate these into one function? Where the arguments are function parameters
-// Issues with this: how to know whether selecting text or number data?
+    // Issues with that: how to know whether selecting text or number data?
 
 bool Database::fileExists(const QString& hash) {
     QSqlQuery qry = db.exec(QString("SELECT file_hash FROM files WHERE file_hash = \"%1\"").arg(hash));
