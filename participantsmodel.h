@@ -17,6 +17,8 @@ public:
 
     QVector<Task> items() const;
 
+    Q_INVOKABLE QVector<QString> getSelected() const;
+
     bool setItemAt(int index, const Task& item);
 
 
@@ -62,7 +64,7 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
-    ParticipantsList* getModelList() const;
+    Q_INVOKABLE ParticipantsList* getModelList() const;
     void setModelList(ParticipantsList *value);
 
     Q_INVOKABLE void appendTask(const QString& sessionID) {modelList->appendTask(sessionID);}

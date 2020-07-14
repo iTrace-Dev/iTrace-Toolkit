@@ -73,12 +73,13 @@ Window {
             Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
-                    database.generateFixations()
+                    database.generateFixations(participantList.model.getModelList().getSelected())
                 }
             }
         }
         Menu {
             title: qsTr("Help")
+
         }
         Menu {
             title: qsTr("About")
@@ -109,7 +110,7 @@ Window {
         Text {
             x: margin; y: margin
             font.bold: true
-            text: "Loaded Participants:"
+            text: "Loaded Participants - Tasks:"
         }
         Participant {
             id: participantList

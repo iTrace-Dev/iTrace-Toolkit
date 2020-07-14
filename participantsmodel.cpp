@@ -9,6 +9,14 @@ QVector<Task> ParticipantsList::items() const {
     return nTasks;
 }
 
+QVector<QString> ParticipantsList::getSelected() const {
+    QVector<QString> rtn;
+    for(auto i : items()) {
+        rtn.push_back(i.sessionID + " - " + (i.selected ? "1" : "0"));
+    }
+    return rtn;
+}
+
 bool ParticipantsList::setItemAt(int index, const Task& item) {
     if(index < 0 || index >= nTasks.size())
         return false; // If index is out of bounds return false to notify that nothing has changed

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "gaze.h"
 #include "fixation.h"
+//#include "participantsmodel.h"
 
 
 
@@ -56,7 +57,7 @@ public:
 
 
     // Fixation Functions
-    Q_INVOKABLE void generateFixations(); // TODO - allow for custom tasks to be sent
+    Q_INVOKABLE void generateFixations(QVector<QString>); // TODO - allow for custom tasks to be sent
 
     // Helper Bool Functions
     bool isDatabaseOpen();

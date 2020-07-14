@@ -27,7 +27,6 @@ void Fixation::calculateDatabaseFields() {
     int gaze_count = 0;
     std::map<QString,int> candidate_targets;
     for(auto gaze : gaze_vec) {
-        //std::cout << "x";
         if(!gaze.isValid()) { continue; }
         if(fixation_event_time == 0 || fixation_event_time > gaze.event_time) {
             fixation_event_time = gaze.event_time;
@@ -61,15 +60,19 @@ void Fixation::calculateDatabaseFields() {
     }
 
     QStringList fields = most_frequent.first.split("\t");
-    target = fields[0] == "" ? "null" : fields[0];
+    target = fields[0] == "" ? "" : fields[0];
     source_file_line = fields[1] == "" ? -1 : fields[1].toInt();
     source_file_col = fields[2] == "" ? -1 : fields[2].toInt();
-    token = fields[3] == "" ? "null" : fields[3];
-    syntactic_category = fields[4] == "" ? "null" : fields[4];
-    xpath = fields[5] == "" ? "null" : fields[5];
+    token = fields[3] == "" ? "" : fields[3];
+    syntactic_category = fields[4] == "" ? "" : fields[4];
+    xpath = fields[5] == "" ? "" : fields[5];
 
     left_pupil_diameter = left_pupil_diameter / float(gaze_count);
     right_pupil_diameter = right_pupil_diameter / float(gaze_count);
     duration = end_time - start_time;
 
+}
+
+void Fixation::print() {
+    std::cout << fixation_event_time << "," << x << "," << y << "," << target.toUtf8().constData() << "," << source_file_line << "," << source_file_col << "," << token.toUtf8().constData() << "," << syntactic_category.toUtf8().constData() << "," << xpath.toUtf8().constData() << "," << left_pupil_diameter << "," << right_pupil_diameter << "," << duration << std::endl;
 }
