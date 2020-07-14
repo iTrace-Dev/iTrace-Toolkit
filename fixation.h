@@ -18,7 +18,7 @@ public:
 
     // This could maybe be moved to a set if we want to ignore duplicates
     std::vector<Gaze> gaze_vec;
-    float x, y, left_pupil_diameter = 0, right_pupil_diameter = 0;
+    double x, y, left_pupil_diameter = 0, right_pupil_diameter = 0;
     int source_file_line, source_file_col, duration = 0;
     long long fixation_event_time = 0;
     QString target = "", syntactic_category = "", token = "", xpath = "";

@@ -320,6 +320,7 @@ void Database::generateFixations(QVector<QString> tasks) {
     // - This function is massive and will be even more massive as new algorithms are added.
     //      Move to a different file; maybe
     // - Add comments explainging the algorithms
+    // - Measure time that elapses and display to output log
 
     // HARDCODED VALUES - will change later as popup window is made
     QString algorithm = "BASIC";
@@ -361,9 +362,9 @@ void Database::generateFixations(QVector<QString> tasks) {
                 }
 
             //calculateDifferenceVector - olsson step 2
-                std::vector<float> differences;
+                std::vector<double> differences;
                 for(int i = window_size; i < int(raw.size()) + 1 - window_size; ++i) {
-                    std::pair<float,float> before = {0.0,0.0},
+                    std::pair<double,double> before = {0.0,0.0},
                                            after =  {0.0,0.0};
                     for(int j = 0; j < window_size; ++j) {
                         before.first += raw[i - (j + 1)].x;
@@ -380,7 +381,7 @@ void Database::generateFixations(QVector<QString> tasks) {
 
             //calculatePeakIndices - olsson step 3-5
                 //step 3
-                std::vector<float> peaks(differences.size());
+                std::vector<double> peaks(differences.size());
                 for(int i = 0; i < int(differences.size()); ++i) { peaks[i] = 0.0; }
                 for(int i = 1; i < int(differences.size()) - 1; ++i) {
                     if(differences[i] > differences[i-1] && differences[i] > differences[i+1]) {
@@ -412,7 +413,7 @@ void Database::generateFixations(QVector<QString> tasks) {
                 }
 
              //calculateSpaitialFixations
-                float shortest_dis = 0;
+                double shortest_dis = 0;
                 std::vector<Fixation> fixations;
 
                 while(shortest_dis < radius) {
@@ -444,7 +445,7 @@ void Database::generateFixations(QVector<QString> tasks) {
                     auto crnt = fixations.begin();
                     for(; crnt != fixations.end(); ++crnt) {
                         if(previous_estimate != nullptr) {
-                            float distance = sqrt(pow((*crnt).x - (*previous_estimate).x,2) + pow((*crnt).y - (*previous_estimate).y,2));
+                            double distance = sqrt(pow((*crnt).x - (*previous_estimate).x,2) + pow((*crnt).y - (*previous_estimate).y,2));
                             if(distance < shortest_dis) {
                                 shortest_dis = distance;
                                 peak_removal_index = peak_index;

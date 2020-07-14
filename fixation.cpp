@@ -3,7 +3,7 @@
 Fixation::Fixation() {}
 
 void Fixation::computeFixationEstimate(std::vector<Gaze>& slice) {
-    std::vector<float> x_pos, y_pos;
+    std::vector<double> x_pos, y_pos;
     for(auto gaze : slice) {
         x_pos.push_back(gaze.x);
         y_pos.push_back(gaze.y);
@@ -67,8 +67,8 @@ void Fixation::calculateDatabaseFields() {
     syntactic_category = fields[4] == "" ? "" : fields[4];
     xpath = fields[5] == "" ? "" : fields[5];
 
-    left_pupil_diameter = left_pupil_diameter / float(gaze_count);
-    right_pupil_diameter = right_pupil_diameter / float(gaze_count);
+    left_pupil_diameter = left_pupil_diameter / double(gaze_count);
+    right_pupil_diameter = right_pupil_diameter / double(gaze_count);
     duration = end_time - start_time;
 
 }

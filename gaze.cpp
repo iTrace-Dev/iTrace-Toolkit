@@ -7,11 +7,11 @@ Gaze::Gaze(QSqlQuery& gaze_data) {
 
     // Core Data
     event_time = gaze_data.value(0).toLongLong();
-    x = gaze_data.value(1).toFloat();
-    y = gaze_data.value(2).toFloat();
+    x = gaze_data.value(1).toDouble();
+    y = gaze_data.value(2).toDouble();
     system_time = gaze_data.value(3).toLongLong();
-    left_pupil_diameter = gaze_data.value(4).toFloat();
-    right_pupil_diameter = gaze_data.value(5).toFloat();
+    left_pupil_diameter = gaze_data.value(4).toDouble();
+    right_pupil_diameter = gaze_data.value(5).toDouble();
     left_validation = gaze_data.value(6).toInt();
     right_validation = gaze_data.value(7).toInt();
 
