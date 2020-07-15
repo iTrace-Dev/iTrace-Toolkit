@@ -91,8 +91,7 @@ Window {
         onTaskAdded: participantList.model.appendTask(sessionID);
         //onOutputToScreen: output.text += "\n" + text
         onOutputToScreen: {
-            output.append(text)
-            outputFlick.contentY += 1
+            outputFlick.myAppend("\n" + text)
         }
 
     }
@@ -141,33 +140,58 @@ Window {
 
     // Output TextArea
     Rectangle {
-        id: outputTab
-        width: parent.width - (margin*2); height: 90
-        x: margin; y: parent.height - height - margin
-        border.color: "black"
-        /*ScrollView {
-            anchors.fill: parent
-            TextArea {
-                id: output
+            id: outputTab
+            width: parent.width - (margin*2); height: 90
+            x: margin; y: parent.height - height - margin
+            border.color: "black"
+            Flickable {
+                id: outputFlick
                 anchors.fill: parent
-                text: "Output:"
-                color: "black"
-                readOnly: true
-            }
-        }*/
-        Flickable {
-            id: outputFlick
-            anchors.fill: parent
-            boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: ScrollBar {}
-            TextArea.flickable: TextArea {
-                id: output
-                anchors.fill: parent
-                text: "Output:"
-                color: "black"
-                readOnly: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar {}
+                TextArea.flickable: TextArea {
+                    id: output
+                    anchors.fill: parent
+                    text: "Output:"
+                    color: "black"
+                    readOnly: true
+                }
+                function currPos(){
+                    return outputFlick.contentY
+                }
+
+                function setPos(pos){
+                    outputFlick.contentY = pos;
+                }
+
+                function getEndPos(){
+                    var ratio = 1.0 - outputFlick.visibleArea.heightRatio;
+                    var endPos = outputFlick.contentHeight * ratio;
+                    return endPos;
+                }
+
+                function scrollToEnd(){
+                    outputFlick.contentY = getEndPos();
+                }
+
+                function myAppend(text){
+                    var pos, endPos, value;
+
+                    value = output.text + String(text);
+                    // Limit value size here
+
+                    endPos = getEndPos();
+                    pos = currPos();
+
+                    output.text = value;
+
+                    if(pos === endPos){
+                        scrollToEnd();
+                    } else {
+                        setPos(pos);
+                    }
+                }
             }
         }
-    }
 }
 

@@ -22,7 +22,7 @@ public:
     double x, y, left_pupil_diameter, right_pupil_diameter;
     QString gaze_target = "", gaze_target_type = "",
                 source_token = "", source_token_xpath = "", source_token_syntatic_context = "";
-    bool initialized = false;
+
 };
 
 #endif // GAZE_H

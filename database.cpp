@@ -338,7 +338,6 @@ void Database::generateFixations(QVector<QString> tasks) {
 
     db.exec("BEGIN");
     for(auto session_id : sessions) {
-        std::cout << "Checking: " << session_id.toUtf8().constData() << std::endl;
         std::vector<Fixation> session_fixations;
         QSqlQuery gazes = db.exec(QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context JOIN gaze ON gaze.event_time=ide_context.event_time WHERE ide_context.gaze_target != \"\" AND gaze.session_id = %1").arg(session_id));
 

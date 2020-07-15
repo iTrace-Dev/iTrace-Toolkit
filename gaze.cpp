@@ -3,7 +3,6 @@
 Gaze::Gaze() {}
 
 Gaze::Gaze(QSqlQuery& gaze_data) {
-    initialized = true;
 
     // Core Data
     event_time = gaze_data.value(0).toLongLong();
