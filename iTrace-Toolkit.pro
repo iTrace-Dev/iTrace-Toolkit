@@ -18,11 +18,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    controller.cpp \
     fixation.cpp \
     gaze.cpp \
         main.cpp \
         participantsmodel.cpp \
-        database.cpp \
+        database.cpp \ \
+    xmlhandler.cpp
 
 
 RESOURCES += qml.qrc
@@ -45,10 +47,12 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = iTrace.ico
 
 HEADERS += \
+    controller.h \
     fixation.h \
     gaze.h \
     participantsmodel.h \
-    database.h
+    database.h \
+    xmlhandler.h
 
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend
