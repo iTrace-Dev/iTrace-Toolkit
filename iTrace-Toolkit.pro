@@ -23,7 +23,7 @@ SOURCES += \
     gaze.cpp \
         main.cpp \
         participantsmodel.cpp \
-        database.cpp \ \
+        database.cpp \
     xmlhandler.cpp
 
 

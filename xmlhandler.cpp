@@ -28,12 +28,18 @@ QString XMLHandler::checkAndReturnError() {
 QString XMLHandler::getXMLFileType() {
     xml->readNextStartElement();
     QString rtn = xml->name().toString();
-    resetStream();
+    //resetStream();
     return rtn;
 }
 
 QString XMLHandler::getNextElementName() {
-    while(!xml->readNextStartElement()) {}
+    //while(!xml->readNextStartElement()) {}
+    while(true) {
+        auto x = xml->readNext(); auto y = xml->name();
+        if(x == QXmlStreamReader::StartElement) { break; }
+        if(x == QXmlStreamReader::Invalid) { break; }
+    }
+
     return xml->name().toString();
 }
 

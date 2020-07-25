@@ -10,6 +10,21 @@ Database::Database(QString fileURL) : Database() {
 
     db.setDatabaseName(file_path.toUtf8().constData());
     db.open();
+
+    //Create tables here
+    db.exec("CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER)");
+    db.exec("CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
+    db.exec("CREATE TABLE IF NOT EXISTS session(session_id INTEGER PRIMARY KEY,participant_id TEXT,screen_width INTEGER, screen_height INTEGER,tracker_type TEXT, tracker_serial_number TEXT,session_date INTEGER, session_time INTEGER,screen_recording_start INTEGER,task_name TEXT,FOREIGN KEY (participant_id) REFERENCES participant(participant_id))");
+    db.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER)");
+    db.exec("CREATE TABLE IF NOT EXISTS calibration(calibration_id INTEGER PRIMARY KEY)");
+    db.exec("CREATE TABLE IF NOT EXISTS calibration_point(calibration_point_id TEXT,calibration_id INTEGER,calibration_x REAL,calibration_y REAL,FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id))");
+    db.exec("CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id))");
+    db.exec("CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id))");
+    db.exec("CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
+    db.exec("CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
+    db.exec("CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gazes(event_time))");
+    db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
+    db.commit();
 }
 
 QString Database::checkAndReturnError() {
@@ -77,7 +92,7 @@ void Database::insertGaze(QString event_time, QString session_id, QString calibr
 // The following parameters are unused and should always be inserted as "" - for now
 // source_token, source_token_type, source_token_xpath, source_token_sytnactic_context
 void Database::insertIDEContext(QString event_time, QString time_stamp, QString ide_type, QString gaze_target, QString gaze_target_type, QString source_file_path, QString source_file_line, QString source_file_col, QString editor_line_height, QString editor_font_height, QString editor_line_base_x, QString editor_line_base_y, QString source_token, QString source_token_type, QString source_token_xpath, QString source_token_syntactic_context) {
-    db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\""));
+    db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y,source_token,source_token_type,source_token_xpath,source_token_syntactic_context) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\""));
 }
 
 void Database::insertParticipant(QString participant_id, QString session_length) {
@@ -85,11 +100,20 @@ void Database::insertParticipant(QString participant_id, QString session_length)
 }
 
 void Database::insertSession(QString session_id, QString participant_id, QString screen_width, QString screen_height, QString tracker_type, QString tracker_serial_number, QString session_date, QString session_time, QString screen_recording_start, QString task_name) {
-    db.exec(QString("INSERT INTO session(session_id,participant_id,screen_width,screen_height,tracker_type,tracker_serial_number,session_date,session_time.screen_recording_start,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\",\"%6\",%7,%8,\"%9\")").arg(session_id).arg(participant_id).arg(screen_width).arg(screen_height).arg(tracker_type).arg(tracker_serial_number).arg(session_date).arg(session_time).arg(screen_recording_start).arg(task_name));
+    db.exec(QString("INSERT INTO session(session_id,participant_id,screen_width,screen_height,tracker_type,tracker_serial_number,session_date,session_time,screen_recording_start,task_name) VALUES(%1,\"%2\",%3,%4,\"%5\",\"%6\",%7,%8,%9,\"%10\")").arg(session_id).arg(participant_id).arg(screen_width).arg(screen_height).arg(tracker_type).arg(tracker_serial_number).arg(session_date).arg(session_time).arg(screen_recording_start).arg(task_name));
 }
 
 // Currently unused
 void Database::insertWebContext(QString event_time, QString browser_type, QString site_name, QString url, QString tag) {
     db.exec(QString("INSERT INTO web_context(event_time,browser_type,site_name,url,tag) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\")").arg(event_time).arg(browser_type).arg(site_name).arg(url).arg(tag));
+}
+
+QVector<QString> Database::getSessions() {
+    QVector<QString> data;
+    QSqlQuery sessions = db.exec("SELECT participant_id, task_name FROM session");
+    while(sessions.next()) {
+        data.push_back(sessions.value(0).toString() + " - " + sessions.value(1).toString());
+    }
+    return data;
 }
 

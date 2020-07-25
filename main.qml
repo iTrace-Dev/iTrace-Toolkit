@@ -37,15 +37,14 @@ Window {
             Action {
                 text: "Create New Database"
                 onTriggered: {
-                    database.createNewDatabase();
-                    // TODO - Add update participant list
+                    databaseCreate.open()
                 }
             }
             // Open Database File
             Action {
                 text: "Open Database"
                 onTriggered: {
-                    database.openDatabase()
+                    databaseOpen.open()
                 }
             }
             // Load XML File(s) Submenu
@@ -55,14 +54,14 @@ Window {
                 Action {
                     text: "Load XML File"
                     onTriggered: {
-                        database.importXML()
+                        xmlOpen.open()
                     }
                 }
                 // Batch Load XML From File
                 Action {
                     text: "Load XML From Folder"
                     onTriggered: {
-                        database.batchAddXMLFiles()
+                        folderOpen.open()
                     }
                 }
             }
@@ -86,6 +85,7 @@ Window {
         }
     }
 
+    /*
     Database {
         id: database
         onTaskAdded: participantList.model.appendTask(sessionID);
@@ -94,6 +94,17 @@ Window {
             outputFlick.myAppend("\n" + text)
         }
 
+    }*/
+    Controller {
+        id: control
+        // Signal Catchers
+        onTaskAdded: participantList.model.appendTask(task);
+        onOutputToScreen: outputFlick.myAppend("\n" + msg);
+        onWarning: {
+            warningDialog.title = title;
+            warningDialog.text = msg;
+            warningDialog.open();
+        }
     }
 
     //Database Tab
@@ -193,5 +204,46 @@ Window {
                 }
             }
         }
+
+    // File Dialogs
+    FileDialog { // DatabaseOpen
+        id: databaseOpen
+        selectExisting: true
+        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        onAccepted: {
+            control.loadDatabaseFile(fileUrl)
+        }
+    }
+    FileDialog { // DatabaseCreate
+        id: databaseCreate
+        selectExisting: false
+        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        onAccepted: {
+            control.saveDatabaseFile(fileUrl)
+        }
+    }
+    FileDialog { // XMLOpen
+        id: xmlOpen
+        selectExisting: true
+        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        onAccepted: {
+            control.importXMLFile(fileUrl)
+        }
+    }
+    FileDialog { // FolderOpen
+        id: folderOpen
+        selectExisting: true
+        selectFolder: true
+        onAccepted: {
+            control.batchAddXML(fileUrl)
+        }
+    }
+
+    MessageDialog {
+        id: warningDialog
+        title: ""
+        text: ""
+        icon: StandardIcon.Warning
+    }
 }
 

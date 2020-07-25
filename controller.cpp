@@ -2,25 +2,98 @@
 
 Controller::Controller(QObject* parent) : QObject(parent) {}
 
+void Controller::saveDatabaseFile(QString file_loc) {
+    file_loc.remove("file:///");
+    std::ofstream file(file_loc.toUtf8().constData());
+    file.close();
+    idb = Database(file_loc);
+    emit outputToScreen("Successfully created new Database at: "+file_loc);
+}
+
+void Controller::loadDatabaseFile(QString file_path) {
+    file_path.remove("file:///");
+    idb = Database(file_path);
+
+    for(auto i : idb.getSessions()) { emit taskAdded(i); }
+    emit outputToScreen("Successfully loaded database.");
+}
+
 void Controller::importXMLFile(QString file_path) {
+
     file_path.remove("file:///");
 
+    if(!idb.isDatabaseOpen()) {
+        emit warning("Database Error","There is no Database currently loaded.");
+        return;
+    }
+
     //Exit function if file is already imported
-    if(idb.fileExists(QCryptographicHash::hash(file_path.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) { /* Emit warning */ return; }
+    if(idb.fileExists(QCryptographicHash::hash(file_path.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        emit warning("XML Import Error","This XML File has already been imported into the Database.");
+        return;
+    }
 
     XMLHandler xml_file(file_path);
     QString type = xml_file.getXMLFileType();
 
-    if(type == "itrace_core") { importCoreXML(xml_file); }
-    else if(type == "itrace_plugin") { importPluginXML(xml_file); }
+    if(type == "itrace_core") { importCoreXML(file_path); }
+    else if(type == "itrace_plugin") { importPluginXML(file_path); }
     else { /* Emit warning here */ }
 }
 
 void Controller::batchAddXML(QString folder_path) {
+    if(!idb.isDatabaseOpen()) {
+        emit warning("Database Error","There is no Database currently loaded.");
+        return;
+    }
 
+    folder_path.remove("file:///");
+    std::map<QString,std::pair<std::vector<QString>,bool>> files;
+    QDirIterator dir(folder_path);
+    while(dir.hasNext()) {
+        QString filename = dir.next();
+        if(filename.endsWith(".xml")) {
+            filename.remove("file:///");
+            XMLHandler xml_file(filename);
+            QString type = xml_file.getXMLFileType();
+            if(type == "itrace_core" || type == "itrace_plugin") {
+                //xml_file.getNextElementName();
+                QString id = xml_file.getElementAttribute("session_id");
+                std::cout << xml_file.checkAndReturnError().toUtf8().constData() << std::endl;
+                std::cout << "ID: " << id.toUtf8().constData() << std::endl;
+                if(files.count(id) == 0) {
+                    auto insert = files.insert(std::make_pair(id,std::make_pair(std::vector<QString>(),false)));
+                    insert.first->second.first.push_back(filename);
+                }
+                else { (files.find(id))->second.first.push_back(filename); }
+                if(type == "itrace_core") { files.find(id)->second.second = true; }
+            }
+        }
+    }
+    QString badPairWarn, alreadyInWarn;
+    for(auto i : files) {
+        std::cout << "Num: " << i.second.first.size() << std::endl;
+        if(i.second.first.size() >= 2 && i.second.second) {
+            for(auto j : i.second.first) {
+                if(!idb.fileExists(QCryptographicHash::hash(j.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) { importXMLFile(j); }
+                else { alreadyInWarn += "\t" + j + "\n"; }
+            }
+        }
+        else { for(auto j : i.second.first) { badPairWarn += "\t" + j + "\n"; } }
+    }
+
+    QString warn;
+    if(badPairWarn != "") { warn += "The following files were missing their associated pair file:\n" + badPairWarn; }
+    if(alreadyInWarn != "") { warn += "The following files are already imported:\n" + alreadyInWarn; }
+    if(warn != "") { emit warning("XML Import Error",warn); }
 }
 
-void Controller::importCoreXML(XMLHandler& core_file) {
+void Controller::importCoreXML(const QString& file_path) {
+    QElapsedTimer time;
+    time.start();
+
+    XMLHandler core_file(file_path);
+
     idb.startTransaction();
 
     QString session_id,
@@ -87,10 +160,17 @@ void Controller::importCoreXML(XMLHandler& core_file) {
 
     idb.commit();
 
-    // EMITS GO HERE
+    emit taskAdded(participant_id + " - " + task_name);
+    emit outputToScreen(QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000));
+
 }
 
-void Controller::importPluginXML(XMLHandler& plugin_file) {
+void Controller::importPluginXML(const QString& file_path) {
+    QElapsedTimer time;
+    time.start();
+
+    XMLHandler plugin_file(file_path);
+
     idb.startTransaction();
 
     QString session_id,
@@ -121,5 +201,9 @@ void Controller::importPluginXML(XMLHandler& plugin_file) {
 
     idb.commit();
 
-    // EMITS GO HERE
+    emit outputToScreen(QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000));
+}
+
+void Controller::generateFixationData(QVector<QString> tasks, QString type) {
+    // TODO
 }

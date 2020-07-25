@@ -2,6 +2,8 @@
 #define DATABASE_H
 
 #include <QString>
+#include <QVector>
+#include <QVariant>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -36,6 +38,7 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
+    QVector<QString> getSessions();
 private:
     QSqlDatabase db;
     QString file_path;

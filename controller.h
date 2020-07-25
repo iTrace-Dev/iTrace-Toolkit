@@ -3,13 +3,17 @@
 
 #include <iostream>
 
+#include <qqml.h>
 #include <QObject>
 #include <QApplication>
 #include <QString>
 #include <QVector>
 #include <QCryptographicHash>
+#include <QElapsedTimer>
+#include <QDirIterator>
 
 #include <map>
+#include <fstream>
 
 #include "xmlhandler.h"
 #include "database.h"
@@ -18,15 +22,17 @@ class Controller : public QObject {
 public:
     Q_OBJECT
 
-    //QML_ELEMENT
+    QML_ELEMENT
 public:
     explicit Controller(QObject* parent = nullptr);
 
     //XML Functions
+    Q_INVOKABLE void saveDatabaseFile(QString);
+    Q_INVOKABLE void loadDatabaseFile(QString);
     Q_INVOKABLE void importXMLFile(QString);
     Q_INVOKABLE void batchAddXML(QString);
-    void importCoreXML(XMLHandler&);
-    void importPluginXML(XMLHandler&);
+    void importCoreXML(const QString&);
+    void importPluginXML(const QString&);
 
     //Fixation Functions
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
