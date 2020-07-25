@@ -85,16 +85,6 @@ Window {
         }
     }
 
-    /*
-    Database {
-        id: database
-        onTaskAdded: participantList.model.appendTask(sessionID);
-        //onOutputToScreen: output.text += "\n" + text
-        onOutputToScreen: {
-            outputFlick.myAppend("\n" + text)
-        }
-
-    }*/
     Controller {
         id: control
         // Signal Catchers
@@ -112,7 +102,7 @@ Window {
     // TODO - Rectangle looks weird now?
     Rectangle {
         id: databaseTab
-        width: (parent.width - margin) / 2; height: 460 - margin;
+        width: (parent.width - 3 * margin) / 2; height: parent.height - menuHeight - outputTab.height - (3 * margin)
         x: margin; y: margin + menuHeight
         color: "red"
 
@@ -134,8 +124,9 @@ Window {
     // Token Tab
     Rectangle {
         id: tokenTab
-        width: 300; height: 220;
-        x: 330; y: 10 + menuHeight
+        width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
+        x: databaseTab.x+databaseTab.width + margin
+        y: margin + menuHeight
         color: "blue"
         Text { x: 5; y: 5; text: "Token Analysis Area" }
     }
@@ -143,10 +134,14 @@ Window {
     // Fixation Tab
     Rectangle {
         id: fixationTab
-        width: 300; height: 220;
-        x: 330; y: 250 + menuHeight
+        width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
+        x: tokenTab.x; y: tokenTab.y + tokenTab.height + margin
         color: "green"
-        Text { x: 5; y: 5; text: "Fixation Data Area" }
+        ComboBox {
+            x: margin; y: margin
+            width: parent.width - 2 * margin
+            model: ["BASIC","IDT","IVT"]
+        }
     }
 
     // Output TextArea

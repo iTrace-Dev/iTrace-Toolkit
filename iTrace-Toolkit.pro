@@ -18,8 +18,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    basicalgorithm.cpp \
     controller.cpp \
     fixation.cpp \
+    fixationalgorithm.cpp \
     gaze.cpp \
         main.cpp \
         participantsmodel.cpp \
@@ -47,8 +49,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = iTrace.ico
 
 HEADERS += \
+    basicalgorithm.h \
     controller.h \
     fixation.h \
+    fixationalgorithm.h \
     gaze.h \
     participantsmodel.h \
     database.h \
