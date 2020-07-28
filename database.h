@@ -8,6 +8,9 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include "gaze.h"
+
+#include <iostream>
 
 
 class Database {
@@ -38,7 +41,10 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
+    QString getSessionFromParticipantAndTask(QString,QString);
     QVector<QString> getSessions();
+    QVector<QString> getGazeTargetsFromSession(QString);
+    QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
 private:
     QSqlDatabase db;
     QString file_path;

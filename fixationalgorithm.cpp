@@ -1,6 +1,6 @@
 #include "fixationalgorithm.h"
 
-std::vector<Fixation> &FixationAlgorithm::getFixations()
+QVector<Fixation> &FixationAlgorithm::getFixations()
 {
     return fixations;
 }

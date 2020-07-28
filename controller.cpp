@@ -57,7 +57,6 @@ void Controller::batchAddXML(QString folder_path) {
             XMLHandler xml_file(filename);
             QString type = xml_file.getXMLFileType();
             if(type == "itrace_core" || type == "itrace_plugin") {
-                //xml_file.getNextElementName();
                 QString id = xml_file.getElementAttribute("session_id");
                 std::cout << xml_file.checkAndReturnError().toUtf8().constData() << std::endl;
                 std::cout << "ID: " << id.toUtf8().constData() << std::endl;
@@ -161,11 +160,16 @@ void Controller::importCoreXML(const QString& file_path) {
     idb.commit();
 
     emit taskAdded(participant_id + " - " + task_name);
-    emit outputToScreen(QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000));
+    emit outputToScreen(QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 
 }
 
 void Controller::importPluginXML(const QString& file_path) {
+    if(!idb.isDatabaseOpen()) {
+        emit warning("Database Error","There is no Database currently loaded.");
+        return;
+    }
+
     QElapsedTimer time;
     time.start();
 
@@ -201,9 +205,61 @@ void Controller::importPluginXML(const QString& file_path) {
 
     idb.commit();
 
-    emit outputToScreen(QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000));
+    emit outputToScreen(QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 }
 
 void Controller::generateFixationData(QVector<QString> tasks, QString type) {
-    // TODO
+    QElapsedTimer time;
+    time.start();
+
+    std::vector<QString> sessions;
+    for(auto i : tasks) { // Get the sessions that the user wants to use
+        QStringList values = i.split(" - ");
+        if(values[2] == "1") {
+            sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+        }
+    }
+
+    idb.startTransaction();
+
+    for(auto session_id : sessions) {
+        QVector<Fixation> session_fixations;
+        QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
+        QString fixation_filter_settings;
+        for(auto gaze_target : gaze_targets) {
+            QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
+            FixationAlgorithm* algorithm;
+            if(type == "BASIC") {
+                //These values are hardcoded for now
+                algorithm = new BasicAlgorithm(gazes,4/*windowsize*/,35/*radius*/,40/*peakthreshold*/);
+            }
+            else { algorithm = new BasicAlgorithm(gazes,0,0,0); }
+            session_fixations.append(algorithm->generateFixations());
+            fixation_filter_settings = algorithm->generateFixationSettings();
+        }
+        for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
+            item->calculateDatabaseFields();
+        }
+        std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        QString fixation_run_id = QString::number(ms.count());
+        QString fixation_date_time = fixation_run_id; // This will probably be changed in the future
+        idb.insertFixationRun(fixation_run_id,session_id,fixation_date_time,fixation_filter_settings);
+
+        int fixation_order = 1;
+        for(auto fix = session_fixations.begin(); fix != session_fixations.end(); ++fix) {
+            QString fixation_id = QUuid::createUuid().toString();
+            fixation_id.remove("{"); fixation_id.remove("}");
+            idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
+
+            ++fixation_order;
+            std::set<long long> unique_gazes;
+            for(auto gaze : fix->gaze_vec) {
+                if(unique_gazes.find(gaze.event_time) != unique_gazes.end()) { continue; }
+                idb.insertFixationGaze(fixation_id,QString::number(gaze.event_time));
+            }
+        }
+    }
+    idb.commit();
+    emit outputToScreen(QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }

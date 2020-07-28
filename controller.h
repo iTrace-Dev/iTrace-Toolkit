@@ -9,14 +9,20 @@
 #include <QString>
 #include <QVector>
 #include <QCryptographicHash>
+#include <QUuid>
 #include <QElapsedTimer>
 #include <QDirIterator>
 
 #include <map>
 #include <fstream>
+#include <set>
 
 #include "xmlhandler.h"
 #include "database.h"
+#include "gaze.h"
+#include "fixation.h"
+#include "basicalgorithm.h"
+
 
 class Controller : public QObject {
 public:

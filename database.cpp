@@ -108,6 +108,12 @@ void Database::insertWebContext(QString event_time, QString browser_type, QStrin
     db.exec(QString("INSERT INTO web_context(event_time,browser_type,site_name,url,tag) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\")").arg(event_time).arg(browser_type).arg(site_name).arg(url).arg(tag));
 }
 
+QString Database::getSessionFromParticipantAndTask(QString participant_id, QString task_name) {
+    QSqlQuery session_id = db.exec(QString("SELECT session_id FROM session WHERE participant_id = \"%1\" AND task_name = \"%2\"").arg(participant_id).arg(task_name));
+    session_id.first();
+    return session_id.value(0).toString();
+}
+
 QVector<QString> Database::getSessions() {
     QVector<QString> data;
     QSqlQuery sessions = db.exec("SELECT participant_id, task_name FROM session");
@@ -115,5 +121,27 @@ QVector<QString> Database::getSessions() {
         data.push_back(sessions.value(0).toString() + " - " + sessions.value(1).toString());
     }
     return data;
+}
+
+QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
+    QSqlQuery targets = db.exec(QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context JOIN gaze ON gaze.event_time=ide_context.event_time WHERE ide_context.gaze_target != \"\" AND gaze.session_id = %1").arg(session_id));
+    QVector<QString> gaze_targets;
+    while(targets.next()) { gaze_targets.push_back(targets.value(0).toString()); }
+    return gaze_targets;
+}
+
+QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString gaze_target) {
+    QVector<Gaze> gazes;
+    QSqlQuery session_gazes = db.exec(QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC").arg(session_id).arg(gaze_target));
+    Gaze last_valid = Gaze();
+    while(session_gazes.next()) {
+        Gaze data(session_gazes);
+        if(data.isValid()) {
+            gazes.push_back(data);
+            last_valid = data;
+        }
+        else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
+    }
+    return gazes;
 }
 
