@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.3
 import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly fine
 
 
@@ -72,7 +73,7 @@ Window {
             Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
-                    database.generateFixations(participantList.model.getModelList().getSelected())
+                    control.generateFixationData(participantList.model.getModelList().getSelected(),algSelection.model[algSelection.currentIndex])
                 }
             }
         }
@@ -98,8 +99,6 @@ Window {
     }
 
     //Database Tab
-
-    // TODO - Rectangle looks weird now?
     Rectangle {
         id: databaseTab
         width: (parent.width - 3 * margin) / 2; height: parent.height - menuHeight - outputTab.height - (3 * margin)
@@ -137,11 +136,144 @@ Window {
         width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
         x: tokenTab.x; y: tokenTab.y + tokenTab.height + margin
         color: "green"
-        ComboBox {
-            x: margin; y: margin
-            width: parent.width - 2 * margin
-            model: ["BASIC","IDT","IVT"]
+
+        enum Algorithm {
+            Basic = 0,
+            IDT,
+            IVT
         }
+
+        function enableAlgorithm(index) {
+            if(index === 0) { // BASIC
+                basicAlg.visible = true
+                idtAlg.visible = false
+                ivtAlg.visible = false
+            } else if (index === 1) { // IDT
+                basicAlg.visible = false
+                idtAlg.visible = true
+                ivtAlg.visible = false
+            } else if (index === 2) { // IVT
+                basicAlg.visible = false
+                idtAlg.visible = false
+                ivtAlg.visible = true
+            }
+        }
+
+        ComboBox {
+            id: algSelection
+            x: margin; y: margin
+            width: fixationTab.width - 2 * margin
+            model: ["BASIC","IDT","IVT"]
+            onActivated: fixationTab.enableAlgorithm(index)
+        }
+
+        // BASIC Olsson: Window Size, Radius, Peak
+        GridLayout {
+            id: basicAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: true
+
+            Text {
+                id: windowSizeLabel
+                text: qsTr("Window Size: ")
+            }
+            TextField {
+                id: windowSize
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "4"
+            }
+            Text {
+                id: radiusLabel
+                text: qsTr("Radius: ")
+            }
+            TextField {
+                id: radius
+                Layout.fillWidth: true
+                validator: IntValidator {bottom: 1}
+                text: "35"
+            }
+            Text {
+                id: peakLabel
+                text: qsTr("Peak: ")
+            }
+            TextField {
+                id: peak
+                Layout.fillWidth: true
+                validator: IntValidator {bottom: 1}
+                text: "40"
+            }
+
+        }
+
+        // IDT: Duration Window, Dispersion
+        GridLayout {
+            id: idtAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: false
+
+            Text {
+                id: durationWindowLabel
+                text: qsTr("Duration Window: ")
+            }
+            TextField {
+                id: durationWindow
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "10"
+            }
+            Text {
+                id: dispersionLabel
+                text: qsTr("Dispersion: ")
+            }
+            TextField {
+                id: dispersion
+                Layout.fillWidth: true
+                validator: IntValidator{bottom: 1}
+                text: "125"
+            }
+        }
+
+        // IVT: Velocity, Duration (milliseconds)
+        GridLayout {
+            id: ivtAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: false
+
+            Text {
+                id: velocityLabel
+                text: qsTr("Velocity: ")
+            }
+            TextField {
+                id: velocity
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "50"
+            }
+            Text {
+                id: durationLabel
+                text: qsTr("Duration (milliseconds): ")
+            }
+            TextField {
+                id: duration
+                Layout.fillWidth: true
+                validator: IntValidator{bottom: 1}
+                text: "80"
+            }
+        }
+
     }
 
     // Output TextArea
