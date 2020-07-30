@@ -73,6 +73,11 @@ Window {
             Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
+                    generateFixations(algSelection.currentIndex)
+                }
+                function generateFixations(index) {
+
+
                     control.generateFixationData(participantList.model.getModelList().getSelected(),algSelection.model[algSelection.currentIndex])
                 }
             }

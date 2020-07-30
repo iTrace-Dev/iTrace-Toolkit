@@ -23,6 +23,7 @@ SOURCES += \
     fixation.cpp \
     fixationalgorithm.cpp \
     gaze.cpp \
+    idtalgorithm.cpp \
         main.cpp \
         participantsmodel.cpp \
         database.cpp \
@@ -54,6 +55,7 @@ HEADERS += \
     fixation.h \
     fixationalgorithm.h \
     gaze.h \
+    idtalgorithm.h \
     participantsmodel.h \
     database.h \
     xmlhandler.h

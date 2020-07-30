@@ -11,7 +11,7 @@
 class Fixation {
 public:
     Fixation();
-    void computeFixationEstimate(std::vector<Gaze>&);
+
     void calculateDatabaseFields();
 
     void print();

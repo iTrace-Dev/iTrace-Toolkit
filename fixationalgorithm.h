@@ -12,6 +12,7 @@ public:
     FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
 
     virtual QVector<Fixation> generateFixations()=0;
+    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
     virtual QString generateFixationSettings()=0;
 
     QVector<Fixation>& getFixations();

@@ -58,8 +58,6 @@ void Controller::batchAddXML(QString folder_path) {
             QString type = xml_file.getXMLFileType();
             if(type == "itrace_core" || type == "itrace_plugin") {
                 QString id = xml_file.getElementAttribute("session_id");
-                std::cout << xml_file.checkAndReturnError().toUtf8().constData() << std::endl;
-                std::cout << "ID: " << id.toUtf8().constData() << std::endl;
                 if(files.count(id) == 0) {
                     auto insert = files.insert(std::make_pair(id,std::make_pair(std::vector<QString>(),false)));
                     insert.first->second.first.push_back(filename);
@@ -71,7 +69,6 @@ void Controller::batchAddXML(QString folder_path) {
     }
     QString badPairWarn, alreadyInWarn;
     for(auto i : files) {
-        std::cout << "Num: " << i.second.first.size() << std::endl;
         if(i.second.first.size() >= 2 && i.second.second) {
             for(auto j : i.second.first) {
                 if(!idb.fileExists(QCryptographicHash::hash(j.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) { importXMLFile(j); }
@@ -233,7 +230,10 @@ void Controller::generateFixationData(QVector<QString> tasks, QString type) {
                 //These values are hardcoded for now
                 algorithm = new BasicAlgorithm(gazes,4/*windowsize*/,35/*radius*/,40/*peakthreshold*/);
             }
-            else { algorithm = new BasicAlgorithm(gazes,0,0,0); }
+            else if(type == "IDT") {
+                algorithm = new IDTAlgorithm(gazes,10/*duration_window*/,125/*dispersion*/);
+            }
+            else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + type); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());
             fixation_filter_settings = algorithm->generateFixationSettings();
         }

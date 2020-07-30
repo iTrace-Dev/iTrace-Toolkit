@@ -71,21 +71,17 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
         int start_peak_index = 0;
 
         for(auto index : indicies) {
-            std::vector<Gaze> slice;
+            QVector<Gaze> slice;
             auto start = session_gazes.begin() + start_peak_index;
             auto end = session_gazes.begin() + index;
             copy(start, end, std::back_inserter(slice));
-            //computerFixationEstimate
-            Fixation fix = Fixation();
-            fix.computeFixationEstimate(slice);
-            //end computerFixationEstimate
+            Fixation fix = computeFixationEstimate(slice);
             fixations.push_back(fix);
             start_peak_index = index;
         }
-        Fixation fix = Fixation();
-        std::vector<Gaze> slice;
+        QVector<Gaze> slice;
         copy(session_gazes.begin() + start_peak_index, session_gazes.end(), std::back_inserter(slice));
-        fix.computeFixationEstimate(slice);
+        Fixation fix = computeFixationEstimate(slice);
         fixations.push_back(fix);
 
         shortest_dis = INFINITY;
@@ -106,6 +102,28 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
         if(shortest_dis < radius) { indicies.erase(indicies.begin() + peak_removal_index); }
     }
     return fixations;
+}
+
+Fixation BasicAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_gazes) {
+    Fixation fixation;
+    std::vector<double> x_pos, y_pos;
+    for(auto gaze : fixation_gazes) {
+        x_pos.push_back(gaze.x);
+        y_pos.push_back(gaze.y);
+        fixation.gaze_vec.push_back(gaze);
+    }
+    std::sort(x_pos.begin(),x_pos.end());
+    std::sort(y_pos.begin(),y_pos.end());
+    int median_index = x_pos.size() / 2;
+    if(x_pos.size() % 2 == 0) {
+        fixation.x = (x_pos[median_index - 1] + x_pos[median_index]) / 2;
+        fixation.y = (y_pos[median_index - 1] + y_pos[median_index]) / 2;
+    }
+    else {
+        fixation.x = x_pos[median_index];
+        fixation.y = y_pos[median_index];
+    }
+    return fixation;
 }
 
 QString BasicAlgorithm::generateFixationSettings() {

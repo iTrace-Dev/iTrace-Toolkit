@@ -22,6 +22,7 @@
 #include "gaze.h"
 #include "fixation.h"
 #include "basicalgorithm.h"
+#include "idtalgorithm.h"
 
 
 class Controller : public QObject {
