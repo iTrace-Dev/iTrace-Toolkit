@@ -228,10 +228,13 @@ void Controller::generateFixationData(QVector<QString> tasks, QString type) {
             FixationAlgorithm* algorithm;
             if(type == "BASIC") {
                 //These values are hardcoded for now
-                algorithm = new BasicAlgorithm(gazes,4/*windowsize*/,35/*radius*/,40/*peakthreshold*/);
+                algorithm = new BasicAlgorithm(gazes,4/*window_size*/,35/*radius*/,40/*peak_threshold*/);
             }
             else if(type == "IDT") {
                 algorithm = new IDTAlgorithm(gazes,10/*duration_window*/,125/*dispersion*/);
+            }
+            else if(type == "IVT") {
+                algorithm = new IVTAlgorithm(gazes,50/*velocity_threshold*/,80/*duration_ms*/);
             }
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + type); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());

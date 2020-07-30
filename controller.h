@@ -23,6 +23,7 @@
 #include "fixation.h"
 #include "basicalgorithm.h"
 #include "idtalgorithm.h"
+#include "ivtalgorithm.h"
 
 
 class Controller : public QObject {

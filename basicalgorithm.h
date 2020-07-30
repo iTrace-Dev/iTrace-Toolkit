@@ -8,10 +8,12 @@ public:
     BasicAlgorithm(QVector<Gaze> gazes, int _window_size, int _radius, int _peak_threshold);
 
     QVector<Fixation> generateFixations() override;
-    Fixation computeFixationEstimate(QVector<Gaze>) override;
+
     QString generateFixationSettings() override;
 
 private:
+    Fixation computeFixationEstimate(QVector<Gaze>) override;
+
     int window_size;
     int radius;
     int peak_threshold;

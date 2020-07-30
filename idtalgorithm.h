@@ -8,10 +8,11 @@ public:
     IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion);
 
     QVector<Fixation> generateFixations() override;
-    Fixation computeFixationEstimate(QVector<Gaze>) override;
     QString generateFixationSettings() override;
 
 private:
+    Fixation computeFixationEstimate(QVector<Gaze>) override;
+
     int duration_window;
     int dispersion;
 };

@@ -204,7 +204,7 @@ Window {
             }
             Text {
                 id: peakLabel
-                text: qsTr("Peak: ")
+                text: qsTr("Peak Threshold: ")
             }
             TextField {
                 id: peak
@@ -258,7 +258,7 @@ Window {
 
             Text {
                 id: velocityLabel
-                text: qsTr("Velocity: ")
+                text: qsTr("Velocity Threshold: ")
             }
             TextField {
                 id: velocity
