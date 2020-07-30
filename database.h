@@ -1,77 +1,53 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-#include <QObject>      // Might be OK to remove
-#include <QApplication> //
 #include <QString>
-#include <QFile>
-#include <QXmlStreamReader>
+#include <QVector>
+#include <QVariant>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QCryptographicHash>
-#include <QElapsedTimer>
-#include <QFileDialog>
-#include <QDirIterator>
-#include <QUuid>
-#include <qqml.h>
-#include <iostream>
-#include <fstream>
-//#include <string>
-#include <utility>
-#include <map>
-#include <chrono>
-#include <set>
-#include <algorithm>
+
 #include "gaze.h"
-#include "fixation.h"
-//#include "participantsmodel.h"
+
+#include <iostream>
 
 
-
-/* Database Class, used to interact between the QSql object and the QML Window
-TODO:
-   - This DESPERATELY needs to be broken up into smaller classes.
-     Database has access to way too much
-*/
-
-class Database: public QObject {
+class Database {
 public:
-    Q_OBJECT
-
-    QML_ELEMENT
-public:
-    explicit Database(QObject* parent = nullptr);
-
-    // Database Functions
-    Q_INVOKABLE void createNewDatabase();
-    Q_INVOKABLE void openDatabase();
-    Q_INVOKABLE void importXML();
-    void backupDatabase();
-
-    // XML Functions
-    Q_INVOKABLE bool addXMLFile(QString); // change to void?
-    Q_INVOKABLE void batchAddXMLFiles();
-    bool addCoreXMLFile(const QString&); // change to void?
-    bool addPluginXMLFile(const QString&); // change to void?
-
-
-    // Fixation Functions
-    Q_INVOKABLE void generateFixations(QVector<QString>); // TODO - allow for custom tasks to be sent
-
-    // Helper Bool Functions
+    Database();
+    Database(QString);
+    
+    QString checkAndReturnError();
+    
     bool isDatabaseOpen();
     bool fileExists(const QString&);
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);
+    
+    void startTransaction();
+    void commit();
+    
+    void insertCalibration(QString);
+    void insertCalibrationPoint(QString,QString,QString,QString);
+    void insertCalibrationSample(QString,QString,QString,QString,QString,QString,QString);
+    void insertFile(QString,QString,QString,QString);
+    void insertFixation(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    void insertFixationGaze(QString,QString);
+    void insertFixationRun(QString,QString,QString,QString);
+    void insertGaze(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    void insertIDEContext(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    void insertParticipant(QString,QString);
+    void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    void insertWebContext(QString,QString,QString,QString,QString);
 
-signals:
-    void taskAdded(const QString& sessionID);
-    void outputToScreen(const QString& text);
-
+    QString getSessionFromParticipantAndTask(QString,QString);
+    QVector<QString> getSessions();
+    QVector<QString> getGazeTargetsFromSession(QString);
+    QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
 private:
     QSqlDatabase db;
-    QString path;
+    QString file_path;
 };
 
 #endif // DATABASE_H

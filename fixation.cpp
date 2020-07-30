@@ -2,26 +2,6 @@
 
 Fixation::Fixation() {}
 
-void Fixation::computeFixationEstimate(std::vector<Gaze>& slice) {
-    std::vector<double> x_pos, y_pos;
-    for(auto gaze : slice) {
-        x_pos.push_back(gaze.x);
-        y_pos.push_back(gaze.y);
-        gaze_vec.push_back(gaze);
-    }
-    std::sort(x_pos.begin(),x_pos.end());
-    std::sort(y_pos.begin(),y_pos.end());
-    int median_index = x_pos.size() / 2;
-    if(x_pos.size() % 2 == 0) {
-        x = (x_pos[median_index - 1] + x_pos[median_index]) / 2;
-        y = (y_pos[median_index - 1] + y_pos[median_index]) / 2;
-    }
-    else {
-        x = x_pos[median_index];
-        y = y_pos[median_index];
-    }
-}
-
 void Fixation::calculateDatabaseFields() {
     long long start_time = -1, end_time = -1;
     int gaze_count = 0;

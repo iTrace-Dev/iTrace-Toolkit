@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.3
 import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly fine
 
 
@@ -37,15 +38,14 @@ Window {
             Action {
                 text: "Create New Database"
                 onTriggered: {
-                    database.createNewDatabase();
-                    // TODO - Add update participant list
+                    databaseCreate.open()
                 }
             }
             // Open Database File
             Action {
                 text: "Open Database"
                 onTriggered: {
-                    database.openDatabase()
+                    databaseOpen.open()
                 }
             }
             // Load XML File(s) Submenu
@@ -55,14 +55,14 @@ Window {
                 Action {
                     text: "Load XML File"
                     onTriggered: {
-                        database.importXML()
+                        xmlOpen.open()
                     }
                 }
                 // Batch Load XML From File
                 Action {
                     text: "Load XML From Folder"
                     onTriggered: {
-                        database.batchAddXMLFiles()
+                        folderOpen.open()
                     }
                 }
             }
@@ -73,7 +73,12 @@ Window {
             Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
-                    database.generateFixations(participantList.model.getModelList().getSelected())
+                    generateFixations(algSelection.currentIndex)
+                }
+                function generateFixations(index) {
+
+
+                    control.generateFixationData(participantList.model.getModelList().getSelected(),algSelection.model[algSelection.currentIndex])
                 }
             }
         }
@@ -86,22 +91,22 @@ Window {
         }
     }
 
-    Database {
-        id: database
-        onTaskAdded: participantList.model.appendTask(sessionID);
-        //onOutputToScreen: output.text += "\n" + text
-        onOutputToScreen: {
-            outputFlick.myAppend("\n" + text)
+    Controller {
+        id: control
+        // Signal Catchers
+        onTaskAdded: participantList.model.appendTask(task);
+        onOutputToScreen: outputFlick.myAppend("\n" + msg);
+        onWarning: {
+            warningDialog.title = title;
+            warningDialog.text = msg;
+            warningDialog.open();
         }
-
     }
 
     //Database Tab
-
-    // TODO - Rectangle looks weird now?
     Rectangle {
         id: databaseTab
-        width: (parent.width - margin) / 2; height: 460 - margin;
+        width: (parent.width - 3 * margin) / 2; height: parent.height - menuHeight - outputTab.height - (3 * margin)
         x: margin; y: margin + menuHeight
         color: "red"
 
@@ -123,8 +128,9 @@ Window {
     // Token Tab
     Rectangle {
         id: tokenTab
-        width: 300; height: 220;
-        x: 330; y: 10 + menuHeight
+        width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
+        x: databaseTab.x+databaseTab.width + margin
+        y: margin + menuHeight
         color: "blue"
         Text { x: 5; y: 5; text: "Token Analysis Area" }
     }
@@ -132,10 +138,147 @@ Window {
     // Fixation Tab
     Rectangle {
         id: fixationTab
-        width: 300; height: 220;
-        x: 330; y: 250 + menuHeight
+        width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
+        x: tokenTab.x; y: tokenTab.y + tokenTab.height + margin
         color: "green"
-        Text { x: 5; y: 5; text: "Fixation Data Area" }
+
+        enum Algorithm {
+            Basic = 0,
+            IDT,
+            IVT
+        }
+
+        function enableAlgorithm(index) {
+            if(index === 0) { // BASIC
+                basicAlg.visible = true
+                idtAlg.visible = false
+                ivtAlg.visible = false
+            } else if (index === 1) { // IDT
+                basicAlg.visible = false
+                idtAlg.visible = true
+                ivtAlg.visible = false
+            } else if (index === 2) { // IVT
+                basicAlg.visible = false
+                idtAlg.visible = false
+                ivtAlg.visible = true
+            }
+        }
+
+        ComboBox {
+            id: algSelection
+            x: margin; y: margin
+            width: fixationTab.width - 2 * margin
+            model: ["BASIC","IDT","IVT"]
+            onActivated: fixationTab.enableAlgorithm(index)
+        }
+
+        // BASIC Olsson: Window Size, Radius, Peak
+        GridLayout {
+            id: basicAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: true
+
+            Text {
+                id: windowSizeLabel
+                text: qsTr("Window Size: ")
+            }
+            TextField {
+                id: windowSize
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "4"
+            }
+            Text {
+                id: radiusLabel
+                text: qsTr("Radius: ")
+            }
+            TextField {
+                id: radius
+                Layout.fillWidth: true
+                validator: IntValidator {bottom: 1}
+                text: "35"
+            }
+            Text {
+                id: peakLabel
+                text: qsTr("Peak Threshold: ")
+            }
+            TextField {
+                id: peak
+                Layout.fillWidth: true
+                validator: IntValidator {bottom: 1}
+                text: "40"
+            }
+
+        }
+
+        // IDT: Duration Window, Dispersion
+        GridLayout {
+            id: idtAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: false
+
+            Text {
+                id: durationWindowLabel
+                text: qsTr("Duration Window: ")
+            }
+            TextField {
+                id: durationWindow
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "10"
+            }
+            Text {
+                id: dispersionLabel
+                text: qsTr("Dispersion: ")
+            }
+            TextField {
+                id: dispersion
+                Layout.fillWidth: true
+                validator: IntValidator{bottom: 1}
+                text: "125"
+            }
+        }
+
+        // IVT: Velocity, Duration (milliseconds)
+        GridLayout {
+            id: ivtAlg
+            x: margin; y: 2 * margin + algSelection.height
+            height: fixationTab.height - 3 * margin - algSelection.height
+            width: fixationTab.width - 2 * margin
+            columns: 2
+            visible: false
+
+            Text {
+                id: velocityLabel
+                text: qsTr("Velocity Threshold: ")
+            }
+            TextField {
+                id: velocity
+                Layout.fillWidth: true
+                //Int validator requires input to be a number >1 and <MAXINT
+                validator: IntValidator {bottom: 1}
+                text: "50"
+            }
+            Text {
+                id: durationLabel
+                text: qsTr("Duration (milliseconds): ")
+            }
+            TextField {
+                id: duration
+                Layout.fillWidth: true
+                validator: IntValidator{bottom: 1}
+                text: "80"
+            }
+        }
+
     }
 
     // Output TextArea
@@ -193,5 +336,46 @@ Window {
                 }
             }
         }
+
+    // File Dialogs
+    FileDialog { // DatabaseOpen
+        id: databaseOpen
+        selectExisting: true
+        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        onAccepted: {
+            control.loadDatabaseFile(fileUrl)
+        }
+    }
+    FileDialog { // DatabaseCreate
+        id: databaseCreate
+        selectExisting: false
+        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        onAccepted: {
+            control.saveDatabaseFile(fileUrl)
+        }
+    }
+    FileDialog { // XMLOpen
+        id: xmlOpen
+        selectExisting: true
+        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        onAccepted: {
+            control.importXMLFile(fileUrl)
+        }
+    }
+    FileDialog { // FolderOpen
+        id: folderOpen
+        selectExisting: true
+        selectFolder: true
+        onAccepted: {
+            control.batchAddXML(fileUrl)
+        }
+    }
+
+    MessageDialog {
+        id: warningDialog
+        title: ""
+        text: ""
+        icon: StandardIcon.Warning
+    }
 }
 
