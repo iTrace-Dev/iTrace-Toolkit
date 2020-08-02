@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>FileCreator.qml</file>
         <file>Participant.qml</file>
+        <file>Options.qml</file>
     </qresource>
 </RCC>

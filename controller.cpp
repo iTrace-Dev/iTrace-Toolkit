@@ -205,7 +205,7 @@ void Controller::importPluginXML(const QString& file_path) {
     emit outputToScreen(QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 }
 
-void Controller::generateFixationData(QVector<QString> tasks, QString type) {
+void Controller::generateFixationData(QVector<QString> tasks, QString algSettings) {
     QElapsedTimer time;
     time.start();
 
@@ -226,17 +226,20 @@ void Controller::generateFixationData(QVector<QString> tasks, QString type) {
         for(auto gaze_target : gaze_targets) {
             QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
             FixationAlgorithm* algorithm;
-            if(type == "BASIC") {
-                //These values are hardcoded for now
-                algorithm = new BasicAlgorithm(gazes,4/*window_size*/,35/*radius*/,40/*peak_threshold*/);
+            QStringList settings = algSettings.split("-");
+            if(settings[0] == "BASIC") {
+                //BASIC-4-35-40 = BASIC-window_size-radius-peak
+                algorithm = new BasicAlgorithm(gazes,settings[window_size].toInt(),settings[radius].toInt(),settings[peak].toInt());
             }
-            else if(type == "IDT") {
-                algorithm = new IDTAlgorithm(gazes,10/*duration_window*/,125/*dispersion*/);
+            else if(settings[0] == "IDT") {
+                //IDT-10-125 = IDT-duration_window-dispersion
+                algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt());
             }
-            else if(type == "IVT") {
-                algorithm = new IVTAlgorithm(gazes,50/*velocity_threshold*/,80/*duration_ms*/);
+            else if(settings[0] == "IVT") {
+                //IVT-50-80 = IVT-velocity-duration
+                algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
             }
-            else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + type); return; } // Error handler
+            else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());
             fixation_filter_settings = algorithm->generateFixationSettings();
         }
