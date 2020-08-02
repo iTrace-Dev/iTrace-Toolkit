@@ -25,6 +25,22 @@
 #include "idtalgorithm.h"
 #include "ivtalgorithm.h"
 
+// Algorithm settings enums
+enum basic {
+    window_size = 1,
+    radius,
+    peak
+};
+
+enum idt {
+    duration_window = 1,
+    dispersion
+};
+
+enum ivt {
+    velocity = 1,
+    duration
+};
 
 class Controller : public QObject {
 public:
