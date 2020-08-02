@@ -12,7 +12,7 @@ Window {
     property var menuHeight: 40
     property var margin: 15
     visible: true
-    width: 640
+    width: 320
     height: 580 + menuHeight
     maximumHeight: height
     maximumWidth: width
@@ -71,14 +71,19 @@ Window {
         Menu {
             title: qsTr("Analyze")
             Action {
+                text: "Set Fixation Settings"
+                onTriggered: options.open()
+            }
+
+            Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
-                    generateFixations(algSelection.currentIndex)
+                    generateFixations(options.getSettings())
                 }
-                function generateFixations(index) {
+                function generateFixations(algorithm) {
 
 
-                    control.generateFixationData(participantList.model.getModelList().getSelected(),algSelection.model[algSelection.currentIndex])
+                    control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
                 }
             }
         }
@@ -106,7 +111,8 @@ Window {
     //Database Tab
     Rectangle {
         id: databaseTab
-        width: (parent.width - 3 * margin) / 2; height: parent.height - menuHeight - outputTab.height - (3 * margin)
+        width: parent.width - 2 * margin
+        height: parent.height - menuHeight - outputTab.height - (3 * margin)
         x: margin; y: margin + menuHeight
         color: "red"
 
@@ -125,6 +131,7 @@ Window {
         }
     }
 
+    /*
     // Token Tab
     Rectangle {
         id: tokenTab
@@ -141,12 +148,6 @@ Window {
         width: (parent.width - 3 * margin) / 2; height: (databaseTab.height - margin) / 2
         x: tokenTab.x; y: tokenTab.y + tokenTab.height + margin
         color: "green"
-
-        enum Algorithm {
-            Basic = 0,
-            IDT,
-            IVT
-        }
 
         function enableAlgorithm(index) {
             if(index === 0) { // BASIC
@@ -280,6 +281,7 @@ Window {
         }
 
     }
+    */
 
     // Output TextArea
     Rectangle {
@@ -317,7 +319,7 @@ Window {
                     outputFlick.contentY = getEndPos();
                 }
 
-                function myAppend(text){
+                function myAppend(text){ //TODO: Make this put a newline
                     var pos, endPos, value;
 
                     value = output.text + String(text);
@@ -377,5 +379,10 @@ Window {
         text: ""
         icon: StandardIcon.Warning
     }
+
+    Options {
+        id: options
+    }
+
 }
 
