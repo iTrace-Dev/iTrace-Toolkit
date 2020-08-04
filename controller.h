@@ -53,6 +53,7 @@ public:
     //XML Functions
     Q_INVOKABLE void saveDatabaseFile(QString);
     Q_INVOKABLE void loadDatabaseFile(QString);
+    Q_INVOKABLE void closeDatabase();
     Q_INVOKABLE void importXMLFile(QString);
     Q_INVOKABLE void batchAddXML(QString);
     void importCoreXML(const QString&);
@@ -65,6 +66,8 @@ signals:
     void taskAdded(const QString& task);
     void outputToScreen(const QString& msg);
     void warning(const QString& title, const QString& msg);
+    void databaseSet(const QString& path);
+    void databaseClosed();
 
 private:
     Database idb;

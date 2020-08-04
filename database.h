@@ -17,6 +17,8 @@ class Database {
 public:
     Database();
     Database(QString);
+
+    void close();
     
     QString checkAndReturnError();
     

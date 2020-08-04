@@ -8,6 +8,7 @@ void Controller::saveDatabaseFile(QString file_loc) {
     file.close();
     idb = Database(file_loc);
     emit outputToScreen("Successfully created new Database at: "+file_loc);
+    emit databaseSet(file_loc);
 }
 
 void Controller::loadDatabaseFile(QString file_path) {
@@ -16,6 +17,12 @@ void Controller::loadDatabaseFile(QString file_path) {
 
     for(auto i : idb.getSessions()) { emit taskAdded(i); }
     emit outputToScreen("Successfully loaded database.");
+    emit databaseSet(file_path);
+}
+
+void Controller::closeDatabase() {
+    idb.close();
+    emit databaseClosed();
 }
 
 void Controller::importXMLFile(QString file_path) {

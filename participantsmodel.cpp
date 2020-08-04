@@ -29,6 +29,10 @@ bool ParticipantsList::setItemAt(int index, const Task& item) {
     return true;
 }
 
+void ParticipantsList::clearTasks() {
+    nTasks.clear();
+}
+
 void ParticipantsList::appendTask(const QString& sessionID) {
     emit preItemAppended();
 

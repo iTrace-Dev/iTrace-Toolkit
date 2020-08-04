@@ -27,6 +27,10 @@ Database::Database(QString fileURL) : Database() {
     db.commit();
 }
 
+void Database::close() {
+    db.close();
+}
+
 QString Database::checkAndReturnError() {
     return db.lastError().text();
 }

@@ -21,6 +21,8 @@ public:
 
     bool setItemAt(int index, const Task& item);
 
+    void clearTasks();
+
 
 signals:
     void preItemAppended();
@@ -68,6 +70,8 @@ public:
     void setModelList(ParticipantsList *value);
 
     Q_INVOKABLE void appendTask(const QString& sessionID) {modelList->appendTask(sessionID);}
+
+    Q_INVOKABLE void clearTasks() { modelList->clearTasks(); setModelList(modelList); }
 
 private:
     ParticipantsList* modelList;
