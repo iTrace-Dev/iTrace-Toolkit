@@ -13,7 +13,7 @@ Window {
     property var margin: 15
     visible: true
     width: 320
-    height: 580 + menuHeight
+    height: 610 + menuHeight
     maximumHeight: height
     maximumWidth: width
     minimumHeight: height
@@ -23,12 +23,6 @@ Window {
     MenuBar {
         Menu {
             title: qsTr("File")
-            Action {
-                text: "Export Token Highlighting"
-            }
-            Action {
-                text: "Export Fixation Highlighting"
-            }
         }
 
         // Database Menu
@@ -82,16 +76,19 @@ Window {
                 text: "Set Fixation Settings"
                 onTriggered: options.open()
             }
-
             Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
                     generateFixations(options.getSettings())
                 }
                 function generateFixations(algorithm) {
-
-
                     control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
+                }
+            }
+            Action {
+                text: "Map Tokens"
+                onTriggered:  {
+                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
                 }
             }
         }
@@ -121,6 +118,24 @@ Window {
         onDatabaseClosed: {
             loadedDatabaseText.text = "No Database Is Loaded"
             loadedDatabaseText.color = "red"
+            // Need to clear the participantList
+        }
+        onStartProgressBar: {
+            loadingBar.visible = true
+            loadingBar.from = start
+            loadingBar.to = stop
+        }
+        onStopProgressBar: {
+            loadingBar.visible = false
+            loadingBar.value = 0.0
+            loadingBar.indeterminate = false
+        }
+        onSetProgressBarValue: {
+            loadingBar.value = val
+        }
+        onSetProgressBarToIndeterminate: {
+            loadingBar.visible = true
+            loadingBar.indeterminate = true
         }
     }
 
@@ -128,7 +143,7 @@ Window {
     Rectangle {
         id: databaseTab
         width: parent.width - 2 * margin
-        height: parent.height - menuHeight - outputTab.height - (3 * margin)
+        height: parent.height - menuHeight - outputTab.height - (4 * margin)
         x: margin; y: margin + menuHeight
         border.color: "red"
         //color: "red"
@@ -156,61 +171,71 @@ Window {
     }
 
 
+
+
     // Output TextArea
     Rectangle {
-            id: outputTab
-            width: parent.width - (margin*2); height: 90
-            x: margin; y: parent.height - height - margin
-            border.color: "black"
-            Flickable {
-                id: outputFlick
+        id: outputTab
+        width: parent.width - (margin*2); height: 90
+        x: margin; y: parent.height - height - margin
+        border.color: "black"
+        Flickable {
+            id: outputFlick
+            anchors.fill: parent
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ScrollBar {}
+            TextArea.flickable: TextArea {
+                id: output
                 anchors.fill: parent
-                boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: ScrollBar {}
-                TextArea.flickable: TextArea {
-                    id: output
-                    anchors.fill: parent
-                    text: "Output:"
-                    color: "black"
-                    readOnly: true
-                }
-                function currPos(){
-                    return outputFlick.contentY
-                }
+                text: "Output:"
+                color: "black"
+                readOnly: true
+            }
+            function currPos(){
+                return outputFlick.contentY
+            }
 
-                function setPos(pos){
-                    outputFlick.contentY = pos;
-                }
+            function setPos(pos){
+                outputFlick.contentY = pos;
+            }
 
-                function getEndPos(){
-                    var ratio = 1.0 - outputFlick.visibleArea.heightRatio;
-                    var endPos = outputFlick.contentHeight * ratio;
-                    return endPos;
-                }
+            function getEndPos(){
+                var ratio = 1.0 - outputFlick.visibleArea.heightRatio;
+                var endPos = outputFlick.contentHeight * ratio;
+                return endPos;
+            }
 
-                function scrollToEnd(){
-                    outputFlick.contentY = getEndPos();
-                }
+            function scrollToEnd(){
+                outputFlick.contentY = getEndPos();
+            }
 
-                function myAppend(text){ //TODO: Make this put a newline
-                    var pos, endPos, value;
+            function myAppend(text){ //TODO: Make this put a newline
+                var pos, endPos, value;
 
-                    value = output.text + String(text);
-                    // Limit value size here
+                value = output.text + String(text);
+                // Limit value size here
 
-                    endPos = getEndPos();
-                    pos = currPos();
+                endPos = getEndPos();
+                pos = currPos();
 
-                    output.text = value;
+                output.text = value;
 
-                    if(pos === endPos){
-                        scrollToEnd();
-                    } else {
-                        setPos(pos);
-                    }
+                if(pos === endPos){
+                    scrollToEnd();
+                } else {
+                    setPos(pos);
                 }
             }
         }
+    }
+    // ProgressBar
+    ProgressBar {
+        id: loadingBar
+        x: margin; y: parent.height - outputTab.height - 2*margin
+        width: parent.width - margin*2
+        value: 0.0
+        visible: false
+    }
 
     // File Dialogs
     FileDialog { // DatabaseOpen
@@ -256,6 +281,8 @@ Window {
     Options {
         id: options
     }
+
+
 
 }
 

@@ -5,6 +5,8 @@
 #include <QXmlStreamReader>
 #include <QFile>
 
+#include <iostream>
+
 
 class XMLHandler {
 public:
@@ -12,11 +14,15 @@ public:
     XMLHandler(QString);
     ~XMLHandler();
 
+    void addString(QString);
+
     QString checkAndReturnError();
 
     QString getXMLFileType();
     QString getNextElementName();
     QString getElementAttribute(QString);
+
+    QString getNextElementAsString();
 
     void resetStream();
     bool isAtEnd();
@@ -26,6 +32,8 @@ private:
     QString file_path;
     QFile file;
     QXmlStreamReader* xml;
+
+    int i = 0;
 };
 
 #endif // XMLHANDLER_H

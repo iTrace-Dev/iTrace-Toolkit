@@ -2,6 +2,7 @@ QT += quick
 QT += widgets
 QT += sql
 QT += core
+QT += xmlpatterns xml
 
 CONFIG += c++11
 CONFIG += sql
@@ -28,6 +29,7 @@ SOURCES += \
         main.cpp \
         participantsmodel.cpp \
         database.cpp \
+    srcmlhandler.cpp \
     xmlhandler.cpp
 
 
@@ -60,6 +62,7 @@ HEADERS += \
     ivtalgorithm.h \
     participantsmodel.h \
     database.h \
+    srcmlhandler.h \
     xmlhandler.h
 
 CONFIG += qmltypes

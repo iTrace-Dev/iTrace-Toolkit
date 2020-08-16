@@ -3,5 +3,6 @@
         <file>main.qml</file>
         <file>Participant.qml</file>
         <file>Options.qml</file>
+        <file>Mapping.qml</file>
     </qresource>
 </RCC>

@@ -1,6 +1,6 @@
 #include "xmlhandler.h"
 
-XMLHandler::XMLHandler() {}
+XMLHandler::XMLHandler() { xml = new QXmlStreamReader(); }
 
 XMLHandler::XMLHandler(QString fileURL) {
     file_path = fileURL;
@@ -15,6 +15,10 @@ XMLHandler::XMLHandler(QString fileURL) {
 XMLHandler::~XMLHandler() {
     file.close();
     delete xml;
+}
+
+void XMLHandler::addString(QString xml_data) {
+    xml->addData(xml_data);
 }
 
 QString XMLHandler::checkAndReturnError() {
@@ -35,7 +39,7 @@ QString XMLHandler::getXMLFileType() {
 QString XMLHandler::getNextElementName() {
     //while(!xml->readNextStartElement()) {}
     while(true) {
-        auto x = xml->readNext(); auto y = xml->name();
+        auto x = xml->readNext();
         if(x == QXmlStreamReader::StartElement) { break; }
         if(x == QXmlStreamReader::Invalid) { break; }
     }
@@ -45,6 +49,25 @@ QString XMLHandler::getNextElementName() {
 
 QString XMLHandler::getElementAttribute(QString attr) {
     return xml->attributes().value(attr).toString();
+}
+
+QString XMLHandler::getNextElementAsString() {
+    //if(i >= 1000) { std::cout << i << std::endl; }
+    while(!isAtEnd()) {
+        auto x = xml->readNext();
+        if(x == QXmlStreamReader::StartElement) { break; }
+        if(x == QXmlStreamReader::Invalid) { break; }
+    }
+    QString name = xml->name().toString();
+    QString rtn = "<" + name + " ";
+    for(auto attr : xml->attributes()) {
+        rtn += attr.name() + "=\"" + attr.value() + "\" ";
+    }
+    xml->readNext();
+    QString text = xml->text().toString().trimmed();
+    rtn += ">" + text + "</" + name + ">";
+    ++i;
+    return rtn;
 }
 
 void XMLHandler::resetStream() {

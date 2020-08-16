@@ -47,6 +47,13 @@ public:
     QVector<QString> getSessions();
     QVector<QString> getGazeTargetsFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
+    QVector<std::pair<QString,QString>> getFilesViewed();
+    QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
+    QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
+
+    void updateGazeWithSyntacticInfo(QString,QString,QString);
+    void updateGazeWithTokenInfo(QString,QString,QString);
+
 private:
     QSqlDatabase db;
     QString file_path;

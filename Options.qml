@@ -101,7 +101,7 @@ Popup {
             Layout.fillWidth: true
             //Int validator requires input to be a number >1 and <MAXINT
             validator: IntValidator {bottom: 1}
-            property var defaultVal: "4"
+            readonly property string defaultVal: "4"
             text: defaultVal
         }
         Text {
@@ -112,7 +112,7 @@ Popup {
             id: radius
             Layout.fillWidth: true
             validator: IntValidator {bottom: 1}
-            property var defaultVal: "35"
+            readonly property string defaultVal: "35"
             text: defaultVal
         }
         Text {
@@ -123,7 +123,7 @@ Popup {
             id: peak
             Layout.fillWidth: true
             validator: IntValidator {bottom: 1}
-            property var defaultVal: "40"
+            readonly property string defaultVal: "40"
             text: defaultVal
         }
         Item {
@@ -152,7 +152,7 @@ Popup {
             Layout.fillWidth: true
             //Int validator requires input to be a number >1 and <MAXINT
             validator: IntValidator {bottom: 1}
-            property var defaultVal: "10"
+            readonly property string defaultVal: "10"
             text: defaultVal
         }
         Text {
@@ -163,7 +163,7 @@ Popup {
             id: dispersion
             Layout.fillWidth: true
             validator: IntValidator{bottom: 1}
-            property var defaultVal: "125"
+            readonly property string defaultVal: "125"
             text: defaultVal
         }
         Item {
@@ -191,7 +191,7 @@ Popup {
             Layout.fillWidth: true
             //Int validator requires input to be a number >1 and <MAXINT
             validator: IntValidator {bottom: 1}
-            property var defaultVal: "50"
+            readonly property string defaultVal: "50"
             text: defaultVal
         }
         Text {
@@ -202,7 +202,7 @@ Popup {
             id: duration
             Layout.fillWidth: true
             validator: IntValidator{bottom: 1}
-            property var defaultVal: "80"
+            readonly property string defaultVal: "80"
             text: defaultVal
         }
         Item {
@@ -235,7 +235,7 @@ Popup {
                 peak.text = peak.defaultVal
 
                 //IDT Algorithm Reset
-                duration.text = duration.defaultVal
+                durationWindow.text = durationWindow.defaultVal
                 dispersion.text = dispersion.defaultVal
 
                 //IVT Algorithm Reset

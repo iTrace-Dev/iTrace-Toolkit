@@ -149,3 +149,43 @@ QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString
     return gazes;
 }
 
+QVector<std::pair<QString, QString> > Database::getFilesViewed() {
+    QSqlQuery data = db.exec("SELECT DISTINCT gaze_target, source_file_path FROM ide_context WHERE gaze_target is not \"\"");
+    QVector<std::pair<QString,QString>> files_viewed;
+    while(data.next()) {
+        files_viewed.push_back(std::make_pair(data.value(0).toString(),data.value(1).toString()));
+    }
+    return files_viewed;
+}
+
+QVector<QVector<QString>> Database::getGazesForSyntacticMapping(QString file_path, bool overwrite) {
+    QVector<QVector<QString>> gazes;
+    QSqlQuery data = db.exec(QString("SELECT event_time,source_file_line,source_file_col,source_token_syntactic_context FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC"));
+    while(data.next()) {
+        QVector<QString> hold;
+        for(int i = 0; i < 4; ++i) { hold.push_back(data.value(i).toString()); }
+        gazes.push_back(hold);
+    }
+    return gazes;
+}
+
+QVector<QVector<QString> > Database::getGazesForSourceMapping(QString file_path, bool overwrite) {
+    QVector<QVector<QString>> gazes;
+    QSqlQuery data = db.exec(QString("SELECT event_time,source_file_line,source_file_col,source_token_syntactic_context FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NOT NULL AND source_token IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC"));
+    while(data.next()) {
+        QVector<QString> hold;
+        for(int i = 0; i < 4; ++i) { hold.push_back(data.value(i).toString()); }
+        gazes.push_back(hold);
+    }
+    return gazes;
+}
+
+void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
+    xpath.replace("\"","'");
+    db.exec(QString("UPDATE ide_context SET source_token_xpath = \"%1\", source_token_syntactic_context = \"%2\" WHERE event_time = %3").arg(xpath).arg(syntactic_context).arg(event_id));
+}
+
+void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString token_type) {
+    db.exec(QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3").arg(token).arg(token_type == "" ? "null" : "\""+token_type+"\"").arg(event_id));
+}
+

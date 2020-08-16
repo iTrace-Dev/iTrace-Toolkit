@@ -12,6 +12,7 @@
 #include <QUuid>
 #include <QElapsedTimer>
 #include <QDirIterator>
+#include <QDomDocument>
 
 #include <map>
 #include <fstream>
@@ -24,6 +25,7 @@
 #include "basicalgorithm.h"
 #include "idtalgorithm.h"
 #include "ivtalgorithm.h"
+#include "srcmlhandler.h"
 
 // Algorithm settings enums
 enum basic {
@@ -62,12 +64,22 @@ public:
     //Fixation Functions
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
 
+    //srcML Functions
+    Q_INVOKABLE void mapTokens(QString);
+    QString findMatchingPath(QVector<QString>,QString);
+    void mapSyntax(SRCMLHandler&,QString,QString,bool);
+    void mapToken(SRCMLHandler&,QString,QString,bool);
+
 signals:
     void taskAdded(const QString& task);
     void outputToScreen(const QString& msg);
     void warning(const QString& title, const QString& msg);
     void databaseSet(const QString& path);
     void databaseClosed();
+    void startProgressBar(int start,int stop);
+    void stopProgressBar();
+    void setProgressBarValue(int val);
+    void setProgressBarToIndeterminate();
 
 private:
     Database idb;

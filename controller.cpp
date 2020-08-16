@@ -1,21 +1,132 @@
 #include "controller.h"
 
+
+/////////////////////////////////////////
+// HELPERS
+/////////////////////////////////////////
+
+void findAllGazeLeadingElements(QVector<QDomElement>& list, QDomNode crnt, const int& res_line, const int& res_col, bool& cont) {
+    if(crnt.isNull() || !cont) { return; }
+    QDomElement elem = crnt.toElement();
+    if(elem.isNull()) { return; }
+    int element_start_line = -1,
+        element_start_col = -1,
+        element_end_line = -1,
+        element_end_col = -1;
+    if(!elem.attributeNode("start").isNull() && !elem.attributeNode("end").isNull() && cont) {
+        QString start = elem.attributeNode("start").value();
+        if(start.contains(":") && !start.contains("INVALID_POS")) {
+            element_start_line = start.split(":")[0].toInt();
+            element_start_col = start.split(":")[1].toInt();
+
+            QString end = elem.attributeNode("end").value();
+            if(end.contains(":") && !end.contains("INVALID_POS")) {
+                element_end_line = end.split(":")[0].toInt();
+                element_end_col = end.split(":")[1].toInt();
+            }
+
+            //Check for bugs
+            if(element_end_line < element_start_line || element_end_line < 0 || element_start_line < 0) {
+                return;
+            } // Skip this token
+
+            // Check if additional tags can encompass
+            if(element_start_line > res_line || (element_start_line == res_line && element_start_col > res_col)) {
+                cont = false; // No more can be found, stop all
+                return;
+            }
+
+            if(res_line > element_start_line && res_line > element_end_line) {
+                return; // Skip this tag
+            }
+
+            if(res_line >= element_start_line && res_line < element_end_line) {
+                list.push_back(elem);
+            }
+            else if(res_line >= element_start_line && res_line == element_end_line && res_col <= element_end_col) {
+                list.push_back(elem);
+            }
+            else { return; }
+
+            QDomNode n = elem.firstChild();
+            while(!n.isNull()) {
+                findAllGazeLeadingElements(list,n,res_line,res_col,cont);
+                if(!cont) { return; }
+                n = n.nextSibling();
+            }
+        }
+    }
+}
+
+void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& token_type) {
+    // token_type is currently unused?
+    QVector<QString> delimiters = {
+        "(",")","{","}",".","++","--","+","-",
+        "!","~",",","/","%","*","<<",">>",">>>",
+        "<","<=",">","<=","==","!=","@","&","^",
+        "|","&&","||","?",":","+=","-=","*=",
+        "/=","=",";" // Should we add ->?
+    };
+    int start = col,
+        end = col;
+    token = "";
+    // Whitespace
+    if(source_line[col].isSpace()) {
+        token = "WHITESPACE";
+    }
+    // COMMENT (look for surrounding whitespace
+    else if(syntactic_context.contains("comment")) {
+        while(start - 1 >= 0 && !source_line[start-1].isSpace()) { --start; }
+        while(end <= source_line.size() - 1 && !source_line[end].isSpace()) { ++end; }
+        token = source_line.mid(start,end-start);
+    }
+    // Operator or a delimiter
+    else if(delimiters.contains(QString(source_line[col]))) {
+        token = source_line[col];
+        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
+            --start;
+            token = source_line[start] + token;
+        }
+        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
+            ++end;
+            token += source_line[end];;
+        }
+    }
+    else {
+        while(start - 1 >= 0 && !source_line[start-1].isSpace() && !delimiters.contains(QString(source_line[start-1]))) {
+            --start;
+        }
+        while(end <= source_line.size() - 1 && !source_line[end].isSpace() && !delimiters.contains(QString(source_line[end]))) {
+            ++end;
+        }
+        token = source_line.mid(start,end-start);
+    }
+}
+
+/////////////////////////////////////////
+// CLASS METHODS
+/////////////////////////////////////////
+
 Controller::Controller(QObject* parent) : QObject(parent) {}
 
 void Controller::saveDatabaseFile(QString file_loc) {
+    closeDatabase();
     file_loc.remove("file:///");
     std::ofstream file(file_loc.toUtf8().constData());
     file.close();
     idb = Database(file_loc);
+
     emit outputToScreen("Successfully created new Database at: "+file_loc);
     emit databaseSet(file_loc);
 }
 
 void Controller::loadDatabaseFile(QString file_path) {
+    closeDatabase();
     file_path.remove("file:///");
     idb = Database(file_path);
 
     for(auto i : idb.getSessions()) { emit taskAdded(i); }
+
     emit outputToScreen("Successfully loaded database.");
     emit databaseSet(file_path);
 }
@@ -45,7 +156,7 @@ void Controller::importXMLFile(QString file_path) {
 
     if(type == "itrace_core") { importCoreXML(file_path); }
     else if(type == "itrace_plugin") { importPluginXML(file_path); }
-    else { /* Emit warning here */ }
+    else { emit outputToScreen("Unrecognized iTrace file: "+file_path); }
 }
 
 void Controller::batchAddXML(QString folder_path) {
@@ -53,6 +164,7 @@ void Controller::batchAddXML(QString folder_path) {
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
+    emit setProgressBarToIndeterminate();
 
     folder_path.remove("file:///");
     std::map<QString,std::pair<std::vector<QString>,bool>> files;
@@ -73,6 +185,7 @@ void Controller::batchAddXML(QString folder_path) {
                 if(type == "itrace_core") { files.find(id)->second.second = true; }
             }
         }
+        QApplication::processEvents();
     }
     QString badPairWarn, alreadyInWarn;
     for(auto i : files) {
@@ -83,7 +196,10 @@ void Controller::batchAddXML(QString folder_path) {
             }
         }
         else { for(auto j : i.second.first) { badPairWarn += "\t" + j + "\n"; } }
+        QApplication::processEvents();
     }
+
+    emit stopProgressBar();
 
     QString warn;
     if(badPairWarn != "") { warn += "The following files were missing their associated pair file:\n" + badPairWarn; }
@@ -159,6 +275,7 @@ void Controller::importCoreXML(const QString& file_path) {
         if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
         report = core_file.checkAndReturnError();
         if(report != "") { std::cout << "XML ERROR: " << report.toUtf8().constData() << std::endl; }
+        QApplication::processEvents();
     }
 
     idb.commit();
@@ -205,6 +322,7 @@ void Controller::importPluginXML(const QString& file_path) {
         if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
         report = plugin_file.checkAndReturnError();
         if(report != "") { std::cout << "XML ERROR: " << report.toUtf8().constData() << std::endl; }
+        QApplication::processEvents();
     }
 
     idb.commit();
@@ -216,17 +334,25 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     QElapsedTimer time;
     time.start();
 
+    int counter = 0;
+
     std::vector<QString> sessions;
     for(auto i : tasks) { // Get the sessions that the user wants to use
         QStringList values = i.split(" - ");
         if(values[2] == "1") {
             sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+            counter += idb.getGazeTargetsFromSession(sessions.back()).size();
         }
     }
 
+    emit startProgressBar(0,counter-1);
+
     idb.startTransaction();
 
+    counter = 0;
+
     for(auto session_id : sessions) {
+        //std::cout << "?" << std::endl;
         QVector<Fixation> session_fixations;
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
@@ -249,6 +375,8 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());
             fixation_filter_settings = algorithm->generateFixationSettings();
+            emit setProgressBarValue(counter); ++counter;
+            QApplication::processEvents();
         }
         for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
             item->calculateDatabaseFields();
@@ -272,7 +400,263 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 idb.insertFixationGaze(fixation_id,QString::number(gaze.event_time));
             }
         }
+        QApplication::processEvents();
     }
     idb.commit();
+    emit stopProgressBar();
     emit outputToScreen(QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
+
+void Controller::mapTokens(QString srcml_file_path) {
+    QElapsedTimer timer;
+    timer.start();
+
+    SRCMLHandler srcml(srcml_file_path);
+
+    QVector<QString> all_files = srcml.getAllFilenames();
+
+    idb.startTransaction();
+
+    QVector<std::pair<QString,QString>> files_viewed = idb.getFilesViewed();
+
+    emit startProgressBar(0,files_viewed.size()-1);
+    int counter = 0;
+    emit outputToScreen("Mapping tokens for "+QString::number(files_viewed.size())+".");
+
+    QString warn = "";
+    for(auto file : files_viewed) {
+        if(!file.second.isNull() && !file.second.isEmpty()) {
+            QString unit_path = findMatchingPath(all_files,file.second);
+            if(unit_path == "") {
+                warn += "\n" + file.second;
+                continue;
+            }
+
+            mapSyntax(srcml,unit_path,file.second,true);
+            mapToken(srcml,unit_path,file.second,true);
+        }
+        emit setProgressBarValue(counter); ++counter;
+        QApplication::processEvents();
+    }
+
+    idb.commit();
+    emit stopProgressBar();
+    emit outputToScreen(QString("Token Mapping done. Time elasped: %1").arg(timer.elapsed() / 1000.0));
+    if(warn != "") {
+        warn = "The following gaze targets had no matching unit:" + warn;
+        emit warning("Token Mapping Error",warn);
+    }
+}
+
+// This should probably be a helper function
+QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
+    file.replace("\\","/");
+    file = file.toLower();
+    QVector<QStringList> possible;
+    QStringList file_split = file.split("/");
+    QString check = file_split[file_split.size()-1];
+    for(auto i : all_files) {
+        if(i.endsWith(check)) { possible.push_back(i.split("/")); }
+    }
+    if(possible.size() == 0) { return ""; }
+
+    QString shortest = "";
+    int passes = 1;
+
+    QVector<QStringList> candidates;
+    while(possible.size() != 1) {
+        if(passes > file_split.size()) { return shortest; }
+        for(auto unit_path : possible) {
+            if(passes > unit_path.size()) {
+                if(shortest == "") { shortest = unit_path.join("/"); }
+                continue;
+            }
+            if(unit_path[unit_path.size() - passes] == file_split[file_split.size() - 1]) {
+                candidates.push_back(unit_path);
+            }
+        }
+        possible = candidates;
+        ++passes;
+        QApplication::processEvents();
+    }
+    if(candidates.size() == 0) { return ""; }
+    return candidates[0].join("/");
+}
+
+void Controller::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
+    QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
+
+    QString unit_data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + srcml.getUnitText(unit_path) + "\n</xml>";
+
+
+    QDomDocument unit;
+    unit.setContent(unit_data,false);
+
+    QVector<QDomElement> elements;
+    elements.append(unit.documentElement());
+    QDomElement first = unit.documentElement().firstChildElement();
+
+    QVector<QDomElement> parents; parents.push_back(first);
+    while(parents.size() != 0) {
+        QDomElement crnt = parents[parents.size() - 1];
+
+        elements.push_back(crnt);
+
+        if(!crnt.firstChildElement().isNull()) {
+            parents.push_back(crnt.firstChildElement());
+        }
+        else if(!crnt.nextSiblingElement().isNull()) {
+            parents[parents.size() - 1] = crnt.nextSiblingElement();
+        }
+        else {
+            while(parents.size() != 0 && parents[parents.size() - 1].nextSiblingElement().isNull()) {
+                parents.pop_back();
+            }
+            if(parents.size() != 0) { parents[parents.size() - 1] = parents[parents.size() - 1].nextSiblingElement(); }
+        }
+        QApplication::processEvents();
+    }
+
+    std::map<QString,std::pair<QString,QString>> cached_gazes;
+    int i = -1;
+    for(auto response : responses) {
+        ++i;
+        int res_line = response[1].toInt(),
+            res_col = response[2].toInt();
+
+        QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+
+        //THIS CAN CHANGE IN THE FUTURE
+        QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
+
+        if(cached_gazes.count(gaze_key) > 0) {
+            idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
+            continue;
+        }
+
+        QVector<QDomElement> element_list;
+        for(auto srcml_element : elements) {
+            if(srcml_element.tagName() == "unit") {
+                element_list.push_back(srcml_element);
+                continue;
+            }
+            int element_start_line = -1,
+                element_start_col = -1,
+                element_end_line = -1,
+                element_end_col = -1;
+
+            QDomAttr start = srcml_element.attributeNode("pos:start"),
+                     end = srcml_element.attributeNode("pos:end");
+
+            //Get pos elements from scrml tag
+            if(!start.isNull() && !end.isNull()) {
+                if(start.value().contains(":") && !start.value().contains("INVALID_POS")) {
+                    element_start_line = start.value().split(":")[0].toInt();
+                    element_start_col = start.value().split(":")[1].toInt();
+                }
+                if(end.value().contains(":") && !end.value().contains("INVALID_POS")) {
+                    element_end_line = end.value().split(":")[0].toInt();
+                    element_end_col = end.value().split(":")[1].toInt();
+                }
+            }
+            else { continue; } // element doesn't have position info
+
+            // Check for bugs in srcml
+            if(element_end_line < element_start_line || element_end_line < 0 || element_start_line < 0) { continue; }
+            // No more tags can encompass the token
+            if(element_start_line > res_line) { break; }
+            // No tags on this line can encompass token
+            if(res_line == element_start_line && element_start_col > res_col) { break; }
+            // Skip this tag since it can't encompass token
+            if(res_line > element_start_line && res_line > element_end_line) { continue; }
+            // In between multiple lines
+            if(res_line >= element_start_line && res_line < element_end_line) {
+                element_list.push_back(srcml_element);
+            }
+            else if(res_line >= element_start_line && res_line == element_end_line) {
+                if(res_col <= element_end_col) { element_list.push_back(srcml_element);  }
+                else { continue; }
+            }
+            QApplication::processEvents();
+        }
+
+        QString syntactic_context = "",
+                xpath = "/";
+        for(auto element : element_list) {
+            if(element.namespaceURI() == "") {
+                xpath += "/src:"+element.tagName();
+            }
+            else {
+                xpath += "/" + element.tagName();
+            }
+
+            if(element.tagName() == "unit") {
+                xpath += "[@filename=\"" + element.attributeNode("filename").value()+"\"]";
+            }
+            QDomAttr start = element.attributeNode("pos:start"),
+                     end = element.attributeNode("pos:end");
+            if(!start.isNull() && !end.isNull()) {
+                xpath += "[@pos:start=\""+start.value()+"\" and ";
+                xpath += "@pos:end=\""+end.value()+"\"]";
+            }
+            if(syntactic_context != "") {
+                syntactic_context += "->"+element.tagName();
+            }
+            else {
+                syntactic_context = element.tagName();
+            }
+            QApplication::processEvents();
+        }
+        cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(xpath,syntactic_context)));
+        idb.updateGazeWithSyntacticInfo(response[0],xpath,syntactic_context);
+    }
+}
+
+void Controller::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
+    QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
+
+    QString report = idb.checkAndReturnError();
+    if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+
+    QStringList unit_body = srcml.getUnitBody(unit_path).split("\n");
+    //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
+    //for(auto i : unit_body) { std::cout << i.toUtf8().constData() << std::endl; }
+
+    std::map<QString,std::pair<QString,QString>> cached_gazes;
+    //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
+    for(auto response : responses) {
+        int res_line = response[1].toInt() - 1,
+            res_col = response[2].toInt() - 1;
+        QString token = "",
+                token_type = "";
+
+        QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+
+        QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
+        if(cached_gazes.count(gaze_key) > 0) {
+            idb.updateGazeWithTokenInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
+            continue;
+        }
+        // If line_num > number of line in body
+        // Invalid, assume it is whitespace
+        // OR
+        // If the col position is outside the bounds of the line
+        // Invalid, assume it is whitespace
+        if(!(res_line < unit_body.size()) || !(res_col < unit_body[res_line].size())) {
+            token = "WHITESPACE";
+            cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
+            idb.updateGazeWithTokenInfo(response[0],token,token_type);
+            continue;
+        }
+        setLineTextToken(unit_body[res_line],res_col,response[3],token,token_type);
+
+        cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
+        idb.updateGazeWithTokenInfo(response[0],token,token_type);
+        QApplication::processEvents();
+    }
+}
+
+
+
