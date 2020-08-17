@@ -88,7 +88,8 @@ Window {
             Action {
                 text: "Map Tokens"
                 onTriggered:  {
-                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
+                    mappingMenu.open()
+//                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
                 }
             }
         }
@@ -152,6 +153,8 @@ Window {
         Text {
             id: loadedDatabaseText
             x: margin; y: margin
+            width: parent.width - 2 * margin
+            elide: Text.ElideMiddle
             text: "No Database Is Loaded"
             color: "red"
         }
@@ -241,7 +244,7 @@ Window {
     FileDialog { // DatabaseOpen
         id: databaseOpen
         selectExisting: true
-        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
             control.loadDatabaseFile(fileUrl)
         }
@@ -249,7 +252,7 @@ Window {
     FileDialog { // DatabaseCreate
         id: databaseCreate
         selectExisting: false
-        nameFilters: ["SQLite Files (*.db3;*.db;*.sqlite;*.sqlite3)","All Files (*.*)"]
+        nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
             control.saveDatabaseFile(fileUrl)
         }
@@ -257,7 +260,7 @@ Window {
     FileDialog { // XMLOpen
         id: xmlOpen
         selectExisting: true
-        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml;*.srcml)", "All Files (*.*)"]
+        nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml; *.srcml)", "All Files (*.*)"]
         onAccepted: {
             control.importXMLFile(fileUrl)
         }
@@ -280,6 +283,10 @@ Window {
 
     Options {
         id: options
+    }
+
+    Mapping {
+        id: mappingMenu
     }
 
 
