@@ -65,7 +65,7 @@ public:
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
 
     //srcML Functions
-    Q_INVOKABLE void mapTokens(QString);
+    Q_INVOKABLE void mapTokens(QString,bool);
     QString findMatchingPath(QVector<QString>,QString);
     void mapSyntax(SRCMLHandler&,QString,QString,bool);
     void mapToken(SRCMLHandler&,QString,QString,bool);

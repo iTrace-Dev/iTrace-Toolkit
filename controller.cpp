@@ -407,11 +407,11 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit outputToScreen(QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
-void Controller::mapTokens(QString srcml_file_path) {
+void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
 
-    SRCMLHandler srcml(srcml_file_path);
+    SRCMLHandler srcml(srcml_file_path.replace("file:///",""));
 
     QVector<QString> all_files = srcml.getAllFilenames();
 
@@ -432,8 +432,8 @@ void Controller::mapTokens(QString srcml_file_path) {
                 continue;
             }
 
-            mapSyntax(srcml,unit_path,file.second,true);
-            mapToken(srcml,unit_path,file.second,true);
+            mapSyntax(srcml,unit_path,file.second,overwrite);
+            mapToken(srcml,unit_path,file.second,overwrite);
         }
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();
