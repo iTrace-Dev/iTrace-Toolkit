@@ -61,7 +61,7 @@ Popup {
     FileDialog {
         id: srcmlOpen
         selectExisting: true
-        nameFilters: ["srcML Archive (*.xml; *.srcml), All Files (*.*)"]
+        nameFilters: ["srcML Archive (*.xml; *.srcml)", "All Files (*.*)"]
         onAccepted: {
             pathText.updateSelected(fileUrl.toString())
         }
