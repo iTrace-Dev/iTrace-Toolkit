@@ -421,7 +421,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     emit startProgressBar(0,files_viewed.size()-1);
     int counter = 0;
-    emit outputToScreen("Mapping tokens for "+QString::number(files_viewed.size())+".");
+    emit outputToScreen("Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
+    emit outputToScreen("This could take a while. Please wait.");
 
     QString warn = "";
     for(auto file : files_viewed) {
@@ -459,6 +460,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
         if(i.endsWith(check)) { possible.push_back(i.split("/")); }
     }
     if(possible.size() == 0) { return ""; }
+    else if(possible.size() == 1) { return possible[0].join("/"); }
 
     QString shortest = "";
     int passes = 1;

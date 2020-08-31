@@ -11,8 +11,8 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
-    app.setOrganizationName("iTrace");
-    app.setOrganizationDomain("Toolkit");
+    app.setOrganizationName("i-Trace.org");
+    app.setOrganizationDomain("Eye Tracking Framework");
 
     qmlRegisterType<ParticipantsModel>("Participants", 1, 0, "ParticipantsModel");
     qmlRegisterUncreatableType<ParticipantsList>("Participants", 1, 0, "ParticipantsList", QStringLiteral("Participants should not be created in QML"));
