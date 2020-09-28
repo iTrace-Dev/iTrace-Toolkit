@@ -77,6 +77,10 @@ Window {
                 onTriggered: options.open()
             }
             Action {
+                text: "Set Fixation Filters"
+                onTriggered: filter.open()
+            }
+            Action {
                 text: "Generate Fixation Data"
                 onTriggered: {
                     generateFixations(options.getSettings())
@@ -283,6 +287,10 @@ Window {
 
     Options {
         id: options
+    }
+
+    Filter {
+        id: filter
     }
 
     Mapping {
