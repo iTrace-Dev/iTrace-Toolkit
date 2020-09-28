@@ -29,7 +29,7 @@ Popup {
         height: parent.height
         width: parent.width
         columns: 1
-        GridLayout {
+        GridLayout { // Fixation Target
             columns: 1
             Text {
                 text: "Fixation Target (leave blank to disable): "
@@ -44,7 +44,58 @@ Popup {
                 placeholderText: "Comma separated list of file names to filter for"
             }
         }
-        GridLayout {
+        GridLayout { // Token Type
+            columns: 1
+            Text {
+                text: "Token Type (leave blank to disable): "
+                font.pointSize: 10
+                font.bold: true
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+            }
+            TextField {
+                id: fixationTokenFilter
+                Layout.fillWidth: true
+                placeholderText: "Comma separated list of token names to filter for"
+            }
+        }
+        GridLayout { // Duration
+            columns: 1
+            Text {
+                text: "Duration (ms): "
+                font.pointSize: 10
+                font.bold: true
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+
+            }
+            GridLayout {
+                columns: 4
+                Text {
+                    text: "Min: "
+                }
+                TextField {
+                    id: fixationDurationFilterMin
+                    Layout.fillWidth: true
+                    validator: IntValidator{bottom: 0}
+                    readonly property string defaultVal: "0"
+                    text: defaultVal
+                }
+                Text {
+                    text: "Max: "
+                }
+                TextField {
+                    id: fixationDurationFilterMax
+                    Layout.fillWidth: true
+                    // When -1, disable filter
+                    validator: IntValidator{bottom:-1}
+                    readonly property string defaultVal: "-1"
+                    text: defaultVal
+                }
+
+            }
+        }
+        GridLayout { // Source File Line
             columns: 1
             Text {
                 text: "Source File Line: "
@@ -80,7 +131,7 @@ Popup {
 
             }
         }
-        GridLayout {
+        GridLayout { // Source File Column
             columns: 1
             Text {
                 text: "Source File Column: "
@@ -116,25 +167,10 @@ Popup {
 
             }
         }
-        GridLayout {
+        GridLayout { // Pupil Diameter
             columns: 1
             Text {
-                text: "Token Filter (leave blank to disable): "
-                font.pointSize: 10
-                font.bold: true
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-            }
-            TextField {
-                id: fixationTokenFilter
-                Layout.fillWidth: true
-                placeholderText: "Comma separated list of token names to filter for"
-            }
-        }
-        GridLayout {
-            columns: 1
-            Text {
-                text: "Pupil Diameters"
+                text: "Pupil Diameters (mm)"
                 font.pointSize: 10
                 font.bold: true
                 Layout.fillWidth: true
@@ -155,9 +191,6 @@ Popup {
                             text: "-1.00"
                             implicitWidth: 50
                             onEditingFinished: {
-//                                if(linkButton.toggled) {
-//                                    leftMin.text =
-//                                }
                                 fixationRightDiameterFilter.first.value = rightMin.text
                             }
                         }
@@ -279,6 +312,7 @@ Popup {
                     }
                 }
             }
+
         }
         Item {
             // Filler element, fills the rest of the space in the layout to force the above elements to be closer to each other
@@ -287,8 +321,6 @@ Popup {
         }
         GridLayout {
             id: buttonGrid
-            x: margin; y: basicAlg.y + basicAlg.height + margin
-            width: basicAlg.width
             columns: 2
             Button {
                 id: closeButton
