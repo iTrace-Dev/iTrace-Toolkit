@@ -92,6 +92,12 @@ Window {
 //                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
                 }
             }
+            Action {
+                text: "Export Fixation Highlighting"
+                onTriggered: {
+                    control.highlightFixations("C:/Users/Joshua/Desktop/iTrace/Output","C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
+                }
+            }
         }
         Menu {
             title: qsTr("Help")

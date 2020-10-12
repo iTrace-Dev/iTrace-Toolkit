@@ -21,8 +21,9 @@ void Fixation::calculateDatabaseFields() {
             end_time = gaze.system_time;
         }
 
-        left_pupil_diameter += isnan(gaze.left_pupil_diameter) ? 0 : gaze.left_pupil_diameter;
-        right_pupil_diameter += isnan(gaze.right_pupil_diameter) ? 0 : gaze.right_pupil_diameter;
+
+        left_pupil_diameter += isnan(gaze.left_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.left_pupil_diameter;
+        right_pupil_diameter += isnan(gaze.right_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.right_pupil_diameter;
 
         QString candidate_key = gaze.gaze_target + "\t";
         candidate_key += (gaze.source_file_line == -1 ? QString("") : QString::number(gaze.source_file_line)) + "\t";

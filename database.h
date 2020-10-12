@@ -50,6 +50,8 @@ public:
     QVector<std::pair<QString,QString>> getFilesViewed();
     QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
     QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
+    QVector<QString> getFixationRunIDs();
+    QVector<QVector<QString>> getFixationsFromRunID(QString);
 
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);

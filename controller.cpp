@@ -103,6 +103,14 @@ void setLineTextToken(QString source_line, int col, QString syntactic_context, Q
     }
 }
 
+QString getFilenameFromXpath(QString xpath) {
+    int start = xpath.indexOf("'"),
+        end = xpath.lastIndexOf("'");
+    QString filename = xpath.mid(start,end-start+1);
+    filename = filename.mid(filename.length() - filename.lastIndexOf("/"));
+    return filename;
+}
+
 /////////////////////////////////////////
 // CLASS METHODS
 /////////////////////////////////////////
@@ -345,11 +353,11 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
     }
 
-    emit startProgressBar(0,counter-1);
+    emit startProgressBar(0,counter);
 
     idb.startTransaction();
 
-    counter = 0;
+    counter = 1;
 
     for(auto session_id : sessions) {
         //std::cout << "?" << std::endl;
@@ -391,6 +399,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         for(auto fix = session_fixations.begin(); fix != session_fixations.end(); ++fix) {
             QString fixation_id = QUuid::createUuid().toString();
             fixation_id.remove("{"); fixation_id.remove("}");
+            std::cout << "TOKEN: " << int((fix->token).toUtf8().constData()[0]) << "|" << std::endl;
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
 
             ++fixation_order;
@@ -419,8 +428,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     QVector<std::pair<QString,QString>> files_viewed = idb.getFilesViewed();
 
-    emit startProgressBar(0,files_viewed.size()-1);
-    int counter = 0;
+    emit startProgressBar(0,files_viewed.size());
+    int counter = 1;
     emit outputToScreen("Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
     emit outputToScreen("This could take a while. Please wait.");
 
@@ -659,6 +668,118 @@ void Controller::mapToken(SRCMLHandler& srcml, QString unit_path, QString projec
         QApplication::processEvents();
     }
 }
+
+void Controller::highlightFixations(QString dir, QString srcml_file_path) {
+    if(!idb.isDatabaseOpen()) {
+        emit warning("Database Error","There is no Database currently loaded.");
+        return;
+    }
+
+    QElapsedTimer timer;
+    timer.start();
+
+    emit outputToScreen("Highlighting Fixations...");
+    QVector<QString> ids = idb.getFixationRunIDs();
+    for(auto id : ids) {
+        emit outputToScreen("Fixation Run: " + id);
+        highlightTokens(idb.getFixationsFromRunID(id),SRCMLHandler(srcml_file_path),dir,id);
+    }
+    emit outputToScreen(QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
+}
+
+void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandler srcml, QString dir, QString run_id) {
+    //xpath -> [source_file_line,source_file_col,token]
+    mkdir((dir+"/"+run_id).toUtf8().constData());
+
+    std::map<QString,QVector<QVector<QString>>> token_map;
+    for(auto fixation : fixations) {
+        QString unit_xpath = fixation[0].left(fixation[0].indexOf("]")) + "]";
+        QVector<QString> extra = { fixation[1],fixation[2],fixation[3] };
+        //token_map.insert(std::make_pair(unit_xpath,extra));
+        if(token_map.count(unit_xpath) == 0) {
+            token_map.insert(std::make_pair(unit_xpath,QVector<QVector<QString>>()));
+        }
+        token_map.find(unit_xpath)->second.push_back(extra);
+        std::cout << "("; for(auto i : extra) { std::cout << i.toUtf8().constData() << ","; } std::cout << ")" << std::endl;
+    }
+    for(auto unit : token_map) {
+        std::sort(unit.second.begin(), unit.second.end(), [](const QVector<QString>& a,const QVector<QString>& b) -> bool { return a[0].toInt() < b[0].toInt() && a[1].toInt() < b[1].toInt(); });
+        generateHighlightedFile(dir,getFilenameFromXpath(unit.first),srcml.getUnitText(unit.first).split("\n"),unit.second);
+    }
+    // TODO - Need to add the run_prettify.js file
+    // Currently don't know how to have that work
+    // with how C++ creates executables
+
+    //emit outputToScreen("Finished Exporting Files");
+
+}
+
+void Controller::generateHighlightedFile(QString dir, QString filename, QStringList source_contents, QVector<QVector<QString>> locations) {
+    emit outputToScreen("Processing: " + filename);
+
+    std::set<QString> set_keys;
+    // This is a sin against man
+    // Fix this later \/
+    std::map<int,QVector<std::pair<std::pair<int,int>,QString>>> boundary_matches;
+    
+    for(auto location : locations) {
+        int line_num = location[0].toInt() - 1,
+            col_num = location[1].toInt() - 1;
+        QString token = location[2],
+                source_line = source_contents[line_num];
+        std::cout << "SOURCE LINE: " << source_line.toUtf8().constData() << std::endl;
+        QString set_key = token + "L" + QString::number(line_num) + "C" + QString::number(col_num);
+
+        if(set_keys.count(set_key) > 0) { continue; }
+        else { set_keys.insert(set_key); }
+        
+        bool bounds_hit = false;
+        if(boundary_matches.count(line_num) > 0) {
+            for(auto matches : boundary_matches.at(line_num)) {
+                bounds_hit = col_num >= matches.first.first && matches.first.second && matches.second == token;
+                if(bounds_hit) { break; }
+            }
+        }
+        else { boundary_matches.insert(std::make_pair(line_num,QVector<std::pair<std::pair<int,int>,QString>>())); }
+        
+        if(bounds_hit) { continue; }
+        
+        if(token.size() == 1) {
+            int token_index = source_line.indexOf(token,col_num);
+            source_line = source_line.left(token_index) + "<MARK>" + token + "</MARK>" + source_line.right(source_line.size() - token_index - 1);
+            boundary_matches.at(line_num).push_back(std::make_pair(std::make_pair(token_index,token_index),token));
+        }
+        else {
+            int start_index = source_line.indexOf(token),
+                end_index = start_index + token.size() - 1;
+            while(!(col_num >= start_index && col_num <= end_index)) {
+                start_index = source_line.indexOf(token,start_index+1);
+                end_index = start_index + token.size() - 1;
+            }
+            boundary_matches.at(line_num).push_back(std::make_pair(std::make_pair(start_index,end_index),token));
+            source_line = source_line.left(start_index) + "<MARK>" + token +  "</MARK>" + source_line.right(source_line.size() - end_index);
+        }
+        source_contents[line_num] = source_line;
+    }
+    QString output = dir + filename.left(filename.lastIndexOf(".")) + "-" + QString::number(std::time(nullptr))+".html";
+    //std::ifstream highlighted_file(output.toUtf8().constData());
+    QFile highlighted_file(output);
+    highlighted_file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream highlighted_file_stream(&highlighted_file);
+    highlighted_file_stream << "<HTML><HEAD><SCRIPT src=\"run_prettify.js\"></SCRIPT><TITLE>" << filename
+                            << "</TITLE></HEAD><BODY>\n<PRE><CODE class=\"prettyprint\">\n";
+    for(auto line_of_code : source_contents) {
+        line_of_code.replace("<","&lt;");
+        line_of_code.replace(">","&gt;");
+        line_of_code.replace("&lt;MARK&gt;","<MARK>");
+        line_of_code.replace("&lt;/MARK&gt;","</MARK>");
+        highlighted_file_stream << line_of_code;
+    }
+    highlighted_file_stream << "</CODE></PRE>\n</BODY></HTML>\n";
+}
+
+
+
 
 
 

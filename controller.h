@@ -2,6 +2,8 @@
 #define CONTROLLER_H
 
 #include <iostream>
+#include <ctime>
+#include <sys/stat.h>
 
 #include <qqml.h>
 #include <QObject>
@@ -69,6 +71,11 @@ public:
     QString findMatchingPath(QVector<QString>,QString);
     void mapSyntax(SRCMLHandler&,QString,QString,bool);
     void mapToken(SRCMLHandler&,QString,QString,bool);
+
+    //Highlight Functions
+    Q_INVOKABLE void highlightFixations(QString,QString);
+    void highlightTokens(QVector<QVector<QString>>, SRCMLHandler, QString, QString);
+    void generateHighlightedFile(QString,QString,QStringList,QVector<QVector<QString>>);
 
 signals:
     void taskAdded(const QString& task);

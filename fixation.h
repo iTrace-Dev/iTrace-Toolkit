@@ -8,6 +8,19 @@
 #include <gaze.h>
 #include <iostream>
 
+/*//////////////////////////////////////
+gaze_vec - vector of gazes that go with this fixation
+x, y - ? x and y coordinates of the fixation on the screen ?
+left_pupil_diameter, right_pupil_diameter - average value of the user's pupil diameters. In millimeters
+source_file_line, source_file_column - line and column position of the token of the fixation
+duration - time in milliseconds of how long the fixation lasted
+fixation_event_time - unix time of when the fixation occurred
+target - file that the fixation occurred in
+syntactic_category - category of syntax the token belongs to
+token - what the fixation was looking at
+xpath - the XML xpath to get the token
+//////////////////////////////////////*/
+
 class Fixation {
 public:
     Fixation();

@@ -78,7 +78,9 @@ void Database::insertFile(QString file_hash, QString session_id, QString file_fu
 }
 
 void Database::insertFixation(QString fixation_id, QString fixation_run_id, QString fixation_start_event_time, QString fixation_order_number, QString x, QString y, QString fixation_target, QString source_file_line, QString source_file_col, QString token, QString syntactic_category, QString xpath, QString left_pupil_diameter, QString right_pupil_diameter, QString duration) {
-    db.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15)").arg(fixation_id).arg(fixation_run_id).arg(fixation_start_event_time).arg(fixation_order_number).arg(x).arg(y).arg(fixation_target).arg(source_file_line).arg(source_file_col).arg(token == "" ? "null" : "\""+token+"\"").arg(syntactic_category == "" ? "null" : "\""+syntactic_category+"\"").arg(xpath == "" ? "null" : "\""+xpath+"\"").arg(left_pupil_diameter).arg(right_pupil_diameter).arg(duration));
+    QString s = QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15)").arg(fixation_id).arg(fixation_run_id).arg(fixation_start_event_time).arg(fixation_order_number).arg(x).arg(y).arg(fixation_target).arg(source_file_line).arg(source_file_col).arg(token == "null" ? "null" : "\""+token+"\"").arg(syntactic_category == "null" ? "null" : "\""+syntactic_category+"\"").arg(xpath == "null" ? "null" : "\""+xpath+"\"").arg(left_pupil_diameter).arg(right_pupil_diameter).arg(duration);
+    std::cout << "Testing: " << s.toUtf8().constData() << std::endl;
+    db.exec(s);
 }
 
 void Database::insertFixationGaze(QString fixation_id, QString event_time) {
@@ -180,6 +182,26 @@ QVector<QVector<QString> > Database::getGazesForSourceMapping(QString file_path,
     return gazes;
 }
 
+QVector<QString> Database::getFixationRunIDs() {
+    QVector<QString> ids;
+    QSqlQuery data = db.exec("SELECT DISTINCT fixation_run_id FROM fixation");
+    while(data.next()) {
+        ids.push_back(data.value(0).toString());
+    }
+    return ids;
+}
+
+QVector<QVector<QString> > Database::getFixationsFromRunID(QString run_id) {
+    QVector<QVector<QString>> fixations;
+    QSqlQuery data = db.exec(QString("SELECT DISTINCT xpath, source_file_line, source_file_col, token FROM fixation WHERE fixation_run_id = %1 AND syntactic_category != '' AND token != 'WHITESPACE' ORDER BY source_file_line ASC, source_file_col ASC").arg(run_id));
+    while(data.next()) {
+        QVector<QString> hold;
+        for(int i = 0; i < 4; ++i) { hold.push_back(data.value(i).toString()); }
+        fixations.push_back(hold);
+    }
+    return fixations;
+}
+
 void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
     xpath.replace("\"","'");
     db.exec(QString("UPDATE ide_context SET source_token_xpath = \"%1\", source_token_syntactic_context = \"%2\" WHERE event_time = %3").arg(xpath).arg(syntactic_context).arg(event_id));
@@ -188,4 +210,6 @@ void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QStr
 void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString token_type) {
     db.exec(QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3").arg(token).arg(token_type == "" ? "null" : "\""+token_type+"\"").arg(event_id));
 }
+
+
 
