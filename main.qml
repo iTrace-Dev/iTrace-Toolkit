@@ -73,11 +73,11 @@ Window {
         Menu {
             title: qsTr("Analyze")
             Action {
-                text: "Set Fixation Settings"
+                text: "Fixation Settings"
                 onTriggered: options.open()
             }
             Action {
-                text: "Set Fixation Filters"
+                text: "Query Fixation Data"
                 onTriggered: filter.open()
             }
             Action {
