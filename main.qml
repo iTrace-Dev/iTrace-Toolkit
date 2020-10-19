@@ -73,8 +73,12 @@ Window {
         Menu {
             title: qsTr("Analyze")
             Action {
-                text: "Set Fixation Settings"
+                text: "Fixation Settings"
                 onTriggered: options.open()
+            }
+            Action {
+                text: "Query Fixation Data"
+                onTriggered: filter.open()
             }
             Action {
                 text: "Generate Fixation Data"
@@ -289,6 +293,10 @@ Window {
 
     Options {
         id: options
+    }
+
+    Filter {
+        id: filter
     }
 
     Mapping {

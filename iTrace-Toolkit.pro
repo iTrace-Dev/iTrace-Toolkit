@@ -33,7 +33,8 @@ SOURCES += \
     xmlhandler.cpp
 
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc \
+    images.qrc
 
 TRANSLATIONS += \
     iTrace-Toolkit_en_US.ts
