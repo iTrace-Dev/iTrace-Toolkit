@@ -399,11 +399,12 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         for(auto fix = session_fixations.begin(); fix != session_fixations.end(); ++fix) {
             QString fixation_id = QUuid::createUuid().toString();
             fixation_id.remove("{"); fixation_id.remove("}");
-            std::cout << "TOKEN: " << int((fix->token).toUtf8().constData()[0]) << "|" << std::endl;
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
 
+            //std::cout << idb.checkAndReturnError().toUtf8().constData() << std::endl;
+
             ++fixation_order;
-            std::set<long long> unique_gazes;
+            std::set<long long> unique_gazes; // What does this even do? Check the py
             for(auto gaze : fix->gaze_vec) {
                 if(unique_gazes.find(gaze.event_time) != unique_gazes.end()) { continue; }
                 idb.insertFixationGaze(fixation_id,QString::number(gaze.event_time));
