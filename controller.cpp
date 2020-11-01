@@ -779,6 +779,50 @@ void Controller::generateHighlightedFile(QString dir, QString filename, QStringL
     highlighted_file_stream << "</CODE></PRE>\n</BODY></HTML>\n";
 }
 
+void Controller::generateQueriedData(QString targets, QString token_types, QString duration_min, QString duration_max, QString source_file_line_min, QString source_file_line_max, QString source_file_col_min, QString source_file_col_max, QString right_pupil_diameter_min, QString right_pupil_diameter_max, QString left_pupil_diameter_min, QString left_pupil_diameter_max, QString output_type) {
+
+    QString query = "SELECT * FROM fixation WHERE ";
+
+    // Add in Targets
+    if(targets != "") {
+        QStringList target_list = targets.split(',');
+        query += QString("fixation_target = \"%1\"").arg(target_list[0]);
+        for(auto i = target_list.begin()+1; i != target_list.end(); ++i) {
+            query += QString(" OR fixation_target = \"%1\" ").arg(*i);
+        }
+        query += " AND ";
+    }
+    // Add in Tokens
+    if(token_types != "") {
+        QStringList token_list = token_types.split(',');
+        query += QString("(fixation_target = \"%1\"").arg(token_list[0]);
+        for(auto i = token_list.begin()+1; i != token_list.end(); ++i) {
+            query += QString(" OR token = \"%1\" ").arg(*i);
+        }
+        query += ") AND ";
+    }
+
+    // Duration
+    query += " duration >= " + duration_min + " " + (duration_max.toInt() == -1 ? "" : "AND duration <= "+duration_max);
+    // Source File Line #
+    query += " AND source_file_line >= " + source_file_line_min + " " + (source_file_line_max.toInt() == -1 ? "" : "AND source_file_line <= "+source_file_line_max);
+    // Source File Column #
+    query += " AND source_file_col >= " + source_file_col_min + " " + (source_file_col_max.toInt() == -1 ? "" : "AND source_file_col <= "+source_file_col_max);
+
+
+    // Left and Right Pupil Diameters
+    query += " AND left_pupil_diameter >= " + left_pupil_diameter_min + " AND left_pupil_diameter <= " + left_pupil_diameter_max + " ";
+    query += " AND right_pupil_diameter >= " + right_pupil_diameter_min + " AND right_pupil_diameter <= " + right_pupil_diameter_max + " ";
+
+
+    std::cout << query.toUtf8().constData() << std::endl;
+
+    auto data = idb.runFilterQuery(query);
+    for(auto i : data) {
+        for(auto j : i) { std::cout << j.toUtf8().constData() << "||"; }
+        std::cout << std::endl << std::endl;
+    }
+}
 
 
 

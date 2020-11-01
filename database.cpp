@@ -211,5 +211,16 @@ void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString 
     db.exec(QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3").arg(token).arg(token_type == "" ? "null" : "\""+token_type+"\"").arg(event_id));
 }
 
+QVector<QVector<QString> > Database::runFilterQuery(QString query) {
+    QVector<QVector<QString>> fixations;
+    QSqlQuery data = db.exec(query);
+    while(data.next()) {
+        QVector<QString> hold;
+        for(int i = 0; i < 15; ++i) { hold.push_back((data.value(i).toString())); }
+        fixations.push_back(hold);
+    }
+    return fixations;
+}
+
 
 

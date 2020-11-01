@@ -56,6 +56,8 @@ public:
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);
 
+    QVector<QVector<QString>> runFilterQuery(QString);
+
 private:
     QSqlDatabase db;
     QString file_path;

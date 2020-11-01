@@ -346,6 +346,8 @@ Popup {
                 Layout.fillWidth: true
                 text: "Export"
                 onClicked: {
+                    filter.close()
+                    control.generateQueriedData(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text,exportBox.model[exportBox.currentIndex])
                 }
             }
         }

@@ -77,6 +77,9 @@ public:
     void highlightTokens(QVector<QVector<QString>>, SRCMLHandler, QString, QString);
     void generateHighlightedFile(QString,QString,QStringList,QVector<QVector<QString>>);
 
+    //Query Functions
+    Q_INVOKABLE void generateQueriedData(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+
 signals:
     void taskAdded(const QString& task);
     void outputToScreen(const QString& msg);
