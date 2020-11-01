@@ -18,8 +18,8 @@ Popup {
      * source_file_line: filter which source file lines wanted, set to 0 and -1 to disable filter
      * source_file_col: filter which source file lines wanted, set to 0 and -1 to disable filter
      * token: comma separated list of tokens to be filtered
-     * left_pupil_diameter: ranges from -1 to 1
-     * right_pupil_diameter: ranges from -1 to 1
+     * left_pupil_diameter: ranges from 0 to 4
+     * right_pupil_diameter: ranges from 0 to 4
      * duration: Range of duration to filter, measured in milliseconds, set to 0 and -1 to disable filter
      * save/load options to/from file
      */
@@ -169,6 +169,9 @@ Popup {
         }
         GridLayout { // Pupil Diameter
             columns: 1
+            id: pupilLayout
+            readonly property string min: "0.00"
+            readonly property string max: "4.00"
             Text {
                 text: "Pupil Diameters (mm)"
                 font.pointSize: 10
@@ -188,7 +191,7 @@ Popup {
                         columns: 3
                         TextField {
                             id: rightMin
-                            text: "-1.00"
+                            text: pupilLayout.min
                             implicitWidth: 50
                             onEditingFinished: {
                                 fixationRightDiameterFilter.first.value = rightMin.text
@@ -197,10 +200,10 @@ Popup {
                         RangeSlider {
                             id: fixationRightDiameterFilter
                             Layout.fillWidth: true
-                            from: -1
-                            to: 1
-                            first.value: -1
-                            second.value: 1
+                            from: pupilLayout.min
+                            to: pupilLayout.max
+                            first.value: pupilLayout.min
+                            second.value: pupilLayout.max
                             stepSize: 0.001
                             snapMode: RangeSlider.SnapOnRelease
 
@@ -228,7 +231,7 @@ Popup {
                         }
                         TextField {
                             id: rightMax
-                            text: "1.00"
+                            text: pupilLayout.max
                             implicitWidth: 50
                             onEditingFinished: fixationRightDiameterFilter.second.value = rightMax.text
                         }
@@ -240,11 +243,11 @@ Popup {
                         columns: 3
                         TextField {
                             id: leftMin
-                            text: "-1.00"
+                            text: pupilLayout.min
                             implicitWidth: 50
                             validator: DoubleValidator {
-                                bottom: -1
-                                top: 1
+                                bottom: pupilLayout.min
+                                top: pupilLayout.max
                                 decimals: 3
                             }
                             onEditingFinished: fixationLeftDiameterFilter.first.value = leftMin.text
@@ -252,10 +255,10 @@ Popup {
                         RangeSlider {
                             id: fixationLeftDiameterFilter
                             Layout.fillWidth: true
-                            from: -1
-                            to: 1
-                            first.value: -1
-                            second.value: 1
+                            from: pupilLayout.min
+                            to: pupilLayout.max
+                            first.value: pupilLayout.min
+                            second.value: pupilLayout.max
                             stepSize: 0.001
                             snapMode: RangeSlider.SnapOnRelease
 
@@ -282,11 +285,11 @@ Popup {
                         }
                         TextField {
                             id: leftMax
-                            text: "1.00"
+                            text: pupilLayout.max
                             implicitWidth: 50
                             validator: DoubleValidator {
-                                bottom: -1
-                                top: 1
+                                bottom: pupilLayout.min
+                                top: pupilLayout.max
                                 decimals: 3
                             }
                             onEditingFinished: fixationLeftDiameterFilter.second.value = leftMax.text
