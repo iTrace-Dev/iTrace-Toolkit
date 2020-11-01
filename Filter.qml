@@ -314,6 +314,19 @@ Popup {
             }
 
         }
+        Text {
+            text: "Output File Type: "
+            font.pointSize: 10
+            font.bold: true
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+
+        }
+        ComboBox {
+            id: exportBox
+            model: [".db3",".tsv",".xml",".json"]
+            implicitWidth: parent.width
+        }
         Item {
             // Filler element, fills the rest of the space in the layout to force the above elements to be closer to each other
             // rather than equally spaced in the entire layout space
@@ -331,7 +344,7 @@ Popup {
             Button {
                 id: filterButton
                 Layout.fillWidth: true
-                text: "Filter"
+                text: "Export"
                 onClicked: {
                 }
             }
