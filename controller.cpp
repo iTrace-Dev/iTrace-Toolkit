@@ -5,6 +5,8 @@
 // HELPERS
 /////////////////////////////////////////
 
+std::ostream& operator<<(std::ostream& out, const QString& s) { out << s.toUtf8().constData(); return out; }
+
 void findAllGazeLeadingElements(QVector<QDomElement>& list, QDomNode crnt, const int& res_line, const int& res_col, bool& cont) {
     if(crnt.isNull() || !cont) { return; }
     QDomElement elem = crnt.toElement();
@@ -815,20 +817,19 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
     query += " AND right_pupil_diameter >= " + right_pupil_diameter_min + " AND right_pupil_diameter <= " + right_pupil_diameter_max + " ";
 
 
-    //std::cout << query.toUtf8().constData() << std::endl;
+//    std::cout << query << std::endl;
 
     QVector<QVector<QString>> data = idb.runFilterQuery(query);
+    QString safeQuery = query.replace("\"", "\\\"");
     QString savename = "fixation_query_"+QString::number(std::time(nullptr))+output_type;
     /////// DATABASE
     if(output_type == ".db3") {
         QSqlDatabase output = QSqlDatabase::addDatabase("QSQLITE","output");
         output.setDatabaseName(savename);
         output.open();
-        output.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER)");
+        output.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER, query TEXT)");
         for(auto i : data) {
-            //for(auto j : i) {
-                output.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15)").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).replace("\"\"","\""));
-            //}
+            output.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,\"%16\")").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery).replace("\"\"","\""));
         }
         output.close();
         QSqlDatabase::removeDatabase("output");
@@ -836,13 +837,14 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
     /////// TAB SEPARATED VALUES
     else if(output_type == ".tsv") {
         std::ofstream output(savename.toUtf8().constData());
-        for(auto fix : data) { for(auto value : fix) { output << value.toUtf8().constData() << "\t"; } }
+        output << "fixation_id\tfixation_run_id\tfixation_start_event_time\tfixation_order_number\tx\ty\tfixation_target\tsource_file_line\tsource_file_col\ttoken\tsyntactic_category\txpath\tleft_pupil_diameter\tright_pupil_diameter\tduration\n";
+        for(auto fix : data) { for(auto value : fix) { output << value.toUtf8().constData() << "\t"; } output << "\n"; }
         output.close();
     }
     /////// XML
     else if(output_type == ".xml") {
         std::ofstream output(savename.toUtf8().constData());
-        output << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<itrace_fixation_query>\n";
+        output << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<itrace_fixation_query query=\"" << safeQuery << "\">\n";
         for(auto fix : data) {
             output << "\t" << (QString("<fixation fixation_id=\"%1\" fixation_run_id=\"%2\" fixation_start_event_time=\"%3\" fixation_order_number=\"%4\" x=\"%5\" y=\"%6\" fixation_target=\"%7\" source_file_line=\"%8\" source_file_col=\"%9\" token=\"%10\" syntactic_category=\"%11\" xpath=\"%12\" left_pupil_diameter=\"%13\" right_pupil_diameter=\"%14\" duration=\"%15\" />").arg(fix[0]).arg(fix[1]).arg(fix[2]).arg(fix[3]).arg(fix[4]).arg(fix[5]).arg(fix[6]).arg(fix[7]).arg(fix[8]).arg(fix[9]).arg(fix[10]).arg(fix[11]).arg(fix[12]).arg(fix[13]).arg(fix[14])).toUtf8().constData() << "\n";
         }
@@ -852,7 +854,8 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
     /////// JSON
     else if(output_type == ".json") {
         std::ofstream output(savename.toUtf8().constData());
-        output << "{\n\t\"fixations\": [\n";
+        output << "{\n\t\"query\": \"" << safeQuery << "\",\n";
+        output << "\t\"fixations\": [\n";
         for(auto fix : data) {
             output << (QString("\t{\n\t\t\"fixation_id\": \"%1\",\n\t\t\"fixation_run_id\": \"%2\",\n\t\t\"fixation_start_event_time\": %3,\n\t\t\"fixation_order_number\": %4,\n\t\t\"x\": %5,\n\t\t\"y\": %6,\n\t\t\"fixation_target\": \"%7\",\n\t\t\"source_file_line\": %8,\n\t\t\"source_file_col\": %9,\n\t\t\"token\": \"%10\",\n\t\t\"syntactic_category\": \"%11\",\n\t\t\"xpath\": \"%12\",\n\t\t\"left_pupil_diameter\": %13,\n\t\t\"right_pupil_diameter\": %14,\n\t\t\"duration\": %15\n\t}\n").arg(fix[0]).arg(fix[1]).arg(fix[2]).arg(fix[3]).arg(fix[4]).arg(fix[5]).arg(fix[6]).arg(fix[7]).arg(fix[8]).arg(fix[9]).arg(fix[10]).arg(fix[11]).arg(fix[12]).arg(fix[13]).arg(fix[14])).toUtf8().constData();
         }
@@ -860,8 +863,3 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
     }
     std::cout << output_type.toUtf8().constData() << std::endl;
 }
-
-
-
-
-
