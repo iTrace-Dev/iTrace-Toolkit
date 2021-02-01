@@ -30,6 +30,7 @@ SOURCES += \
         participantsmodel.cpp \
         database.cpp \
     srcmlhandler.cpp \
+    srcmlmapper.cpp \
     xmlhandler.cpp
 
 
@@ -64,6 +65,7 @@ HEADERS += \
     participantsmodel.h \
     database.h \
     srcmlhandler.h \
+    srcmlmapper.h \
     xmlhandler.h
 
 CONFIG += qmltypes

@@ -12,8 +12,8 @@ Window {
     property var menuHeight: 40
     property var margin: 15
     visible: true
-    width: 320
-    height: 610 + menuHeight
+    width: 420
+    height: 760 + menuHeight
     maximumHeight: height
     maximumWidth: width
     minimumHeight: height

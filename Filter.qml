@@ -2,6 +2,7 @@ import QtQuick.Window 2.15
 import QtQuick 2.0
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.2
 
 Popup {
     id: filter
@@ -330,6 +331,33 @@ Popup {
             model: [".db3",".tsv",".xml",".json"]
             implicitWidth: parent.width
         }
+        Text {
+            text: "Import/Export SQL Files: "
+            font.pointSize: 10
+            font.bold: true
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+        }
+        GridLayout {
+            id: sqlButtonGrid
+            columns: 2
+            Button {
+                id: exportCurrentButton
+                Layout.fillWidth: true
+                text: "Export Current Settings"
+                onClicked: queryFileCreate.open()
+            }
+            Button {
+                id: importSQLButton
+                Layout.fillWidth: true
+                text: "Load SQL File and Filter"
+                onClicked: {
+                    queryFileOpen.open();
+                    filter.close();
+                }
+            }
+        }
+
         Item {
             // Filler element, fills the rest of the space in the layout to force the above elements to be closer to each other
             // rather than equally spaced in the entire layout space
@@ -347,12 +375,29 @@ Popup {
             Button {
                 id: filterButton
                 Layout.fillWidth: true
-                text: "Export"
+                text: "Filter"
                 onClicked: {
                     filter.close()
-                    control.generateQueriedData(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text,exportBox.model[exportBox.currentIndex])
+                    control.generateQueriedData(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),exportBox.model[exportBox.currentIndex])
                 }
             }
+        }
+    }
+
+    FileDialog {
+        id: queryFileOpen
+        selectExisting: true
+        nameFilters: ["Query Files (*.sql)","All Files (*.*)"]
+        onAccepted: {
+            control.loadQueryFile(fileUrl,exportBox.model[exportBox.currentIndex])
+        }
+    }
+    FileDialog {
+        id: queryFileCreate
+        selectExisting: false
+        nameFilters: ["Query Files (*.sql)","All Files (*.*)"]
+        onAccepted: {
+            control.saveQueryFile(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),fileUrl);
         }
     }
 }

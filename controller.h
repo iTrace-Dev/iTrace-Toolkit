@@ -28,6 +28,7 @@
 #include "idtalgorithm.h"
 #include "ivtalgorithm.h"
 #include "srcmlhandler.h"
+#include "srcmlmapper.h"
 
 // Algorithm settings enums
 enum basic {
@@ -69,8 +70,6 @@ public:
     //srcML Functions
     Q_INVOKABLE void mapTokens(QString,bool);
     QString findMatchingPath(QVector<QString>,QString);
-    void mapSyntax(SRCMLHandler&,QString,QString,bool);
-    void mapToken(SRCMLHandler&,QString,QString,bool);
 
     //Highlight Functions
     Q_INVOKABLE void highlightFixations(QString,QString);
@@ -78,7 +77,11 @@ public:
     void generateHighlightedFile(QString,QString,QStringList,QVector<QVector<QString>>);
 
     //Query Functions
-    Q_INVOKABLE void generateQueriedData(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    Q_INVOKABLE QString generateQuery(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    Q_INVOKABLE void loadQueryFile(QString, QString);
+    Q_INVOKABLE void saveQueryFile(QString, QString);
+    Q_INVOKABLE void generateQueriedData(QString,QString);
+
 
 signals:
     void taskAdded(const QString& task);
