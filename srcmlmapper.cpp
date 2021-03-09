@@ -88,7 +88,7 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
             res_col = response[2].toInt();
 
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }
 
         //THIS CAN CHANGE IN THE FUTURE
         QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
@@ -180,7 +180,7 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
     QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
 
     QString report = idb.checkAndReturnError();
-    if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+    if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING TOP: " << report.toUtf8().constData() << std::endl; }
 
     QStringList unit_body = srcml.getUnitBody(unit_path).split("\n");
     //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
@@ -195,7 +195,7 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
                 token_type = "";
 
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING BOTTOM: " << report.toUtf8().constData() << std::endl; }
 
         QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
         if(cached_gazes.count(gaze_key) > 0) {

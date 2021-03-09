@@ -184,7 +184,7 @@ void Controller::importCoreXML(const QString& file_path) {
             participant_id,
             task_name,
             session_date_time,
-            calibration_id,
+            calibration_id = "-1",
             calibration_x,
             calibration_y,
             calibration_point_id;
@@ -237,9 +237,9 @@ void Controller::importCoreXML(const QString& file_path) {
             idb.insertGaze(core_file.getElementAttribute("event_id"),session_id,calibration_id,participant_id,core_file.getElementAttribute("tracker_time"),core_file.getElementAttribute("core_time"),core_file.getElementAttribute("x"),core_file.getElementAttribute("y"),core_file.getElementAttribute("left_x"),core_file.getElementAttribute("left_y"),core_file.getElementAttribute("left_pupil_diameter"),core_file.getElementAttribute("left_validation"),core_file.getElementAttribute("right_x"),core_file.getElementAttribute("right_y"),core_file.getElementAttribute("right_pupil_diameter"),core_file.getElementAttribute("right_validation"),core_file.getElementAttribute("user_left_x"),core_file.getElementAttribute("user_left_y"),core_file.getElementAttribute("user_left_z"),core_file.getElementAttribute("user_right_x"),core_file.getElementAttribute("user_right_y"),core_file.getElementAttribute("user_right_z"));
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN CORE: " << report << std::endl; }
         report = core_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR: " << report << std::endl; }
+        if(report != "") { std::cout << "XML ERROR IN CORE: " << report << std::endl; }
         QApplication::processEvents();
     }
 
@@ -284,9 +284,9 @@ void Controller::importPluginXML(const QString& file_path) {
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","");
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN PLUGIN: " << report << std::endl; }
         report = plugin_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR: " << report << std::endl; }
+        if(report != "") { std::cout << "XML ERROR IN PLUGIN: " << report << std::endl; }
         QApplication::processEvents();
     }
 
@@ -425,7 +425,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
     QStringList file_split = file.split("/");
     QString check = file_split[file_split.size()-1];
     for(auto i : all_files) {
-        if(i.endsWith(check)) { possible.push_back(i.split("/")); }
+        if(i.toLower().endsWith(check)) { possible.push_back(i.split("/")); }
     }
     if(possible.size() == 0) { return ""; }
     else if(possible.size() == 1) { return possible[0].join("/"); }
@@ -473,8 +473,8 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
 }
 
 void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandler srcml, QString dir, QString run_id) {
-    //xpath -> [source_file_line,source_file_col,token]
-    mkdir((dir+"/"+run_id).toUtf8().constData());
+    /*//xpath -> [source_file_line,source_file_col,token]
+    //mkdir((dir+"/"+run_id).toUtf8().constData());
 
     std::map<QString,QVector<QVector<QString>>> token_map;
     for(auto fixation : fixations) {
@@ -495,7 +495,7 @@ void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandl
     // Currently don't know how to have that work
     // with how C++ creates executables
 
-    //emit outputToScreen("Finished Exporting Files");
+    //emit outputToScreen("Finished Exporting Files");*/
 
 }
 
