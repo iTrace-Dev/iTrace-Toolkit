@@ -1,25 +1,11 @@
-#include <QApplication>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
-
-#include "participantsmodel.h"
-#include "control.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    QApplication app(argc, argv);
-
-    app.setOrganizationName("i-Trace.org");
-    app.setOrganizationDomain("Eye Tracking Framework");
-
-    qmlRegisterType<ParticipantsModel>("Participants", 1, 0, "ParticipantsModel");
-    qmlRegisterUncreatableType<ParticipantsList>("Participants", 1, 0, "ParticipantsList", QStringLiteral("Participants should not be created in QML"));
-
-    ParticipantsList participants;
-
-
+    QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));
@@ -28,7 +14,6 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
-    engine.rootContext()->setContextProperty("participants", &participants);
     engine.load(url);
 
     return app.exec();
