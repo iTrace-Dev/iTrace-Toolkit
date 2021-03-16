@@ -14,8 +14,9 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
     //Step 2 - Calculate a vector of differences between each gaze
     std::vector<double> differences;
     for(int i = window_size; i < int(session_gazes.size()) + 1 - window_size; ++i) {
-        std::pair<double,double> before = {0.0,0.0},
-                               after =  {0.0,0.0};
+        double value = 0.0;
+        std::pair<double,double> before = std::make_pair(value,value);
+        std::pair<double,double> after =  std::make_pair(0.0,0.0);
         for(int j = 0; j < window_size; ++j) {
             before.first += session_gazes[i - (j + 1)].x;
             before.second += session_gazes[i - (j + 1)].y;

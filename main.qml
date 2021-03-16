@@ -12,8 +12,8 @@ Window {
     property var menuHeight: 40
     property var margin: 15
     visible: true
-    width: 320
-    height: 610 + menuHeight
+    width: 420
+    height: 760 + menuHeight
     maximumHeight: height
     maximumWidth: width
     minimumHeight: height
@@ -77,8 +77,11 @@ Window {
                 onTriggered: options.open()
             }
             Action {
-                text: "Query Fixation Data"
-                onTriggered: filter.open()
+                text: "Map Tokens"
+                onTriggered:  {
+                    mappingMenu.open()
+//                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
+                }
             }
             Action {
                 text: "Generate Fixation Data"
@@ -90,26 +93,23 @@ Window {
                 }
             }
             Action {
-                text: "Map Tokens"
-                onTriggered:  {
-                    mappingMenu.open()
-//                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
-                }
+                text: "Query Fixation Data"
+                onTriggered: filter.open()
             }
             Action {
-                text: "Export Fixation Highlighting"
+                text: "Export Fixation Highlighting (WIP)"
                 onTriggered: {
                     control.highlightFixations("C:/Users/Joshua/Desktop/iTrace/Output","C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
                 }
             }
         }
-        Menu {
+        /*Menu {
             title: qsTr("Help")
 
         }
         Menu {
             title: qsTr("About")
-        }
+        }*/
     }
 
     Controller {

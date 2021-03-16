@@ -3,7 +3,9 @@
 
 #include <QString>
 #include <QXmlStreamReader>
+#include <QXmlStreamAttributes>
 #include <QFile>
+#include <QVector>
 
 #include <iostream>
 

@@ -18,7 +18,7 @@ Popup {
     Button {
         id: browseButton
         y: margin
-        text: "Browse for srcML  Archive"
+        text: "Browse for srcML Archive"
         anchors.horizontalCenter: parent.horizontalCenter
         onClicked: {
             srcmlOpen.open()

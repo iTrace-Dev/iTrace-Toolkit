@@ -208,7 +208,7 @@ void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QStr
 }
 
 void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString token_type) {
-    db.exec(QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3").arg(token).arg(token_type == "" ? "null" : "\""+token_type+"\"").arg(event_id));
+    db.exec(QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3").arg(token.replace("'","''")).arg(token_type == "" ? "null" : "\""+token_type+"\"").arg(event_id));
 }
 
 QVector<QVector<QString> > Database::runFilterQuery(QString query) {

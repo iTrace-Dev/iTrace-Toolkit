@@ -32,12 +32,12 @@ void Fixation::calculateDatabaseFields() {
         candidate_key += gaze.source_token_syntatic_context + "\t";
         candidate_key += gaze.source_token_xpath + "\t";
 
-        if(candidate_targets.count(candidate_key) == 0) { candidate_targets.insert(std::make_pair(candidate_key,1)); }
+        if(candidate_targets.count(candidate_key) == 0) { candidate_targets.emplace(candidate_key,1); }
         else { ++(candidate_targets.find(candidate_key)->second); }
     }
     std::pair<QString,int> most_frequent = std::make_pair(QString(""),0);
-    for(auto candidate : candidate_targets) {
-        if(most_frequent.first == "" || most_frequent.second < candidate.second) { most_frequent = candidate; }
+    for(auto candidate = candidate_targets.begin(); candidate != candidate_targets.end(); ++candidate) {
+        if(most_frequent.first == "" || most_frequent.second < candidate->second) { most_frequent = *candidate; }
     }
 
     QStringList fields = most_frequent.first.split("\t");

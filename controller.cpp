@@ -60,51 +60,6 @@ void findAllGazeLeadingElements(QVector<QDomElement>& list, QDomNode crnt, const
     }
 }
 
-void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& token_type) {
-    // token_type is currently unused?
-    QVector<QString> delimiters = {
-        "(",")","{","}",".","++","--","+","-",
-        "!","~",",","/","%","*","<<",">>",">>>",
-        "<","<=",">","<=","==","!=","@","&","^",
-        "|","&&","||","?",":","+=","-=","*=",
-        "/=","=",";" // Should we add ->?
-    };
-    int start = col,
-        end = col;
-    token = "";
-    // Whitespace
-    if(source_line[col].isSpace()) {
-        token = "WHITESPACE";
-    }
-    // COMMENT (look for surrounding whitespace
-    else if(syntactic_context.contains("comment")) {
-        while(start - 1 >= 0 && !source_line[start-1].isSpace()) { --start; }
-        while(end <= source_line.size() - 1 && !source_line[end].isSpace()) { ++end; }
-        token = source_line.mid(start,end-start);
-    }
-    // Operator or a delimiter
-    else if(delimiters.contains(QString(source_line[col]))) {
-        token = source_line[col];
-        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
-            --start;
-            token = source_line[start] + token;
-        }
-        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
-            ++end;
-            token += source_line[end];;
-        }
-    }
-    else {
-        while(start - 1 >= 0 && !source_line[start-1].isSpace() && !delimiters.contains(QString(source_line[start-1]))) {
-            --start;
-        }
-        while(end <= source_line.size() - 1 && !source_line[end].isSpace() && !delimiters.contains(QString(source_line[end]))) {
-            ++end;
-        }
-        token = source_line.mid(start,end-start);
-    }
-}
-
 QString getFilenameFromXpath(QString xpath) {
     int start = xpath.indexOf("'"),
         end = xpath.lastIndexOf("'");
@@ -188,7 +143,7 @@ void Controller::batchAddXML(QString folder_path) {
             if(type == "itrace_core" || type == "itrace_plugin") {
                 QString id = xml_file.getElementAttribute("session_id");
                 if(files.count(id) == 0) {
-                    auto insert = files.insert(std::make_pair(id,std::make_pair(std::vector<QString>(),false)));
+                    auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
                     insert.first->second.first.push_back(filename);
                 }
                 else { (files.find(id))->second.first.push_back(filename); }
@@ -198,14 +153,14 @@ void Controller::batchAddXML(QString folder_path) {
         QApplication::processEvents();
     }
     QString badPairWarn, alreadyInWarn;
-    for(auto i : files) {
-        if(i.second.first.size() >= 2 && i.second.second) {
-            for(auto j : i.second.first) {
+    for(auto i = files.begin(); i != files.end(); ++i) {
+        if(i->second.first.size() >= 2 && i->second.second) {
+            for(auto j : i->second.first) {
                 if(!idb.fileExists(QCryptographicHash::hash(j.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) { importXMLFile(j); }
                 else { alreadyInWarn += "\t" + j + "\n"; }
             }
         }
-        else { for(auto j : i.second.first) { badPairWarn += "\t" + j + "\n"; } }
+        else { for(auto j : i->second.first) { badPairWarn += "\t" + j + "\n"; } }
         QApplication::processEvents();
     }
 
@@ -229,7 +184,7 @@ void Controller::importCoreXML(const QString& file_path) {
             participant_id,
             task_name,
             session_date_time,
-            calibration_id,
+            calibration_id = "-1",
             calibration_x,
             calibration_y,
             calibration_point_id;
@@ -282,9 +237,9 @@ void Controller::importCoreXML(const QString& file_path) {
             idb.insertGaze(core_file.getElementAttribute("event_id"),session_id,calibration_id,participant_id,core_file.getElementAttribute("tracker_time"),core_file.getElementAttribute("core_time"),core_file.getElementAttribute("x"),core_file.getElementAttribute("y"),core_file.getElementAttribute("left_x"),core_file.getElementAttribute("left_y"),core_file.getElementAttribute("left_pupil_diameter"),core_file.getElementAttribute("left_validation"),core_file.getElementAttribute("right_x"),core_file.getElementAttribute("right_y"),core_file.getElementAttribute("right_pupil_diameter"),core_file.getElementAttribute("right_validation"),core_file.getElementAttribute("user_left_x"),core_file.getElementAttribute("user_left_y"),core_file.getElementAttribute("user_left_z"),core_file.getElementAttribute("user_right_x"),core_file.getElementAttribute("user_right_y"),core_file.getElementAttribute("user_right_z"));
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN CORE: " << report << std::endl; }
         report = core_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "XML ERROR IN CORE: " << report << std::endl; }
         QApplication::processEvents();
     }
 
@@ -318,7 +273,11 @@ void Controller::importPluginXML(const QString& file_path) {
             session_id = plugin_file.getElementAttribute("session_id");
         }
         else if(element == "environment") {
-            std::map<QString,QString> types = {{"MSVS","vstudio_plugin"},{"eclipse","eclipse_plugin"},{"atom","atom_plugin"},{"chrome","chrome_plugin"}};
+            std::map<QString,QString> types;
+            types["MSVS"] = "vstudio_plugin";
+            types["eclipse"] = "eclipse_plugin";
+            types["atom"] = "atom_plugin";
+            types["chrome"] = "chrome_plugin";
             ide_plugin_type = plugin_file.getElementAttribute("plugin_type");
             // Insert file
             idb.insertFile(QCryptographicHash::hash(plugin_file.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),session_id,plugin_file.getFilePath(),types.at(ide_plugin_type));
@@ -329,9 +288,9 @@ void Controller::importPluginXML(const QString& file_path) {
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","");
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "IDB ERROR IN PLUGIN: " << report << std::endl; }
         report = plugin_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR: " << report.toUtf8().constData() << std::endl; }
+        if(report != "") { std::cout << "XML ERROR IN PLUGIN: " << report << std::endl; }
         QApplication::processEvents();
     }
 
@@ -437,16 +396,17 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     emit outputToScreen("This could take a while. Please wait.");
 
     QString warn = "";
-    for(auto file : files_viewed) {
-        if(!file.second.isNull() && !file.second.isEmpty()) {
-            QString unit_path = findMatchingPath(all_files,file.second);
+    SRCMLMapper mapper(idb);
+    for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
+        if(!file->second.isNull() && !file->second.isEmpty()) {
+            QString unit_path = findMatchingPath(all_files,file->second);
             if(unit_path == "") {
-                warn += "\n" + file.second;
+                warn += "\n" + file->second;
                 continue;
             }
 
-            mapSyntax(srcml,unit_path,file.second,overwrite);
-            mapToken(srcml,unit_path,file.second,overwrite);
+            mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
+            mapper.mapToken(srcml,unit_path,file->second,overwrite);
         }
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();
@@ -469,7 +429,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
     QStringList file_split = file.split("/");
     QString check = file_split[file_split.size()-1];
     for(auto i : all_files) {
-        if(i.endsWith(check)) { possible.push_back(i.split("/")); }
+        if(i.toLower().endsWith(check)) { possible.push_back(i.split("/")); }
     }
     if(possible.size() == 0) { return ""; }
     else if(possible.size() == 1) { return possible[0].join("/"); }
@@ -497,180 +457,6 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
     return candidates[0].join("/");
 }
 
-void Controller::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
-    QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
-
-    QString unit_data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + srcml.getUnitText(unit_path) + "\n</xml>";
-
-
-    QDomDocument unit;
-    unit.setContent(unit_data,false);
-
-    QVector<QDomElement> elements;
-    elements.append(unit.documentElement());
-    QDomElement first = unit.documentElement().firstChildElement();
-
-    QVector<QDomElement> parents; parents.push_back(first);
-    while(parents.size() != 0) {
-        QDomElement crnt = parents[parents.size() - 1];
-
-        elements.push_back(crnt);
-
-        if(!crnt.firstChildElement().isNull()) {
-            parents.push_back(crnt.firstChildElement());
-        }
-        else if(!crnt.nextSiblingElement().isNull()) {
-            parents[parents.size() - 1] = crnt.nextSiblingElement();
-        }
-        else {
-            while(parents.size() != 0 && parents[parents.size() - 1].nextSiblingElement().isNull()) {
-                parents.pop_back();
-            }
-            if(parents.size() != 0) { parents[parents.size() - 1] = parents[parents.size() - 1].nextSiblingElement(); }
-        }
-        QApplication::processEvents();
-    }
-
-    std::map<QString,std::pair<QString,QString>> cached_gazes;
-    int i = -1;
-    for(auto response : responses) {
-        ++i;
-        int res_line = response[1].toInt(),
-            res_col = response[2].toInt();
-
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
-
-        //THIS CAN CHANGE IN THE FUTURE
-        QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
-
-        if(cached_gazes.count(gaze_key) > 0) {
-            idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
-            continue;
-        }
-
-        QVector<QDomElement> element_list;
-        for(auto srcml_element : elements) {
-            if(srcml_element.tagName() == "unit") {
-                element_list.push_back(srcml_element);
-                continue;
-            }
-            int element_start_line = -1,
-                element_start_col = -1,
-                element_end_line = -1,
-                element_end_col = -1;
-
-            QDomAttr start = srcml_element.attributeNode("pos:start"),
-                     end = srcml_element.attributeNode("pos:end");
-
-            //Get pos elements from scrml tag
-            if(!start.isNull() && !end.isNull()) {
-                if(start.value().contains(":") && !start.value().contains("INVALID_POS")) {
-                    element_start_line = start.value().split(":")[0].toInt();
-                    element_start_col = start.value().split(":")[1].toInt();
-                }
-                if(end.value().contains(":") && !end.value().contains("INVALID_POS")) {
-                    element_end_line = end.value().split(":")[0].toInt();
-                    element_end_col = end.value().split(":")[1].toInt();
-                }
-            }
-            else { continue; } // element doesn't have position info
-
-            // Check for bugs in srcml
-            if(element_end_line < element_start_line || element_end_line < 0 || element_start_line < 0) { continue; }
-            // No more tags can encompass the token
-            if(element_start_line > res_line) { break; }
-            // No tags on this line can encompass token
-            if(res_line == element_start_line && element_start_col > res_col) { break; }
-            // Skip this tag since it can't encompass token
-            if(res_line > element_start_line && res_line > element_end_line) { continue; }
-            // In between multiple lines
-            if(res_line >= element_start_line && res_line < element_end_line) {
-                element_list.push_back(srcml_element);
-            }
-            else if(res_line >= element_start_line && res_line == element_end_line) {
-                if(res_col <= element_end_col) { element_list.push_back(srcml_element);  }
-                else { continue; }
-            }
-            QApplication::processEvents();
-        }
-
-        QString syntactic_context = "",
-                xpath = "/";
-        for(auto element : element_list) {
-            if(element.namespaceURI() == "") {
-                xpath += "/src:"+element.tagName();
-            }
-            else {
-                xpath += "/" + element.tagName();
-            }
-
-            if(element.tagName() == "unit") {
-                xpath += "[@filename=\"" + element.attributeNode("filename").value()+"\"]";
-            }
-            QDomAttr start = element.attributeNode("pos:start"),
-                     end = element.attributeNode("pos:end");
-            if(!start.isNull() && !end.isNull()) {
-                xpath += "[@pos:start=\""+start.value()+"\" and ";
-                xpath += "@pos:end=\""+end.value()+"\"]";
-            }
-            if(syntactic_context != "") {
-                syntactic_context += "->"+element.tagName();
-            }
-            else {
-                syntactic_context = element.tagName();
-            }
-            QApplication::processEvents();
-        }
-        cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(xpath,syntactic_context)));
-        idb.updateGazeWithSyntacticInfo(response[0],xpath,syntactic_context);
-    }
-}
-
-void Controller::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
-    QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
-
-    QString report = idb.checkAndReturnError();
-    if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
-
-    QStringList unit_body = srcml.getUnitBody(unit_path).split("\n");
-    //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
-    //for(auto i : unit_body) { std::cout << i.toUtf8().constData() << std::endl; }
-
-    std::map<QString,std::pair<QString,QString>> cached_gazes;
-    //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
-    for(auto response : responses) {
-        int res_line = response[1].toInt() - 1,
-            res_col = response[2].toInt() - 1;
-        QString token = "",
-                token_type = "";
-
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR: " << report.toUtf8().constData() << std::endl; }
-
-        QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
-        if(cached_gazes.count(gaze_key) > 0) {
-            idb.updateGazeWithTokenInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
-            continue;
-        }
-        // If line_num > number of line in body
-        // Invalid, assume it is whitespace
-        // OR
-        // If the col position is outside the bounds of the line
-        // Invalid, assume it is whitespace
-        if(!(res_line < unit_body.size()) || !(res_col < unit_body[res_line].size())) {
-            token = "WHITESPACE";
-            cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
-            idb.updateGazeWithTokenInfo(response[0],token,token_type);
-            continue;
-        }
-        setLineTextToken(unit_body[res_line],res_col,response[3],token,token_type);
-
-        cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
-        idb.updateGazeWithTokenInfo(response[0],token,token_type);
-        QApplication::processEvents();
-    }
-}
 
 void Controller::highlightFixations(QString dir, QString srcml_file_path) {
     if(!idb.isDatabaseOpen()) {
@@ -690,9 +476,10 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
     emit outputToScreen(QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
 }
 
+// WIP
 void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandler srcml, QString dir, QString run_id) {
-    //xpath -> [source_file_line,source_file_col,token]
-    mkdir((dir+"/"+run_id).toUtf8().constData());
+    /*//xpath -> [source_file_line,source_file_col,token]
+    //mkdir((dir+"/"+run_id).toUtf8().constData());
 
     std::map<QString,QVector<QVector<QString>>> token_map;
     for(auto fixation : fixations) {
@@ -703,7 +490,7 @@ void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandl
             token_map.insert(std::make_pair(unit_xpath,QVector<QVector<QString>>()));
         }
         token_map.find(unit_xpath)->second.push_back(extra);
-        std::cout << "("; for(auto i : extra) { std::cout << i.toUtf8().constData() << ","; } std::cout << ")" << std::endl;
+        std::cout << "("; for(auto i : extra) { std::cout << i << ","; } std::cout << ")" << std::endl;
     }
     for(auto unit : token_map) {
         std::sort(unit.second.begin(), unit.second.end(), [](const QVector<QString>& a,const QVector<QString>& b) -> bool { return a[0].toInt() < b[0].toInt() && a[1].toInt() < b[1].toInt(); });
@@ -713,12 +500,13 @@ void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandl
     // Currently don't know how to have that work
     // with how C++ creates executables
 
-    //emit outputToScreen("Finished Exporting Files");
+    //emit outputToScreen("Finished Exporting Files");*/
 
 }
 
+// TODO - NOT YET DONE
 void Controller::generateHighlightedFile(QString dir, QString filename, QStringList source_contents, QVector<QVector<QString>> locations) {
-    emit outputToScreen("Processing: " + filename);
+    /*emit outputToScreen("Processing: " + filename);
 
     std::set<QString> set_keys;
     // This is a sin against man
@@ -730,7 +518,7 @@ void Controller::generateHighlightedFile(QString dir, QString filename, QStringL
             col_num = location[1].toInt() - 1;
         QString token = location[2],
                 source_line = source_contents[line_num];
-        std::cout << "SOURCE LINE: " << source_line.toUtf8().constData() << std::endl;
+        std::cout << "SOURCE LINE: " << source_line << std::endl;
         QString set_key = token + "L" + QString::number(line_num) + "C" + QString::number(col_num);
 
         if(set_keys.count(set_key) > 0) { continue; }
@@ -779,10 +567,10 @@ void Controller::generateHighlightedFile(QString dir, QString filename, QStringL
         highlighted_file_stream << line_of_code;
     }
     highlighted_file_stream << "</CODE></PRE>\n</BODY></HTML>\n";
+    */
 }
 
-void Controller::generateQueriedData(QString targets, QString token_types, QString duration_min, QString duration_max, QString source_file_line_min, QString source_file_line_max, QString source_file_col_min, QString source_file_col_max, QString right_pupil_diameter_min, QString right_pupil_diameter_max, QString left_pupil_diameter_min, QString left_pupil_diameter_max, QString output_type) {
-
+QString Controller::generateQuery(QString targets, QString token_types, QString duration_min, QString duration_max, QString source_file_line_min, QString source_file_line_max, QString source_file_col_min, QString source_file_col_max, QString right_pupil_diameter_min, QString right_pupil_diameter_max, QString left_pupil_diameter_min, QString left_pupil_diameter_max) {
     QString query = "SELECT * FROM fixation WHERE ";
 
     // Add in Targets
@@ -816,9 +604,33 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
     query += " AND left_pupil_diameter >= " + left_pupil_diameter_min + " AND left_pupil_diameter <= " + left_pupil_diameter_max + " ";
     query += " AND right_pupil_diameter >= " + right_pupil_diameter_min + " AND right_pupil_diameter <= " + right_pupil_diameter_max + " ";
 
+    std::cout << "QUERY: " << query << "||\n" << std::endl;
+    return query;
+}
 
-//    std::cout << query << std::endl;
+void Controller::loadQueryFile(QString file_path, QString output_type) {
+    file_path.remove("file:///");
+    QFile file(file_path);
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        emit outputToScreen("No file matching the given path was found.");
+        return;
+    }
+    QTextStream stream(&file);
+    QString data = stream.readAll();
 
+    file.close();
+
+    generateQueriedData(data,output_type);
+}
+
+void Controller::saveQueryFile(QString query, QString file_path) {
+    file_path.remove("file:///");
+    std::ofstream file(file_path.toUtf8().constData());
+    file << query;
+    file.close();
+}
+
+void Controller::generateQueriedData(QString query, QString output_type) {
     QVector<QVector<QString>> data = idb.runFilterQuery(query);
     QString safeQuery = query.replace("\"", "\\\"");
     QString savename = "fixation_query_"+QString::number(std::time(nullptr))+output_type;
@@ -857,9 +669,9 @@ void Controller::generateQueriedData(QString targets, QString token_types, QStri
         output << "{\n\t\"query\": \"" << safeQuery << "\",\n";
         output << "\t\"fixations\": [\n";
         for(auto fix : data) {
-            output << (QString("\t{\n\t\t\"fixation_id\": \"%1\",\n\t\t\"fixation_run_id\": \"%2\",\n\t\t\"fixation_start_event_time\": %3,\n\t\t\"fixation_order_number\": %4,\n\t\t\"x\": %5,\n\t\t\"y\": %6,\n\t\t\"fixation_target\": \"%7\",\n\t\t\"source_file_line\": %8,\n\t\t\"source_file_col\": %9,\n\t\t\"token\": \"%10\",\n\t\t\"syntactic_category\": \"%11\",\n\t\t\"xpath\": \"%12\",\n\t\t\"left_pupil_diameter\": %13,\n\t\t\"right_pupil_diameter\": %14,\n\t\t\"duration\": %15\n\t}\n").arg(fix[0]).arg(fix[1]).arg(fix[2]).arg(fix[3]).arg(fix[4]).arg(fix[5]).arg(fix[6]).arg(fix[7]).arg(fix[8]).arg(fix[9]).arg(fix[10]).arg(fix[11]).arg(fix[12]).arg(fix[13]).arg(fix[14])).toUtf8().constData();
+            output << (QString("\t{\n\t\t\"fixation_id\": \"%1\",\n\t\t\"fixation_run_id\": \"%2\",\n\t\t\"fixation_start_event_time\": %3,\n\t\t\"fixation_order_number\": %4,\n\t\t\"x\": %5,\n\t\t\"y\": %6,\n\t\t\"fixation_target\": \"%7\",\n\t\t\"source_file_line\": %8,\n\t\t\"source_file_col\": %9,\n\t\t\"token\": \"%10\",\n\t\t\"syntactic_category\": \"%11\",\n\t\t\"xpath\": \"%12\",\n\t\t\"left_pupil_diameter\": %13,\n\t\t\"right_pupil_diameter\": %14,\n\t\t\"duration\": %15\n\t}\n").arg(fix[0]).arg(fix[1]).arg(fix[2]).arg(fix[3]).arg(fix[4]).arg(fix[5]).arg(fix[6]).arg(fix[7]).arg(fix[8]).arg(fix[9]).arg(fix[10]).arg(fix[11]).arg(fix[12]).arg(fix[13]).arg(fix[14]));
         }
         output << "\t]\n}";
     }
-    std::cout << output_type.toUtf8().constData() << std::endl;
+    std::cout << output_type << std::endl;
 }
