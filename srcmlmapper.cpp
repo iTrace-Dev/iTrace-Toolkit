@@ -171,7 +171,7 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
             }
             QApplication::processEvents();
         }
-        cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(xpath,syntactic_context)));
+        cached_gazes.emplace(gaze_key,std::make_pair(xpath,syntactic_context));
         idb.updateGazeWithSyntacticInfo(response[0],xpath,syntactic_context);
     }
 }

@@ -143,7 +143,7 @@ void Controller::batchAddXML(QString folder_path) {
             if(type == "itrace_core" || type == "itrace_plugin") {
                 QString id = xml_file.getElementAttribute("session_id");
                 if(files.count(id) == 0) {
-                    auto insert = files.insert(std::make_pair(id,std::make_pair(std::vector<QString>(),false)));
+                    auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
                     insert.first->second.first.push_back(filename);
                 }
                 else { (files.find(id))->second.first.push_back(filename); }
@@ -153,14 +153,14 @@ void Controller::batchAddXML(QString folder_path) {
         QApplication::processEvents();
     }
     QString badPairWarn, alreadyInWarn;
-    for(auto i : files) {
-        if(i.second.first.size() >= 2 && i.second.second) {
-            for(auto j : i.second.first) {
+    for(auto i = files.begin(); i != files.end(); ++i) {
+        if(i->second.first.size() >= 2 && i->second.second) {
+            for(auto j : i->second.first) {
                 if(!idb.fileExists(QCryptographicHash::hash(j.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) { importXMLFile(j); }
                 else { alreadyInWarn += "\t" + j + "\n"; }
             }
         }
-        else { for(auto j : i.second.first) { badPairWarn += "\t" + j + "\n"; } }
+        else { for(auto j : i->second.first) { badPairWarn += "\t" + j + "\n"; } }
         QApplication::processEvents();
     }
 
@@ -273,7 +273,11 @@ void Controller::importPluginXML(const QString& file_path) {
             session_id = plugin_file.getElementAttribute("session_id");
         }
         else if(element == "environment") {
-            std::map<QString,QString> types = {{"MSVS","vstudio_plugin"},{"eclipse","eclipse_plugin"},{"atom","atom_plugin"},{"chrome","chrome_plugin"}};
+            std::map<QString,QString> types;
+            types["MSVS"] = "vstudio_plugin";
+            types["eclipse"] = "eclipse_plugin";
+            types["atom"] = "atom_plugin";
+            types["chrome"] = "chrome_plugin";
             ide_plugin_type = plugin_file.getElementAttribute("plugin_type");
             // Insert file
             idb.insertFile(QCryptographicHash::hash(plugin_file.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),session_id,plugin_file.getFilePath(),types.at(ide_plugin_type));
@@ -393,16 +397,16 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     QString warn = "";
     SRCMLMapper mapper(idb);
-    for(auto file : files_viewed) {
-        if(!file.second.isNull() && !file.second.isEmpty()) {
-            QString unit_path = findMatchingPath(all_files,file.second);
+    for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
+        if(!file->second.isNull() && !file->second.isEmpty()) {
+            QString unit_path = findMatchingPath(all_files,file->second);
             if(unit_path == "") {
-                warn += "\n" + file.second;
+                warn += "\n" + file->second;
                 continue;
             }
 
-            mapper.mapSyntax(srcml,unit_path,file.second,overwrite);
-            mapper.mapToken(srcml,unit_path,file.second,overwrite);
+            mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
+            mapper.mapToken(srcml,unit_path,file->second,overwrite);
         }
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();
@@ -472,6 +476,7 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
     emit outputToScreen(QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
 }
 
+// WIP
 void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandler srcml, QString dir, QString run_id) {
     /*//xpath -> [source_file_line,source_file_col,token]
     //mkdir((dir+"/"+run_id).toUtf8().constData());
@@ -501,7 +506,7 @@ void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandl
 
 // TODO - NOT YET DONE
 void Controller::generateHighlightedFile(QString dir, QString filename, QStringList source_contents, QVector<QVector<QString>> locations) {
-    emit outputToScreen("Processing: " + filename);
+    /*emit outputToScreen("Processing: " + filename);
 
     std::set<QString> set_keys;
     // This is a sin against man
@@ -562,6 +567,7 @@ void Controller::generateHighlightedFile(QString dir, QString filename, QStringL
         highlighted_file_stream << line_of_code;
     }
     highlighted_file_stream << "</CODE></PRE>\n</BODY></HTML>\n";
+    */
 }
 
 QString Controller::generateQuery(QString targets, QString token_types, QString duration_min, QString duration_max, QString source_file_line_min, QString source_file_line_max, QString source_file_col_min, QString source_file_col_max, QString right_pupil_diameter_min, QString right_pupil_diameter_max, QString left_pupil_diameter_min, QString left_pupil_diameter_max) {

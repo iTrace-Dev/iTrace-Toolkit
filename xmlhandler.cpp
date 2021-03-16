@@ -60,6 +60,9 @@ QString XMLHandler::getNextElementAsString() {
     }
     QString name = xml->name().toString();
     QString rtn = "<" + name + " ";
+
+
+
     for(auto attr : xml->attributes()) {
         rtn += attr.name() + "=\"" + attr.value() + "\" ";
     }
