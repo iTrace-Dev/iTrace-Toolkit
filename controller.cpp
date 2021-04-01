@@ -445,7 +445,9 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
                 if(shortest == "") { shortest = unit_path.join("/"); }
                 continue;
             }
-            if(unit_path[unit_path.size() - passes] == file_split[file_split.size() - 1]) {
+            QString unit_check = unit_path[unit_path.size() - passes].toLower();
+            QString file_check = file_split[file_split.size() - 1];
+            if(unit_check == file_check) {
                 candidates.push_back(unit_path);
             }
         }
