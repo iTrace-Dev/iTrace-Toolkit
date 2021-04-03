@@ -20,7 +20,7 @@ Database::Database(QString fileURL) : Database() {
     db.exec("CREATE TABLE IF NOT EXISTS calibration_point(calibration_point_id TEXT,calibration_id INTEGER,calibration_x REAL,calibration_y REAL,FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id))");
     db.exec("CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id))");
     db.exec("CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id))");
-    db.exec("CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
+    db.exec("CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
     db.exec("CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time))");
     db.exec("CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gazes(event_time))");
     db.exec("CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id))");
@@ -97,8 +97,8 @@ void Database::insertGaze(QString event_time, QString session_id, QString calibr
 
 // The following parameters are unused and should always be inserted as "" - for now
 // source_token, source_token_type, source_token_xpath, source_token_sytnactic_context
-void Database::insertIDEContext(QString event_time, QString time_stamp, QString ide_type, QString gaze_target, QString gaze_target_type, QString source_file_path, QString source_file_line, QString source_file_col, QString editor_line_height, QString editor_font_height, QString editor_line_base_x, QString editor_line_base_y, QString source_token, QString source_token_type, QString source_token_xpath, QString source_token_syntactic_context) {
-    db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y,source_token,source_token_type,source_token_xpath,source_token_syntactic_context) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\""));
+void Database::insertIDEContext(QString event_time, QString time_stamp, QString ide_type, QString gaze_target, QString gaze_target_type, QString source_file_path, QString source_file_line, QString source_file_col, QString editor_line_height, QString editor_font_height, QString editor_line_base_x, QString editor_line_base_y, QString source_token, QString source_token_type, QString source_token_xpath, QString source_token_syntactic_context, QString x, QString y) {
+    db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y,source_token,source_token_type,source_token_xpath,source_token_syntactic_context,x,y) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\"").arg(x).arg(y));
 }
 
 void Database::insertParticipant(QString participant_id, QString session_length) {
@@ -130,13 +130,23 @@ QVector<QString> Database::getSessions() {
 }
 
 QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
+/*
     QSqlQuery targets = db.exec(QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context JOIN gaze ON gaze.event_time=ide_context.event_time WHERE ide_context.gaze_target != \"\" AND gaze.session_id = %1").arg(session_id));
     QVector<QString> gaze_targets;
     while(targets.next()) { gaze_targets.push_back(targets.value(0).toString()); }
     return gaze_targets;
+    //*/
+
+
+    QSqlQuery targets = db.exec(QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context WHERE ide_context.gaze_target != \"\""));
+    QVector<QString> gaze_targets;
+    while(targets.next()) { gaze_targets.push_back(targets.value(0).toString()); }
+    return gaze_targets;
+    //*/
 }
 
 QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString gaze_target) {
+/*
     QVector<Gaze> gazes;
     QSqlQuery session_gazes = db.exec(QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC").arg(session_id).arg(gaze_target));
     Gaze last_valid = Gaze();
@@ -148,7 +158,25 @@ QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString
         }
         else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
     }
+    //*/
+
+
+    // FAKE GAZE DATA
+    QVector<Gaze> gazes;
+    Gaze last_valid = Gaze();
+    QSqlQuery session_gazes = db.exec(QString("SELECT ide_context.event_time, ide_context.x, ide_context.y, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM ide_context WHERE ide_context.gaze_target = \"%1\" ORDER BY ide_context.event_time ASC").arg(gaze_target));
+    while(session_gazes.next()) {
+        Gaze data(session_gazes);
+        if(data.isValid()) {
+            gazes.push_back(data);
+            last_valid = data;
+        }
+        else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
+    }
+    //*/
+
     return gazes;
+
 }
 
 QVector<std::pair<QString, QString> > Database::getFilesViewed() {

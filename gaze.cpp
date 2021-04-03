@@ -2,6 +2,7 @@
 
 Gaze::Gaze() {}
 
+/*
 Gaze::Gaze(QSqlQuery& gaze_data) {
 
     // Core Data
@@ -22,7 +23,30 @@ Gaze::Gaze(QSqlQuery& gaze_data) {
     source_token = gaze_data.value(12).toString();
     source_token_xpath = gaze_data.value(13).toString();
     source_token_syntatic_context = gaze_data.value(14).toString();
-}
+}//*/
+
+
+// TEMPORARY
+Gaze::Gaze(QSqlQuery& gaze_data) {
+    // Core Data - MOSTLY UNUSED
+    x = gaze_data.value(1).toDouble();
+    y = gaze_data.value(2).toDouble();
+    //system_time = 0;
+    system_time = gaze_data.value(0).toLongLong();
+    left_pupil_diameter = -1;
+    right_pupil_diameter = -1;
+    left_validation = -1;
+    right_validation = -1;
+
+    // Plugin Data
+    gaze_target = gaze_data.value(3).toString();
+    gaze_target_type = gaze_data.value(4).toString();
+    source_file_line = gaze_data.value(5).toInt();
+    source_file_col = gaze_data.value(6).toInt();
+    source_token = gaze_data.value(7).toString();
+    source_token_xpath = gaze_data.value(8).toString();
+    source_token_syntatic_context = gaze_data.value(9).toString();
+}//*/
 
 // Determines if the gaze data is valid. Can be altered later.
 bool Gaze::isValid() {

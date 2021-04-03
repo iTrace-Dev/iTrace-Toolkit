@@ -18,6 +18,7 @@ IDTAlgorithm::IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion) 
 }
 
 QVector<Fixation> IDTAlgorithm::generateFixations() {
+
     //This code follows the IDT Algorithm
 
     //Step 1 should already be done
@@ -57,6 +58,7 @@ QVector<Fixation> IDTAlgorithm::generateFixations() {
             }
         }
     }
+
     return fixations;
 }
 

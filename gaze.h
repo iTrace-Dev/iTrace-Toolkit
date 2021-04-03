@@ -23,6 +23,8 @@ public:
     QString gaze_target = "", gaze_target_type = "",
                 source_token = "", source_token_xpath = "", source_token_syntatic_context = "";
 
+    //friend std::ostream& operator<<(std::ostream&,const Gaze&);
+
 };
 
 #endif // GAZE_H

@@ -285,7 +285,7 @@ void Controller::importPluginXML(const QString& file_path) {
         else if(element == "response") {
             // Insert ide_context
             // The last 4 parameters are unused for the moment
-            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","");
+            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
         }
         QString report = idb.checkAndReturnError();
         if(report != "") { std::cout << "IDB ERROR IN PLUGIN: " << report << std::endl; }
@@ -398,6 +398,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     QString warn = "";
     SRCMLMapper mapper(idb);
     for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
+        QElapsedTimer inner_timer;
+        inner_timer.start();
         if(!file->second.isNull() && !file->second.isEmpty()) {
             QString unit_path = findMatchingPath(all_files,file->second);
             if(unit_path == "") {
@@ -408,6 +410,7 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
             mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
             mapper.mapToken(srcml,unit_path,file->second,overwrite);
         }
+        emit outputToScreen(QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();
     }
@@ -418,6 +421,9 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     if(warn != "") {
         warn = "The following gaze targets had no matching unit:" + warn;
         emit warning("Token Mapping Error",warn);
+    }
+    else {
+        QApplication::beep();
     }
 }
 

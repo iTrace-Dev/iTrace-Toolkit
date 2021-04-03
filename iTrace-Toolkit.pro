@@ -33,10 +33,11 @@ SOURCES += \
         srcmlmapper.cpp \
         xmlhandler.cpp
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc \
+    images.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
+QML_IMPORT_PATH = $$PWD
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
 QML_DESIGNER_IMPORT_PATH =
@@ -45,6 +46,9 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# ICON
+RC_ICONS = iTrace.ico
 
 HEADERS += \
     basicalgorithm.h \
@@ -59,8 +63,6 @@ HEADERS += \
     srcmlhandler.h \
     srcmlmapper.h \
     xmlhandler.h
-
-DISTFILES +=
 
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend

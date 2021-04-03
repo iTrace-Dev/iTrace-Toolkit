@@ -18,7 +18,6 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
     //This code follows the IVT Algorithm
 
     //Step 1 should already be done
-    std::cout << "GAZE SIZE: " << session_gazes.size() << std::endl;
 
     //Step 2 -  Calculate velocity between each gaze point
     std::vector<double> velocity_vector;
@@ -27,7 +26,6 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
     for(int i = 1; i < session_gazes.size(); ++i) {
         velocity_vector.push_back(calculateGazeVelocity(session_gazes[i-1].x,session_gazes[i-1].y,session_gazes[i].x,session_gazes[i].y));
     }
-std::cout << "VELOCITY SIZE: " << velocity_vector.size() << std::endl;
     //Step 3 - Calculate fixation groupings
     QVector<std::pair<Gaze,int>> fixation_groups;
     int fix_number = 1;
@@ -44,7 +42,6 @@ std::cout << "VELOCITY SIZE: " << velocity_vector.size() << std::endl;
             ++fix_number;
         }
     }
-    std::cout << "GROUPS SIZE: " << fixation_groups.size() << std::endl;
     //Step 4 - Filter the fixation groupings
     QVector<Gaze> tmp;
     for(int i = 1; i < fixation_groups.size() - 1; ++i) {
