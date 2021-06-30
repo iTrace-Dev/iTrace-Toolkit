@@ -10,6 +10,7 @@ class FixationAlgorithm
 public:
     FixationAlgorithm() {};
     FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
+    virtual ~FixationAlgorithm() {};
 
     virtual QVector<Fixation> generateFixations()=0;
     virtual QString generateFixationSettings()=0;

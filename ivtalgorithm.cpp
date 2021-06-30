@@ -5,7 +5,6 @@ double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
     double vx = x1 - x2,
            vy = y1 - y2;
     double v = sqrt((vx*vx)+(vy*vy));
-    std::cout << "VALUE: " << v << std::endl;
     return v;
 }
 

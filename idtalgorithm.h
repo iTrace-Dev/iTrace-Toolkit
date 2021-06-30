@@ -6,6 +6,7 @@
 class IDTAlgorithm : public FixationAlgorithm{
 public:
     IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion);
+    ~IDTAlgorithm() {};
 
     QVector<Fixation> generateFixations() override;
     QString generateFixationSettings() override;

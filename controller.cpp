@@ -346,6 +346,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             fixation_filter_settings = algorithm->generateFixationSettings();
             emit setProgressBarValue(counter); ++counter;
             QApplication::processEvents();
+            delete algorithm;
         }
         for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
             item->calculateDatabaseFields();
@@ -404,6 +405,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
             QString unit_path = findMatchingPath(all_files,file->second);
             if(unit_path == "") {
                 warn += "\n" + file->second;
+                emit outputToScreen(QString("Target %1 skipped - no valid unit.").arg(counter));
+                emit setProgressBarValue(counter); ++counter;
                 continue;
             }
 
