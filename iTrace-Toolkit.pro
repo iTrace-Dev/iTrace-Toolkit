@@ -27,6 +27,7 @@ SOURCES += \
         gaze.cpp \
         idtalgorithm.cpp \
         ivtalgorithm.cpp \
+        logger.cpp \
         main.cpp \
         participantsmodel.cpp \
         srcmlhandler.cpp \
@@ -59,6 +60,7 @@ HEADERS += \
     gaze.h \
     idtalgorithm.h \
     ivtalgorithm.h \
+    logger.h \
     participantsmodel.h \
     srcmlhandler.h \
     srcmlmapper.h \

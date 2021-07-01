@@ -2,10 +2,20 @@
 #define LOGGER_H
 
 
-class logger
+class Logger
 {
 public:
-    logger();
+    static Logger* instance();
+
+private:
+    Logger() {};
+
+    Logger(const Logger&) {}
+    Logger& operator=(const Logger&) {}
+
+    static Logger* internal_inst;
 };
+
+Logger* Logger::internal_inst = nullptr;
 
 #endif // LOGGER_H

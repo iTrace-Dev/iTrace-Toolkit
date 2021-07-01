@@ -29,6 +29,7 @@
 #include "ivtalgorithm.h"
 #include "srcmlhandler.h"
 #include "srcmlmapper.h"
+#include "logger.h"
 
 // Algorithm settings enums
 enum basic {
