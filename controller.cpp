@@ -81,6 +81,9 @@ void Controller::saveDatabaseFile(QString file_loc) {
     file.close();
     idb = Database(file_loc);
 
+    log->writeTime();
+    log->writeLine("Created a database " + file_loc);
+
     emit outputToScreen("Successfully created new Database at: "+file_loc);
     emit databaseSet(file_loc);
 }

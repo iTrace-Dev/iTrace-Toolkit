@@ -97,6 +97,7 @@ signals:
 
 private:
     Database idb;
+    Logger* log = Logger::instance();
 };
 
 #endif // CONTROLLER_H
