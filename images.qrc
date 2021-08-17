@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>chain-open.png</file>
         <file>chain-closed.png</file>
+		<file>loading_128.gif</file>
     </qresource>
 </RCC>

@@ -57,6 +57,12 @@ bool Database::calibrationExists(const QString& calibration_id) {
     return qry.at() + 1 > 0;
 }
 
+bool Database::pluginResponseExists(const QString& response_id) {
+    QSqlQuery qry = db.exec(QString("SELECT event_time FROM ide_context WHERE event_time = %1").arg(response_id));
+    qry.last();
+    return qry.at() + 1 > 0;
+}
+
 void Database::startTransaction() { db.exec("BEGIN"); }
 
 void Database::commit() { db.exec("COMMIT"); }
@@ -100,6 +106,8 @@ void Database::insertGaze(QString event_time, QString session_id, QString calibr
 void Database::insertIDEContext(QString event_time, QString time_stamp, QString ide_type, QString gaze_target, QString gaze_target_type, QString source_file_path, QString source_file_line, QString source_file_col, QString editor_line_height, QString editor_font_height, QString editor_line_base_x, QString editor_line_base_y, QString source_token, QString source_token_type, QString source_token_xpath, QString source_token_syntactic_context, QString x, QString y) {
     db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y,source_token,source_token_type,source_token_xpath,source_token_syntactic_context,x,y) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\"").arg(x).arg(y));
 }
+
+
 
 void Database::insertParticipant(QString participant_id, QString session_length) {
     db.exec(QString("INSERT INTO participant(participant_id,session_length) VALUES(\"%1\",%2)").arg(participant_id).arg(session_length));

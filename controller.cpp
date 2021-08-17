@@ -1,6 +1,5 @@
 #include "controller.h"
 
-
 /////////////////////////////////////////
 // HELPERS
 /////////////////////////////////////////
@@ -78,43 +77,54 @@ void Controller::saveDatabaseFile(QString file_loc) {
     closeDatabase();
     file_loc.remove("file:///");
     std::ofstream file(file_loc.toUtf8().constData());
+    if(!file.is_open()) {
+        log->writeLine("ERROR","Could not create database at " + file_loc);
+        return;
+    }
     file.close();
     idb = Database(file_loc);
 
-    log->writeTime();
-    log->writeLine("Created a database " + file_loc);
+    log->writeLine("INFO","Successfully created new database " + file_loc);
 
-    emit outputToScreen("Successfully created new Database at: "+file_loc);
+    emit outputToScreen("black","Successfully created database");
     emit databaseSet(file_loc);
 }
 
 void Controller::loadDatabaseFile(QString file_path) {
+    //log->writeLine("Attempting to load database from: "+file_path);
+
     closeDatabase();
     file_path.remove("file:///");
     idb = Database(file_path);
 
     for(auto i : idb.getSessions()) { emit taskAdded(i); }
 
-    emit outputToScreen("Successfully loaded database.");
+    log->writeLine("INFo","Successfully loaded database " + file_path);
+
+    emit outputToScreen("black","Successfully loaded database.");
     emit databaseSet(file_path);
 }
 
 void Controller::closeDatabase() {
     idb.close();
+
+    log->writeLine("INFO","Closed currently loaded database");
+
     emit databaseClosed();
 }
 
 void Controller::importXMLFile(QString file_path) {
-
     file_path.remove("file:///");
 
     if(!idb.isDatabaseOpen()) {
+        log->writeLine("ERROR","Database not opened: Import XML");
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
 
     //Exit function if file is already imported
     if(idb.fileExists(QCryptographicHash::hash(file_path.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        log->writeLine("ERROR","XML file already imported "+file_path);
         emit warning("XML Import Error","This XML File has already been imported into the Database.");
         return;
     }
@@ -124,11 +134,16 @@ void Controller::importXMLFile(QString file_path) {
 
     if(type == "itrace_core") { importCoreXML(file_path); }
     else if(type == "itrace_plugin") { importPluginXML(file_path); }
-    else { emit outputToScreen("Unrecognized iTrace file: "+file_path); }
+    else {
+        log->writeLine("WARNING","Unrecognized iTrace XML file "+file_path);
+        emit outputToScreen("#F55904","Unrecognized iTrace XML file: "+file_path);
+    }
 }
 
 void Controller::batchAddXML(QString folder_path) {
+    log->writeLine("INFO","Scanning and adding all XML files in: "+folder_path);
     if(!idb.isDatabaseOpen()) {
+        log->writeLine("ERROR","Database not opened: Batch add XML files");
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
@@ -172,10 +187,21 @@ void Controller::batchAddXML(QString folder_path) {
     QString warn;
     if(badPairWarn != "") { warn += "The following files were missing their associated pair file:\n" + badPairWarn; }
     if(alreadyInWarn != "") { warn += "The following files are already imported:\n" + alreadyInWarn; }
-    if(warn != "") { emit warning("XML Import Error",warn); }
+    if(warn != "") {
+        log->writeLine("ERROR","Batch XML Import Errors: "+warn);
+        emit warning("XML Import Error",warn);
+    }
 }
 
 void Controller::importCoreXML(const QString& file_path) {
+    if(!idb.isDatabaseOpen()) {
+        log->writeLine("ERROR","Database not opened: Core File import");
+        emit warning("Database Error","There is no Database currently loaded.");
+        return;
+    }
+
+    //log->writeLine("INFO","Importing iTrace Core file: "+file_path);
+
     QElapsedTimer time;
     time.start();
 
@@ -240,21 +266,28 @@ void Controller::importCoreXML(const QString& file_path) {
             idb.insertGaze(core_file.getElementAttribute("event_id"),session_id,calibration_id,participant_id,core_file.getElementAttribute("tracker_time"),core_file.getElementAttribute("core_time"),core_file.getElementAttribute("x"),core_file.getElementAttribute("y"),core_file.getElementAttribute("left_x"),core_file.getElementAttribute("left_y"),core_file.getElementAttribute("left_pupil_diameter"),core_file.getElementAttribute("left_validation"),core_file.getElementAttribute("right_x"),core_file.getElementAttribute("right_y"),core_file.getElementAttribute("right_pupil_diameter"),core_file.getElementAttribute("right_validation"),core_file.getElementAttribute("user_left_x"),core_file.getElementAttribute("user_left_y"),core_file.getElementAttribute("user_left_z"),core_file.getElementAttribute("user_right_x"),core_file.getElementAttribute("user_right_y"),core_file.getElementAttribute("user_right_z"));
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN CORE: " << report << std::endl; }
+        if(report != "") {
+            log->writeLine("WARNING","The followng SQLite Error occured while handling core file: "+report);
+        }
         report = core_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR IN CORE: " << report << std::endl; }
+        if(report != "") {
+            log->writeLine("WARNING","The following XML Error occured while handling core file: "+report);
+        }
         QApplication::processEvents();
     }
 
     idb.commit();
 
+    log->writeLine("INFO","Core file successfully imported "+file_path);
+
     emit taskAdded(participant_id + " - " + task_name);
-    emit outputToScreen(QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 
 }
 
 void Controller::importPluginXML(const QString& file_path) {
     if(!idb.isDatabaseOpen()) {
+        log->writeLine("ERROR","Database not opened: Plugin File import");
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
@@ -287,22 +320,38 @@ void Controller::importPluginXML(const QString& file_path) {
         }
         else if(element == "response") {
             // Insert ide_context
+
+            // Check if we are inserting duplicate data
+            if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+                QString output = "Duplicate Plugin Context data in file: "+file_path+" with event_id: " + plugin_file.getElementAttribute(("event_id"));
+                emit outputToScreen("#F55904",output);
+                log->writeLine("WARNING",output);
+                continue;
+            }
+
             // The last 4 parameters are unused for the moment
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
         }
         QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN PLUGIN: " << report << std::endl; }
+        if(report != "") {
+            log->writeLine("WARNING","The followng SQLite Error occured while handling plugin file: "+report);
+        }
         report = plugin_file.checkAndReturnError();
-        if(report != "") { std::cout << "XML ERROR IN PLUGIN: " << report << std::endl; }
+        if(report != "") {
+            log->writeLine("WARNING","The following XML Error occured while handling plugin file: "+report);
+        }
         QApplication::processEvents();
     }
 
     idb.commit();
 
-    emit outputToScreen(QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
+    log->writeLine("INFO","Plugin file successfully imported");
+    emit outputToScreen("black",QString("Plugin file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 }
 
 void Controller::generateFixationData(QVector<QString> tasks, QString algSettings) {
+    log->writeLine("INFO","Generating fixations with settings: "+algSettings);
+
     QElapsedTimer time;
     time.start();
 
@@ -379,7 +428,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     }
     idb.commit();
     emit stopProgressBar();
-    emit outputToScreen(QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
 void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
@@ -396,8 +445,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     emit startProgressBar(0,files_viewed.size());
     int counter = 1;
-    emit outputToScreen("Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
-    emit outputToScreen("This could take a while. Please wait.");
+    emit outputToScreen("black","Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
+    emit outputToScreen("black","This could take a while. Please wait.");
 
     QString warn = "";
     SRCMLMapper mapper(idb);
@@ -408,7 +457,7 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
             QString unit_path = findMatchingPath(all_files,file->second);
             if(unit_path == "") {
                 warn += "\n" + file->second;
-                emit outputToScreen(QString("Target %1 skipped - no valid unit.").arg(counter));
+                emit outputToScreen("#F55904",QString("Target %1 skipped - no valid unit.").arg(counter));
                 emit setProgressBarValue(counter); ++counter;
                 continue;
             }
@@ -416,14 +465,14 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
             mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
             mapper.mapToken(srcml,unit_path,file->second,overwrite);
         }
-        emit outputToScreen(QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
+        emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();
     }
 
     idb.commit();
     emit stopProgressBar();
-    emit outputToScreen(QString("Token Mapping done. Time elasped: %1").arg(timer.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Token Mapping done. Time elasped: %1").arg(timer.elapsed() / 1000.0));
     if(warn != "") {
         warn = "The following gaze targets had no matching unit:" + warn;
         emit warning("Token Mapping Error",warn);
@@ -481,13 +530,13 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
     QElapsedTimer timer;
     timer.start();
 
-    emit outputToScreen("Highlighting Fixations...");
+    emit outputToScreen("black","Highlighting Fixations...");
     QVector<QString> ids = idb.getFixationRunIDs();
     for(auto id : ids) {
-        emit outputToScreen("Fixation Run: " + id);
+        emit outputToScreen("black","Fixation Run: " + id);
         highlightTokens(idb.getFixationsFromRunID(id),SRCMLHandler(srcml_file_path),dir,id);
     }
-    emit outputToScreen(QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
 }
 
 // WIP
@@ -626,7 +675,7 @@ void Controller::loadQueryFile(QString file_path, QString output_type) {
     file_path.remove("file:///");
     QFile file(file_path);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit outputToScreen("No file matching the given path was found.");
+        emit outputToScreen("red","No file matching the given path was found.");
         return;
     }
     QTextStream stream(&file);

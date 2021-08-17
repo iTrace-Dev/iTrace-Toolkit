@@ -86,7 +86,7 @@ public:
 
 signals:
     void taskAdded(const QString& task);
-    void outputToScreen(const QString& msg);
+    void outputToScreen(const QString& color,const QString& msg);
     void warning(const QString& title, const QString& msg);
     void databaseSet(const QString& path);
     void databaseClosed();

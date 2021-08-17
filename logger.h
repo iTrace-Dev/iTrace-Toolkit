@@ -4,6 +4,9 @@
 #include <fstream>
 #include <chrono>
 #include <ctime>
+#include <cstdarg>
+
+#include <iostream>
 
 class Logger {
 public:
@@ -12,25 +15,18 @@ public:
         return internal_inst;
     }
 
-    template<typename T>
+    /*template<typename T>
     void write(const T& t) {
+        if(lineEnded) { writeTime(); }
         log << t;
-    }
+        lineEnded = false;
+    }*/
 
     template<typename T>
-    void writeLine(const T& t) {
-        log << t << std::endl;
-    }
-
-    void writeTime() {
-        time_t res = time(nullptr);
-        struct tm * crnt_time;
-        char buff[26];
-        crnt_time = localtime(&res);
-        strftime(buff, sizeof buff, "%a %m/%d/%Y %H:%M:%S", crnt_time);
-        log << buff << ": ";
-        //auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        //log << std::ctime(&time) << ": ";
+    void writeLine(const char* type, const T& text) {
+        if(lineEnded) { writeTime(); }
+        log << "[" << type << "] " << text << std::endl;
+        lineEnded = true;
     }
 
     void close() {
@@ -39,7 +35,18 @@ public:
 
 private:
     // Privatize the Default Constructor for Singleton
-    Logger() { log = std::ofstream("output_log.txt"); };
+    Logger() { log = std::ofstream("output_log.txt"); writeTime(); writeLine("INFO","Log file created"); };
+
+    // Function that writes time at the beginning of each log entry
+    void writeTime() {
+        time_t t = time(nullptr);
+        char buff[63];
+        struct tm crnt_time;
+        localtime_s(&crnt_time,&t);
+        strftime(buff, sizeof buff, "%H:%M:%S :: ", &crnt_time); //"%a %m/%d/%Y %H:%M:%S :: "
+
+        log << buff;
+    }
 
     // Disabled for Singleton
     Logger(const Logger&) {}
@@ -47,8 +54,8 @@ private:
 
     static Logger* internal_inst;
     std::ofstream log;
-};
 
-//Logger* Logger::internal_inst = nullptr;
+    bool lineEnded = false;
+};
 
 #endif // LOGGER_H

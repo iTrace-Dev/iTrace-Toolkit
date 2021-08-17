@@ -26,6 +26,7 @@ public:
     bool fileExists(const QString&);
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);
+    bool pluginResponseExists(const QString&);
     
     void startTransaction();
     void commit();

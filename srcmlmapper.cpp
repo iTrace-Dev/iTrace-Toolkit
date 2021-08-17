@@ -186,11 +186,22 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
     //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
     //for(auto i : unit_body) { std::cout << i.toUtf8().constData() << std::endl; }
 
+    // Check if any of the values are 0 - if they are, the data is 0-indexed and doesn't need to be shifted.
+    // This is NOT an exhaustive check, plugins should by default be 1-indexed. This is only a small check.
+    bool one_indexed = true;
+    for(auto response : responses) {
+        if(response[1].toInt() == 0 || response[2].toInt() == 0) {
+            one_indexed = false;
+            break;
+        }
+    }
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
     for(auto response : responses) {
-        int res_line = response[1].toInt() - 1,
-            res_col = response[2].toInt() - 1;
+        int res_line = response[1].toInt(),
+            res_col = response[2].toInt();
+        if(one_indexed) { --res_line; --res_col; }
         QString token = "",
                 token_type = "";
 
