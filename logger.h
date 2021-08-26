@@ -42,7 +42,7 @@ private:
         time_t t = time(nullptr);
         char buff[63];
         struct tm crnt_time;
-        localtime_s(&crnt_time,&t);
+        //localtime_s(&crnt_time,&t);
         strftime(buff, sizeof buff, "%H:%M:%S :: ", &crnt_time); //"%a %m/%d/%Y %H:%M:%S :: "
 
         log << buff;
