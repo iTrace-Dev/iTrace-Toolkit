@@ -6,6 +6,8 @@
 #include <ctime>
 #include <cstdarg>
 
+#include <QDateTime>
+
 #include <iostream>
 
 class Logger {
@@ -39,13 +41,7 @@ private:
 
     // Function that writes time at the beginning of each log entry
     void writeTime() {
-        time_t t = time(nullptr);
-        char buff[63];
-        struct tm crnt_time;
-        localtime_s(&crnt_time,&t);
-        strftime(buff, sizeof buff, "%H:%M:%S :: ", &crnt_time); //"%a %m/%d/%Y %H:%M:%S :: "
-
-        log << buff;
+        log << QDateTime::currentDateTime().toString().toUtf8().constData() << ' ';
     }
 
     // Disabled for Singleton

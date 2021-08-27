@@ -6,6 +6,14 @@
 
 std::ostream& operator<<(std::ostream& out, const QString& s) { out << s.toUtf8().constData(); return out; }
 
+void changeFilePathOS(QString& path) {
+    #ifdef Q_OS_WIN
+        path.remove("file:///");
+    #else
+        path.remove("file://");
+    #endif
+}
+
 void findAllGazeLeadingElements(QVector<QDomElement>& list, QDomNode crnt, const int& res_line, const int& res_col, bool& cont) {
     if(crnt.isNull() || !cont) { return; }
     QDomElement elem = crnt.toElement();
@@ -75,9 +83,12 @@ Controller::Controller(QObject* parent) : QObject(parent) {}
 
 void Controller::saveDatabaseFile(QString file_loc) {
     closeDatabase();
-    file_loc.remove("file:///");
-    std::ofstream file(file_loc.toUtf8().constData());
+    changeFilePathOS(file_loc);
+    std::ofstream file;
+    file.open(file_loc.toUtf8().constData());
     if(!file.is_open()) {
+        emit outputToScreen("#FF0000","Failed to create database");
+        emit warning("ERROR","A problem was encountered when trying to create the file.");
         log->writeLine("ERROR","Could not create database at " + file_loc);
         return;
     }
@@ -94,12 +105,12 @@ void Controller::loadDatabaseFile(QString file_path) {
     //log->writeLine("Attempting to load database from: "+file_path);
 
     closeDatabase();
-    file_path.remove("file:///");
+    changeFilePathOS(file_path);
     idb = Database(file_path);
 
     for(auto i : idb.getSessions()) { emit taskAdded(i); }
 
-    log->writeLine("INFo","Successfully loaded database " + file_path);
+    log->writeLine("INFO","Successfully loaded database " + file_path);
 
     emit outputToScreen("black","Successfully loaded database.");
     emit databaseSet(file_path);
@@ -114,7 +125,7 @@ void Controller::closeDatabase() {
 }
 
 void Controller::importXMLFile(QString file_path) {
-    file_path.remove("file:///");
+    changeFilePathOS(file_path);
 
     if(!idb.isDatabaseOpen()) {
         log->writeLine("ERROR","Database not opened: Import XML");
@@ -149,13 +160,13 @@ void Controller::batchAddXML(QString folder_path) {
     }
     emit setProgressBarToIndeterminate();
 
-    folder_path.remove("file:///");
+    changeFilePathOS(folder_path);
     std::map<QString,std::pair<std::vector<QString>,bool>> files;
     QDirIterator dir(folder_path);
     while(dir.hasNext()) {
         QString filename = dir.next();
         if(filename.endsWith(".xml")) {
-            filename.remove("file:///");
+            changeFilePathOS(filename);
             XMLHandler xml_file(filename);
             QString type = xml_file.getXMLFileType();
             if(type == "itrace_core" || type == "itrace_plugin") {
@@ -435,7 +446,9 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
 
-    SRCMLHandler srcml(srcml_file_path.replace("file:///",""));
+    changeFilePathOS(srcml_file_path);
+
+    SRCMLHandler srcml(srcml_file_path);
 
     QVector<QString> all_files = srcml.getAllFilenames();
 
@@ -672,7 +685,7 @@ QString Controller::generateQuery(QString targets, QString token_types, QString 
 }
 
 void Controller::loadQueryFile(QString file_path, QString output_type) {
-    file_path.remove("file:///");
+    changeFilePathOS(file_path);
     QFile file(file_path);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         emit outputToScreen("red","No file matching the given path was found.");
@@ -687,7 +700,7 @@ void Controller::loadQueryFile(QString file_path, QString output_type) {
 }
 
 void Controller::saveQueryFile(QString query, QString file_path) {
-    file_path.remove("file:///");
+    changeFilePathOS(file_path);
     std::ofstream file(file_path.toUtf8().constData());
     file << query;
     file.close();
