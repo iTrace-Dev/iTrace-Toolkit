@@ -78,8 +78,8 @@ void Controller::saveDatabaseFile(QString file_loc) {
     file_loc.remove("file://");
     std::ofstream file;
     file.open(file_loc.toUtf8().constData());
-    //int x = file.is_open();
     if(!file.is_open()) {
+        emit outputToScreen("#FF0000","Failed to create database");
         emit warning("ERROR","A problem was encountered when trying to create the file.");
         log->writeLine("ERROR","Could not create database at " + file_loc);
         return;
