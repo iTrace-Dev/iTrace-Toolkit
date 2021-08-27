@@ -78,8 +78,9 @@ void Controller::saveDatabaseFile(QString file_loc) {
     file_loc.remove("file://");
     std::ofstream file;
     file.open(file_loc.toUtf8().constData());
-    int x = file.is_open();
+    //int x = file.is_open();
     if(!file.is_open()) {
+        emit warning("ERROR","A problem was encountered when trying to create the file.");
         log->writeLine("ERROR","Could not create database at " + file_loc);
         return;
     }
@@ -101,7 +102,7 @@ void Controller::loadDatabaseFile(QString file_path) {
 
     for(auto i : idb.getSessions()) { emit taskAdded(i); }
 
-    log->writeLine("INFo","Successfully loaded database " + file_path);
+    log->writeLine("INFO","Successfully loaded database " + file_path);
 
     emit outputToScreen("black","Successfully loaded database.");
     emit databaseSet(file_path);
