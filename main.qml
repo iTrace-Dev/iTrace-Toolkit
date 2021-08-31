@@ -12,6 +12,9 @@ Window {
     id: main
     property var menuHeight: 40
     property var margin: 15
+
+    property var iTraceRed: "#680314"
+
     visible: true
     width: 420
     height: 760 + menuHeight
@@ -21,9 +24,22 @@ Window {
     minimumWidth: width
     title: qsTr("iTrace Toolkit")
 
+    Rectangle {
+        x: 0; y: 0
+        width: main.width;
+        height: 40;
+        color: "light grey"
+    }
+
     MenuBar {
         Menu {
             title: qsTr("File")
+            Action {
+                text: "Exit"
+                onTriggered: {
+                    main.close()
+                }
+            }
         }
 
         // Database Menu
@@ -129,7 +145,7 @@ Window {
         }
         onDatabaseClosed: {
             loadedDatabaseText.text = "No Database Is Loaded"
-            loadedDatabaseText.color = "red"
+            loadedDatabaseText.color = iTraceRed
             // Need to clear the participantList
         }
         onStartProgressBar: {
@@ -160,12 +176,13 @@ Window {
         width: parent.width - 2 * margin
         height: parent.height - menuHeight - outputTab.height - (4 * margin)
         x: margin; y: margin + menuHeight
-        border.color: "red"
+        border.color: iTraceRed
+        border.width: 3
         //color: "red"
 
         Rectangle {
             id: gifRect
-            x: parent.width - gif.width - 5; y: parent.height - gif.width - 5
+            x: parent.width - gif.width - margin; y: parent.height - gif.width - margin
             width: gif.width; height: gif.height
             AnimatedImage {
                 id: gif
@@ -181,7 +198,7 @@ Window {
             width: parent.width - 2 * margin
             elide: Text.ElideMiddle
             text: "No Database Is Loaded"
-            color: "red"
+            color: iTraceRed
         }
 
         Text {
@@ -207,6 +224,7 @@ Window {
         width: parent.width - (margin*2); height: 90
         x: margin; y: parent.height - height - margin
         border.color: "black"
+        border.width: 3
         Flickable {
             id: outputFlick
             anchors.fill: parent
