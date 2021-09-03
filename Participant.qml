@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-//import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.3
 
 import Participants 1.0
