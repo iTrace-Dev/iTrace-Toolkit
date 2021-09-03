@@ -40,10 +40,10 @@ Window {
     }
 
     function swapDBButtons() {
-        openDatabaseButton.enabled = !openDatabaseButton.enabled;
-        createDatabaseButton.enabled = !createDatabaseButton.enabled;
-        folderOpenButton.enabled = !folderOpenButton.enabled;
-        xmlButton.enabled = !xmlButton.enabled;
+//        openDatabaseButton.enabled = !openDatabaseButton.enabled;
+//        createDatabaseButton.enabled = !createDatabaseButton.enabled;
+        folderOpenButton.enabled = true;
+        xmlButton.enabled = true;
     }
 
 //    Rectangle {
@@ -255,7 +255,7 @@ Window {
         Button {
             id: folderOpenButton
             height: buttonHeight; width: equalWidth(parent.width, 2);
-            x: margin; y: getBottomY(loadedDatabaseText) + margin/2;
+            x: margin; y: getBottomY(loadedDatabaseText) + margin;
             onClicked: {
                 folderOpen.open();
             }
@@ -265,29 +265,30 @@ Window {
 
             enabled: false
 
-            Image {
-                id: folderUploadImg
-                source: "folder upload.png"
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.left: folderButtonText.right
-                anchors.margins: 5
-                fillMode: Image.PreserveAspectFit
-            }
+//            Image {
+//                id: folderUploadImg
+//                source: "folder upload.png"
+//                anchors.top: parent.top
+//                anchors.bottom: parent.bottom
+//                anchors.left: folderButtonText.right
+//                anchors.margins: 5
+//                fillMode: Image.PreserveAspectFit
+//            }
 
             Text {
                 id: folderButtonText
                 anchors.verticalCenter: parent.verticalCenter
                 color: parent.enabled ? "black" : "grey";
-                x: parent.width/2 - width/2 - folderUploadImg.width/2 - folderUploadImg.anchors.margins/2
-                text: "Load Folder"
+//                x: parent.width/2 - width/2 - folderUploadImg.width/2 - folderUploadImg.anchors.margins/2
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Import Data From Folder"
             }
         }
 
         Button {
             id: xmlButton
             height: buttonHeight; width: equalWidth(parent.width, 2); // equalWidth(parent.width - buttonHeight, 2); // For if close button
-            x: getRightX(folderOpenButton) + margin; y: getBottomY(loadedDatabaseText) + margin/2;
+            x: getRightX(folderOpenButton) + margin; y: getBottomY(loadedDatabaseText) + margin;
             onClicked: {
                 folderOpen.open();
             }
@@ -297,22 +298,23 @@ Window {
 
             enabled: false
 
-            Image {
-                id: xmlUploadImg
-                source: "file upload.png"
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.left: xmlButtonText.right
-                anchors.margins: 5
-                fillMode: Image.PreserveAspectFit
-            }
+//            Image {
+//                id: xmlUploadImg
+//                source: "file upload.png"
+//                anchors.top: parent.top
+//                anchors.bottom: parent.bottom
+//                anchors.left: xmlButtonText.right
+//                anchors.margins: 5
+//                fillMode: Image.PreserveAspectFit
+//            }
 
             Text {
                 id: xmlButtonText
                 anchors.verticalCenter: parent.verticalCenter
                 color: parent.enabled ? "black" : "grey";
-                x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
-                text: "Load XML"
+//                x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
+                anchors.horizontalCenter: parent.horizontalCenter;
+                text: "Import From XML"
             }
         }
 
@@ -341,7 +343,7 @@ Window {
 
         Text {
             id: loadedParticipantsText
-            x: margin; y: getBottomY(folderOpenButton) + margin/2;
+            x: margin; y: getBottomY(folderOpenButton) + margin;
             font.bold: true
             text: "Loaded Participants - Tasks:"
         }
@@ -418,8 +420,7 @@ Window {
             TextArea.flickable: TextArea {
                 id: output
                 anchors.fill: parent
-                text: "" //" We are <font color=\"#FDE541\">green</font> with envy"
-                //color: "black"
+                text: ""
                 readOnly: true
                 textFormat: Text.RichText
             }
@@ -475,6 +476,8 @@ Window {
         selectExisting: true
         nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
+            control.closeDatabase()
+            participantList.model.clearTasks()
             control.loadDatabaseFile(fileUrl)
             swapDBButtons()
         }
@@ -484,6 +487,8 @@ Window {
         selectExisting: false
         nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
+            control.closeDatabase()
+            participantList.model.clearTasks()
             control.saveDatabaseFile(fileUrl)
             swapDBButtons()
         }
