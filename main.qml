@@ -11,11 +11,11 @@ import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly
 
 Window {
     id: main
-    property var menuHeight: 40
-    property var buttonHeight: 30;
-    property var margin: 15
+    property int menuHeight: 40
+    property int buttonHeight: 30;
+    property int margin: 15
 
-    property var iTraceRed: "#680314"
+    property string iTraceRed: "#680314"
 
     visible: true
     width: 420
@@ -44,7 +44,6 @@ Window {
         createDatabaseButton.enabled = !createDatabaseButton.enabled;
         folderOpenButton.enabled = !folderOpenButton.enabled;
         xmlButton.enabled = !xmlButton.enabled;
-        closeButton.enabled = !closeButton.enabled;
     }
 
 //    Rectangle {
@@ -156,7 +155,7 @@ Window {
         id: control
         // Signal Catchers
         onTaskAdded: participantList.model.appendTask(task);
-        onOutputToScreen: outputFlick.myAppend("\n<font color=\""+color+"\">" + msg + "</font>");
+        onOutputToScreen: outputFlick.myAppend("<font color=\""+color+"\">" + msg + "</font>\n");
         onWarning: {
             warningDialog.title = title;
             warningDialog.text = msg;
@@ -172,15 +171,15 @@ Window {
             // Need to clear the participantList
         }
         onStartProgressBar: {
-            loadingBar.visible = true
-            loadingBar.from = start
-            loadingBar.to = stop
+//            loadingBar.visible = true
+//            loadingBar.from = start
+//            loadingBar.to = stop
             gif.visible = true;
         }
         onStopProgressBar: {
-            loadingBar.visible = false
-            loadingBar.value = 0.0
-            loadingBar.indeterminate = false
+//            loadingBar.visible = false
+//            loadingBar.value = 0.0
+//            loadingBar.indeterminate = false
             gif.visible = false;
         }
         onSetProgressBarValue: {
@@ -194,11 +193,18 @@ Window {
     }
 
     //Database Tab
+    Text {
+        id: dataBaseTabLabel
+        text: "Database"
+        x: margin; y: margin
+    }
+
     Rectangle {
         id: databaseTab
         width: parent.width - 2 * margin
-        height: parent.height - menuHeight - outputTab.height - (4 * margin)
-        x: margin; y: margin + menuHeight
+//        height: parent.height - menuHeight - outputTab.height - (4 * margin) // Old Height with menubar
+        height: parent.height - outputTab.height - outputTabLabel.height - analysisTab.height - analysisTabLabel.height - (5 * margin)
+        x: margin; y: getBottomY(dataBaseTabLabel) // + menuHeight
         border.color: iTraceRed
         border.width: 3
 //        color: "red"
@@ -342,20 +348,66 @@ Window {
         Participant {
             id: participantList
             x: margin; y: getBottomY(loadedParticipantsText) + margin/2;
-            height: parent.height - 3 * margin
+            height: parent.height - getBottomY(loadedParticipantsText) - 3 * margin / 2
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: margin
         }
     }
 
 
+    Text {
+        id: analysisTabLabel
+        text: "Analysis"
+        x: margin; y: getBottomY(databaseTab) + margin;
+    }
 
+    Rectangle {
+        id: analysisTab
+        x: margin; y: getBottomY(analysisTabLabel)
+        width: parent.width - 2 * margin; height: 3 * margin + 2 * buttonHeight
+        border.color: iTraceRed
+        border.width: 3
+
+        Button {
+            id: mapTokensButton
+            x: margin; y: margin;
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            text: "Map Tokens"
+        }
+
+        Button {
+            id: fixationSettingsButton
+            x: getRightX(mapTokensButton) + margin; y: margin;
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            text: "Fixation Settings"
+        }
+
+        Button {
+            id: genFixationDataButton
+            x: margin; y: getBottomY(mapTokensButton) + margin;
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            text: "Generate Fixations"
+        }
+
+        Button {
+            id: queryFixationButton
+            x: getRightX(genFixationDataButton) + margin; y: getBottomY(mapTokensButton) + margin;
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            text: "Query Fixations"
+        }
+    }
+
+    Text {
+        id: outputTabLabel
+        text: "Output"
+        x: margin; y: parent.height - outputTab.height - margin - height
+    }
 
     // Output TextArea
     Rectangle {
         id: outputTab
         width: parent.width - (margin*2); height: 90
-        x: margin; y: parent.height - height - margin
+        x: margin; y: getBottomY(outputTabLabel)//parent.height - height - margin
         border.color: "black"
         border.width: 3
         Flickable {
@@ -366,7 +418,7 @@ Window {
             TextArea.flickable: TextArea {
                 id: output
                 anchors.fill: parent
-                text: "Output:"//" We are <font color=\"#FDE541\">green</font> with envy"
+                text: "" //" We are <font color=\"#FDE541\">green</font> with envy"
                 //color: "black"
                 readOnly: true
                 textFormat: Text.RichText
@@ -409,13 +461,13 @@ Window {
         }
     }
     // ProgressBar
-    ProgressBar {
-        id: loadingBar
-        x: margin; y: parent.height - outputTab.height - 2*margin
-        width: parent.width - margin*2
-        value: 0.0
-        visible: false
-    }
+//    ProgressBar {
+//        id: loadingBar
+//        x: margin; y: parent.height - outputTab.height - 2*margin
+//        width: parent.width - margin*2
+//        value: 0.0
+//        visible: false
+//    }
 
     // File Dialogs
     FileDialog { // DatabaseOpen
