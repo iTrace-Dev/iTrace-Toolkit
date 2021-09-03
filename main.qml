@@ -8,126 +8,149 @@ import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly
 
 
 // Main iTrace_Toolkit Window
+
 Window {
     id: main
     property var menuHeight: 40
+    property var buttonHeight: 30;
     property var margin: 15
 
     property var iTraceRed: "#680314"
 
     visible: true
     width: 420
-    height: 760 + menuHeight
+    height: 760 //+ menuHeight
     maximumHeight: height
     maximumWidth: width
     minimumHeight: height
     minimumWidth: width
     title: qsTr("iTrace Toolkit")
 
-    Rectangle {
-        x: 0; y: 0
-        width: main.width;
-        height: 40;
-        color: "light grey"
+    function getBottomY(obj) {
+        return obj.y + obj.height;
     }
 
-    MenuBar {
-        Menu {
-            title: qsTr("File")
-            Action {
-                text: "Exit"
-                onTriggered: {
-                    main.close()
-                }
-            }
-        }
-
-        // Database Menu
-        Menu {
-            title: qsTr("Database")
-            // Create New Database File
-            Action {
-                text: "Create New Database"
-                onTriggered: {
-                    databaseCreate.open()
-                }
-            }
-            // Open Database File
-            Action {
-                text: "Open Database"
-                onTriggered: {
-                    databaseOpen.open()
-                }
-            }
-            Action {
-                text: "Close Database"
-                onTriggered: {
-                    control.closeDatabase()
-                    participantList.model.clearTasks()
-                }
-            }
-
-            // Load XML File(s) Submenu
-            Menu {
-                title: qsTr("Load XML")
-                // Load Individual XML
-                Action {
-                    text: "Load XML File"
-                    onTriggered: {
-                        xmlOpen.open()
-                    }
-                }
-                // Batch Load XML From File
-                Action {
-                    text: "Load XML From Folder"
-                    onTriggered: {
-                        folderOpen.open()
-                    }
-                }
-            }
-
-        }
-        Menu {
-            title: qsTr("Analyze")
-            Action {
-                text: "Fixation Settings"
-                onTriggered: options.open()
-            }
-            Action {
-                text: "Map Tokens"
-                onTriggered:  {
-                    mappingMenu.open()
-//                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
-                }
-            }
-            Action {
-                text: "Generate Fixation Data"
-                onTriggered: {
-                    generateFixations(options.getSettings())
-                }
-                function generateFixations(algorithm) {
-                    control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
-                }
-            }
-            Action {
-                text: "Query Fixation Data"
-                onTriggered: filter.open()
-            }
-            Action {
-                text: "Export Fixation Highlighting (WIP)"
-                onTriggered: {
-                    control.highlightFixations("C:/Users/Joshua/Desktop/iTrace/Output","C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
-                }
-            }
-        }
-        /*Menu {
-            title: qsTr("Help")
-
-        }
-        Menu {
-            title: qsTr("About")
-        }*/
+    function getRightX(obj) {
+        return obj.x + obj.width;
     }
+
+    function equalWidth(width, num) {
+        var tempN = width - margin * (num+1)
+        return tempN / num;
+    }
+
+    function swapDBButtons() {
+        openDatabaseButton.enabled = !openDatabaseButton.enabled;
+        createDatabaseButton.enabled = !createDatabaseButton.enabled;
+        folderOpenButton.enabled = !folderOpenButton.enabled;
+        xmlButton.enabled = !xmlButton.enabled;
+        closeButton.enabled = !closeButton.enabled;
+    }
+
+//    Rectangle {
+//        x: 0; y: 0
+//        width: main.width;
+//        height: 40;
+//        color: "light grey"
+//    }
+
+//    MenuBar {
+//        Menu {
+//            title: qsTr("File")
+//            Action {
+//                text: "Exit"
+//                onTriggered: {
+//                    main.close()
+//                }
+//            }
+//        }
+
+//        // Database Menu
+//        Menu {
+//            title: qsTr("Database")
+//            // Create New Database File
+//            Action {
+//                text: "Create New Database"
+//                onTriggered: {
+//                    databaseCreate.open()
+//                }
+//            }
+//            // Open Database File
+//            Action {
+//                text: "Open Database"
+//                onTriggered: {
+//                    databaseOpen.open()
+//                }
+//            }
+//            Action {
+//                text: "Close Database"
+//                onTriggered: {
+//                    control.closeDatabase()
+//                    participantList.model.clearTasks()
+//                }
+//            }
+
+//            // Load XML File(s) Submenu
+//            Menu {
+//                title: qsTr("Load XML")
+//                // Load Individual XML
+//                Action {
+//                    text: "Load XML File"
+//                    onTriggered: {
+//                        xmlOpen.open()
+//                    }
+//                }
+//                // Batch Load XML From File
+//                Action {
+//                    text: "Load XML From Folder"
+//                    onTriggered: {
+//                        folderOpen.open()
+//                    }
+//                }
+//            }
+
+//        }
+//        Menu {
+//            title: qsTr("Analyze")
+//            Action {
+//                text: "Fixation Settings"
+//                onTriggered: options.open()
+//            }
+//            Action {
+//                text: "Map Tokens"
+//                onTriggered:  {
+//                    mappingMenu.open()
+////                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
+//                }
+//            }
+//            Action {
+//                text: "Generate Fixation Data"
+//                onTriggered: {
+//                    generateFixations(options.getSettings())
+//                }
+//                function generateFixations(algorithm) {
+//                    control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
+//                }
+//            }
+//            Action {
+//                text: "Query Fixation Data"
+//                onTriggered: filter.open()
+//            }
+//            Action {
+//                text: "Export Fixation Highlighting (WIP)"
+//                onTriggered: {
+//                    control.highlightFixations("C:/Users/Joshua/Desktop/iTrace/Output","C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
+//                }
+//            }
+//        }
+//        /*Menu {
+//            title: qsTr("Help")
+
+//        }
+//        Menu {
+//            title: qsTr("About")
+//        }*/
+//    }
 
     Controller {
         id: control
@@ -178,7 +201,7 @@ Window {
         x: margin; y: margin + menuHeight
         border.color: iTraceRed
         border.width: 3
-        //color: "red"
+//        color: "red"
 
         Rectangle {
             id: gifRect
@@ -191,27 +214,137 @@ Window {
             }
         }
 
+        Button {
+            id: openDatabaseButton
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            x: margin; y: margin;
+            enabled: true;
+            text: "Open Database"
+            onClicked: {
+                databaseOpen.open();
+            }
+        }
+
+        Button {
+            id: createDatabaseButton
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            x: getRightX(openDatabaseButton) + margin; y: margin;
+            enabled: true;
+            text: "Create Database"
+            onClicked: {
+                databaseCreate.open();
+            }
+        }
+
         // Loaded Files Area
         Text {
             id: loadedDatabaseText
-            x: margin; y: margin
+            x: margin; y: getBottomY(openDatabaseButton) + margin/2;
             width: parent.width - 2 * margin
             elide: Text.ElideMiddle
             text: "No Database Is Loaded"
             color: iTraceRed
         }
 
+        Button {
+            id: folderOpenButton
+            height: buttonHeight; width: equalWidth(parent.width, 2);
+            x: margin; y: getBottomY(loadedDatabaseText) + margin/2;
+            onClicked: {
+                folderOpen.open();
+            }
+
+            ToolTip.visible: hovered | down
+            ToolTip.text: "Select a folder to upload all srcML or XML files inside it"
+
+            enabled: false
+
+            Image {
+                id: folderUploadImg
+                source: "folder upload.png"
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: folderButtonText.right
+                anchors.margins: 5
+                fillMode: Image.PreserveAspectFit
+            }
+
+            Text {
+                id: folderButtonText
+                anchors.verticalCenter: parent.verticalCenter
+                color: parent.enabled ? "black" : "grey";
+                x: parent.width/2 - width/2 - folderUploadImg.width/2 - folderUploadImg.anchors.margins/2
+                text: "Load Folder"
+            }
+        }
+
+        Button {
+            id: xmlButton
+            height: buttonHeight; width: equalWidth(parent.width, 2); // equalWidth(parent.width - buttonHeight, 2); // For if close button
+            x: getRightX(folderOpenButton) + margin; y: getBottomY(loadedDatabaseText) + margin/2;
+            onClicked: {
+                folderOpen.open();
+            }
+
+            ToolTip.visible: hovered | down
+            ToolTip.text: "Select individual srcML or XML files to upload"
+
+            enabled: false
+
+            Image {
+                id: xmlUploadImg
+                source: "file upload.png"
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: xmlButtonText.right
+                anchors.margins: 5
+                fillMode: Image.PreserveAspectFit
+            }
+
+            Text {
+                id: xmlButtonText
+                anchors.verticalCenter: parent.verticalCenter
+                color: parent.enabled ? "black" : "grey";
+                x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
+                text: "Load XML"
+            }
+        }
+
+//        Button {
+//            id: closeButton
+//            height: buttonHeight; width: buttonHeight;
+//            x: getRightX(xmlButton) + margin/2; y: getBottomY(loadedDatabaseText) + margin/2;
+//            onClicked: {
+//                control.closeDatabase()
+//                participantList.model.clearTasks();
+//                swapDBButtons();
+//            }
+
+//            ToolTip.visible: hovered | down
+//            ToolTip.text: "Close currently selected database"
+
+//            visible: false;
+
+//            Image {
+//                id: closeImg
+//                source: "cross.png";
+//                anchors.fill: parent
+//                anchors.margins: 5
+//            }
+//        }
+
         Text {
-            x: margin; y: 2 * margin
+            id: loadedParticipantsText
+            x: margin; y: getBottomY(folderOpenButton) + margin/2;
             font.bold: true
             text: "Loaded Participants - Tasks:"
         }
         Participant {
             id: participantList
-            x: margin; y: 3 * margin
+            x: margin; y: getBottomY(loadedParticipantsText) + margin/2;
             height: parent.height - 3 * margin
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 5
+            spacing: margin
         }
     }
 
@@ -291,6 +424,7 @@ Window {
         nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
             control.loadDatabaseFile(fileUrl)
+            swapDBButtons()
         }
     }
     FileDialog { // DatabaseCreate
@@ -299,6 +433,7 @@ Window {
         nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
         onAccepted: {
             control.saveDatabaseFile(fileUrl)
+            swapDBButtons()
         }
     }
     FileDialog { // XMLOpen
