@@ -42,8 +42,14 @@ Window {
     function swapDBButtons() {
 //        openDatabaseButton.enabled = !openDatabaseButton.enabled;
 //        createDatabaseButton.enabled = !createDatabaseButton.enabled;
+
+        // mapTokensButton fixationSettingsButton genFixationDataButton queryFixationButton
         folderOpenButton.enabled = true;
         xmlButton.enabled = true;
+        mapTokensButton.enabled = true;
+        fixationSettingsButton.enabled = true;
+        genFixationDataButton.enabled = true;
+        queryFixationButton.enabled = true;
     }
 
 //    Rectangle {
@@ -375,6 +381,12 @@ Window {
             x: margin; y: margin;
             height: buttonHeight; width: equalWidth(parent.width, 2)
             text: "Map Tokens"
+
+            enabled: false
+
+            onClicked: {
+                mappingMenu.open()
+            }
         }
 
         Button {
@@ -382,6 +394,10 @@ Window {
             x: getRightX(mapTokensButton) + margin; y: margin;
             height: buttonHeight; width: equalWidth(parent.width, 2)
             text: "Fixation Settings"
+
+            enabled: false
+
+            onClicked: options.open()
         }
 
         Button {
@@ -389,6 +405,15 @@ Window {
             x: margin; y: getBottomY(mapTokensButton) + margin;
             height: buttonHeight; width: equalWidth(parent.width, 2)
             text: "Generate Fixations"
+
+            enabled: false
+
+            onClicked: {
+                generateFixations(options.getSettings())
+            }
+            function generateFixations(algorithm) {
+                control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
+            }
         }
 
         Button {
@@ -396,6 +421,10 @@ Window {
             x: getRightX(genFixationDataButton) + margin; y: getBottomY(mapTokensButton) + margin;
             height: buttonHeight; width: equalWidth(parent.width, 2)
             text: "Query Fixations"
+
+            enabled: false
+
+            onClicked: filter.open()
         }
     }
 
