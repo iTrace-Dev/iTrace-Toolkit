@@ -380,7 +380,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit startProgressBar(0,counter);
 
     idb.startTransaction();
-
     counter = 1;
 
     for(auto session_id : sessions) {
@@ -389,7 +388,12 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
         for(auto gaze_target : gaze_targets) {
+            //emit outputToScreen("black","Generating fixations for gaze_target: "+gaze_target);
             QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
+            if(gazes.length() == 0) {
+                emit outputToScreen("#F55904","No gazes found for gaze target: "+gaze_target);
+                continue;
+            }
             FixationAlgorithm* algorithm;
             QStringList settings = algSettings.split("-");
             if(settings[0] == "BASIC") {
@@ -405,8 +409,11 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
             }
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
+            std::cout << session_id << std::endl;
             session_fixations.append(algorithm->generateFixations());
+            std::cout << "after generate" << std::endl;
             fixation_filter_settings = algorithm->generateFixationSettings();
+            std::cout << "after generate settings" << std::endl;
             emit setProgressBarValue(counter); ++counter;
             QApplication::processEvents();
             delete algorithm;
