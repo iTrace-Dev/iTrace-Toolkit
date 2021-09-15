@@ -189,7 +189,7 @@ Window {
             gif.visible = false;
         }
         onSetProgressBarValue: {
-            loadingBar.value = val
+            //loadingBar.value = val
         }
         onSetProgressBarToIndeterminate: {
             //loadingBar.visible = true

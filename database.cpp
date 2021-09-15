@@ -154,7 +154,7 @@ QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
 }
 
 QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString gaze_target) {
-/*
+
     QVector<Gaze> gazes;
     QSqlQuery session_gazes = db.exec(QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC").arg(session_id).arg(gaze_target));
     Gaze last_valid = Gaze();
@@ -166,22 +166,6 @@ QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString
         }
         else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
     }
-    //*/
-
-
-    // FAKE GAZE DATA
-    QVector<Gaze> gazes;
-    Gaze last_valid = Gaze();
-    QSqlQuery session_gazes = db.exec(QString("SELECT ide_context.event_time, ide_context.x, ide_context.y, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM ide_context WHERE ide_context.gaze_target = \"%1\" ORDER BY ide_context.event_time ASC").arg(gaze_target));
-    while(session_gazes.next()) {
-        Gaze data(session_gazes);
-        if(data.isValid()) {
-            gazes.push_back(data);
-            last_valid = data;
-        }
-        else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
-    }
-    //*/
 
     return gazes;
 
