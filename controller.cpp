@@ -391,7 +391,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             //emit outputToScreen("black","Generating fixations for gaze_target: "+gaze_target);
             QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
             if(gazes.length() == 0) {
-                emit outputToScreen("#F55904","No gazes found for gaze target: "+gaze_target);
                 continue;
             }
             FixationAlgorithm* algorithm;
@@ -409,11 +408,8 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
             }
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
-            std::cout << session_id << std::endl;
             session_fixations.append(algorithm->generateFixations());
-            std::cout << "after generate" << std::endl;
             fixation_filter_settings = algorithm->generateFixationSettings();
-            std::cout << "after generate settings" << std::endl;
             emit setProgressBarValue(counter); ++counter;
             QApplication::processEvents();
             delete algorithm;
@@ -433,7 +429,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             fixation_id.remove("{"); fixation_id.remove("}");
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
 
-            //std::cout << idb.checkAndReturnError().toUtf8().constData() << std::endl;
 
             ++fixation_order;
             std::set<long long> unique_gazes; // What does this even do? Check the py
