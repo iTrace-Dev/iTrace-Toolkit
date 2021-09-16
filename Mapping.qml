@@ -13,7 +13,7 @@ Popup {
     modal: true
     focus: true
     padding: 0
-    closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
+    closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     Button {
         id: browseButton

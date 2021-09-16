@@ -380,7 +380,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit startProgressBar(0,counter);
 
     idb.startTransaction();
-
     counter = 1;
 
     for(auto session_id : sessions) {
@@ -389,7 +388,11 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
         for(auto gaze_target : gaze_targets) {
+            //emit outputToScreen("black","Generating fixations for gaze_target: "+gaze_target);
             QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
+            if(gazes.length() == 0) {
+                continue;
+            }
             FixationAlgorithm* algorithm;
             QStringList settings = algSettings.split("-");
             if(settings[0] == "BASIC") {
@@ -426,7 +429,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             fixation_id.remove("{"); fixation_id.remove("}");
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
 
-            //std::cout << idb.checkAndReturnError().toUtf8().constData() << std::endl;
 
             ++fixation_order;
             std::set<long long> unique_gazes; // What does this even do? Check the py

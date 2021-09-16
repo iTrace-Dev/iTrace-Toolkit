@@ -84,8 +84,6 @@ void Database::insertFile(QString file_hash, QString session_id, QString file_fu
 }
 
 void Database::insertFixation(QString fixation_id, QString fixation_run_id, QString fixation_start_event_time, QString fixation_order_number, QString x, QString y, QString fixation_target, QString source_file_line, QString source_file_col, QString token, QString syntactic_category, QString xpath, QString left_pupil_diameter, QString right_pupil_diameter, QString duration) {
-    //QString s = QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15)").arg(fixation_id).arg(fixation_run_id).arg(fixation_start_event_time).arg(fixation_order_number).arg(x).arg(y).arg(fixation_target).arg(source_file_line).arg(source_file_col).arg(token == "null" ? "null" : "\""+token+"\"").arg(syntactic_category == "null" ? "null" : "\""+syntactic_category+"\"").arg(xpath == "null" ? "null" : "\""+xpath+"\"").arg(left_pupil_diameter).arg(right_pupil_diameter).arg(duration);
-    //std::cout << "Testing: " << s.toUtf8().constData() << std::endl;
     db.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15)").arg(fixation_id).arg(fixation_run_id).arg(fixation_start_event_time).arg(fixation_order_number).arg(x).arg(y).arg(fixation_target).arg(source_file_line).arg(source_file_col).arg(token == "null" ? "null" : "\""+token+"\"").arg(syntactic_category == "null" ? "null" : "\""+syntactic_category+"\"").arg(xpath == "null" ? "null" : "\""+xpath+"\"").arg(left_pupil_diameter).arg(right_pupil_diameter).arg(duration).replace("\"\"","\""));
 }
 
@@ -101,7 +99,7 @@ void Database::insertGaze(QString event_time, QString session_id, QString calibr
     db.exec(QString("INSERT INTO gaze(event_time,session_id,calibration_id,participant_id,tracker_time,system_time,x,y,left_x,left_y,left_pupil_diameter,left_validation,right_x,right_y,right_pupil_diameter,right_validation,user_left_x,user_left_y,user_left_z,user_right_x,user_right_y,user_right_z) VALUES(%1,%2,%3,\"%4\",\"%5\",\"%6\",\"%7\",\"%8\",\"%9\",\"%10\",\"%11\",\"%12\",\"%13\",\"%14\",\"%15\",\"%16\",\"%17\",\"%18\",\"%19\",\"%20\",\"%21\",\"%22\")").arg(event_time).arg(session_id).arg(calibration_id).arg(participant_id).arg(tracker_time).arg(system_time).arg(x).arg(y).arg(left_x).arg(left_y).arg(left_pupil_diameter).arg(left_validation).arg(right_x).arg(right_y).arg(right_pupil_diameter).arg(right_validation).arg(user_left_x).arg(user_left_y).arg(user_left_z).arg(user_right_x).arg(user_right_y).arg(user_right_z));
 }
 
-// The following parameters are unused and should always be inserted as "" - for now
+// The following parameters are unused here and should always be inserted as ""
 // source_token, source_token_type, source_token_xpath, source_token_sytnactic_context
 void Database::insertIDEContext(QString event_time, QString time_stamp, QString ide_type, QString gaze_target, QString gaze_target_type, QString source_file_path, QString source_file_line, QString source_file_col, QString editor_line_height, QString editor_font_height, QString editor_line_base_x, QString editor_line_base_y, QString source_token, QString source_token_type, QString source_token_xpath, QString source_token_syntactic_context, QString x, QString y) {
     db.exec(QString("INSERT INTO ide_context(event_time,time_stamp,ide_type,gaze_target,gaze_target_type,source_file_path,source_file_line,source_file_col,editor_line_height,editor_font_height,editor_line_base_x,editor_line_base_y,source_token,source_token_type,source_token_xpath,source_token_syntactic_context,x,y) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18)").arg(event_time).arg(time_stamp).arg(ide_type).arg(gaze_target).arg(gaze_target_type).arg(source_file_path).arg(source_file_line).arg(source_file_col).arg(editor_line_height == "" ? "null" : editor_line_height).arg(editor_font_height == "" ? "null" : editor_font_height).arg(editor_line_base_x == "" ? "null" : editor_line_base_x).arg(editor_line_base_y == "" ? "null" : editor_line_base_y).arg(source_token == "" ? "null" : "\""+source_token+"\"").arg(source_token_type == "" ? "null" : "\""+source_token_type+"\"").arg(source_token_xpath == "" ? "null" : "\""+source_token_xpath+"\"").arg(source_token_syntactic_context == "" ? "null" : "\""+source_token_syntactic_context+"\"").arg(x).arg(y));
@@ -154,7 +152,7 @@ QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
 }
 
 QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString gaze_target) {
-/*
+
     QVector<Gaze> gazes;
     QSqlQuery session_gazes = db.exec(QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC").arg(session_id).arg(gaze_target));
     Gaze last_valid = Gaze();
@@ -166,22 +164,6 @@ QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString
         }
         else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
     }
-    //*/
-
-
-    // FAKE GAZE DATA
-    QVector<Gaze> gazes;
-    Gaze last_valid = Gaze();
-    QSqlQuery session_gazes = db.exec(QString("SELECT ide_context.event_time, ide_context.x, ide_context.y, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM ide_context WHERE ide_context.gaze_target = \"%1\" ORDER BY ide_context.event_time ASC").arg(gaze_target));
-    while(session_gazes.next()) {
-        Gaze data(session_gazes);
-        if(data.isValid()) {
-            gazes.push_back(data);
-            last_valid = data;
-        }
-        else { if(last_valid.isValid()) { gazes.push_back(last_valid); } }
-    }
-    //*/
 
     return gazes;
 

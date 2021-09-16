@@ -67,7 +67,6 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
     //QVector<Fixation> fixations;
 
     while(shortest_dis < radius) {
-
         fixations.clear();
         int start_peak_index = 0;
 
