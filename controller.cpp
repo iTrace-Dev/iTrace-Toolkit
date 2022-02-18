@@ -321,11 +321,11 @@ void Controller::importPluginXML(const QString& file_path) {
         }
         else if(element == "environment") {
             std::map<QString,QString> types;
-            types["MSVS"] = "vstudio_plugin";
+            types["msvs"] = "vstudio_plugin";
             types["eclipse"] = "eclipse_plugin";
             types["atom"] = "atom_plugin";
             types["chrome"] = "chrome_plugin";
-            ide_plugin_type = plugin_file.getElementAttribute("plugin_type");
+            ide_plugin_type = plugin_file.getElementAttribute("plugin_type").toLower();
             // Insert file
             idb.insertFile(QCryptographicHash::hash(plugin_file.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),session_id,plugin_file.getFilePath(),types.at(ide_plugin_type));
         }
@@ -336,6 +336,7 @@ void Controller::importPluginXML(const QString& file_path) {
             if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
                 QString output = "Duplicate Plugin Context data in file: "+file_path+" with event_id: " + plugin_file.getElementAttribute(("event_id"));
                 emit outputToScreen("#F55904",output);
+                emit outputToScreen("#F55904",plugin_file.getElementAttribute(("event_id")));
                 log->writeLine("WARNING",output);
                 continue;
             }

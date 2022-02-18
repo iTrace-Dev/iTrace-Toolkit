@@ -58,9 +58,9 @@ bool Database::calibrationExists(const QString& calibration_id) {
 }
 
 bool Database::pluginResponseExists(const QString& response_id) {
-    QSqlQuery qry = db.exec(QString("SELECT event_time FROM ide_context WHERE event_time = %1").arg(response_id));
-    qry.last();
-    return qry.at() + 1 > 0;
+    QSqlQuery qry = db.exec(QString("SELECT COUNT(*) FROM ide_context WHERE event_time = %1").arg(response_id));
+    qry.first();
+    return qry.value(0).toInt() > 0;
 }
 
 void Database::startTransaction() { db.exec("BEGIN"); }

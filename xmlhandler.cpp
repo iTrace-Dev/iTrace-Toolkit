@@ -52,7 +52,6 @@ QString XMLHandler::getElementAttribute(QString attr) {
 }
 
 QString XMLHandler::getNextElementAsString() {
-    //if(i >= 1000) { std::cout << i << std::endl; }
     while(!isAtEnd()) {
         auto x = xml->readNext();
         if(x == QXmlStreamReader::StartElement) { break; }
