@@ -296,7 +296,7 @@ Window {
             height: buttonHeight; width: equalWidth(parent.width, 2); // equalWidth(parent.width - buttonHeight, 2); // For if close button
             x: getRightX(folderOpenButton) + margin; y: getBottomY(loadedDatabaseText) + margin;
             onClicked: {
-                folderOpen.open();
+                xmlOpen.open();
             }
 
             ToolTip.visible: hovered | down

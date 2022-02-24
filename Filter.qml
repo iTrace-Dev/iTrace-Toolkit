@@ -400,4 +400,12 @@ Popup {
             control.saveQueryFile(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),fileUrl);
         }
     }
+    FileDialog {
+        id: filterFileSave
+        selectExisting: true
+        nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","Tab-Separated Values (*.tsv;)","JSON Files (*.json;)","XML Files (*.xml;)"]
+        onAccepted: {
+
+        }
+    }
 }
