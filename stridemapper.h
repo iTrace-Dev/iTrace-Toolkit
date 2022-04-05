@@ -14,7 +14,7 @@ class StrideMapper
 {
 public:
     StrideMapper(Database& db) : idb(db) {};
-    void mapSyntax(SRCMLHandler&, QString, QString, bool);
+    void mapSyntax(QString, QString, bool);
 private:
     Database& idb;
 };

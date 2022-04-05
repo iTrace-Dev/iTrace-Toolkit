@@ -1,13 +1,12 @@
 #include "stridemapper.h"
 
-void StrideMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
+void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overwrite) {
     QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
 
-    QString unit_data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + srcml.getUnitText(unit_path) + "\n</xml>";
-
-
     QDomDocument unit;
-    unit.setContent(unit_data,false);
+    QFile file(project_path);
+    file.open(QIODevice::ReadOnly);
+    unit.setContent(&file, false);
 
     QVector<QDomElement> elements;
     elements.append(unit.documentElement());

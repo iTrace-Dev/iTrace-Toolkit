@@ -462,7 +462,11 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     SRCMLHandler srcml(srcml_file_path);
 
-    QVector<QString> all_files = srcml.getAllFilenames();
+    QVector<QString> all_files;
+    if (srcml_file_path.endsWith(".stride",Qt::CaseInsensitive))
+        all_files.append(srcml_file_path);
+    else
+        all_files = srcml.getAllFilenames();
 
     idb.startTransaction();
 
@@ -489,7 +493,7 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
             }
 
             if (file->second.endsWith(".stride")) {
-                strideMapper.mapSyntax(srcml, unit_path, file->second, overwrite);
+                strideMapper.mapSyntax(unit_path, file->second, overwrite);
             }
             else {
                 mapper.mapSyntax(srcml, unit_path, file->second, overwrite);
