@@ -475,6 +475,7 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     QString warn = "";
     SRCMLMapper mapper(idb);
+    StrideMapper strideMapper(idb);
     for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
         QElapsedTimer inner_timer;
         inner_timer.start();
@@ -487,8 +488,13 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
                 continue;
             }
 
-            mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
-            mapper.mapToken(srcml,unit_path,file->second,overwrite);
+            if (file->second.endsWith(".stride")) {
+                strideMapper.mapSyntax(srcml, unit_path, file->second, overwrite);
+            }
+            else {
+                mapper.mapSyntax(srcml, unit_path, file->second, overwrite);
+                mapper.mapToken(srcml, unit_path, file->second, overwrite);
+            }
         }
         emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
         emit setProgressBarValue(counter); ++counter;

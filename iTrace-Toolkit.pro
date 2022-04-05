@@ -43,6 +43,7 @@ SOURCES += \
         participantsmodel.cpp \
         srcmlhandler.cpp \
         srcmlmapper.cpp \
+        stridemapper.cpp \
         xmlhandler.cpp
 
 RESOURCES += qml.qrc \
