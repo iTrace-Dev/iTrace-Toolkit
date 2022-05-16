@@ -14,6 +14,8 @@
 
 #include <QAbstractListModel>
 
+#include "logger.h"
+
 struct Task {
     bool selected;
     QString sessionID;
@@ -82,10 +84,15 @@ public:
 
     Q_INVOKABLE void appendTask(const QString& sessionID) {modelList->appendTask(sessionID);}
 
-    Q_INVOKABLE void clearTasks() { modelList->clearTasks(); setModelList(modelList); }
+    Q_INVOKABLE void clearTasks() {
+        modelList->clearTasks();
+        //setModelList(modelList); // Old code that caused a Heap error
+        setModelList(new ParticipantsList());
+    }
 
 private:
     ParticipantsList* modelList;
+    Logger* log = Logger::instance();
 };
 
 #endif // PARTICIPANTSMODEL_H
