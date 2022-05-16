@@ -113,13 +113,11 @@ void Controller::saveDatabaseFile(QString file_loc) {
 }
 
 void Controller::loadDatabaseFile(QString file_path) {
-    log->writeLine("INFO","DEBUG||: Attempting to load");
-
     closeDatabase();
     changeFilePathOS(file_path);
     idb = Database(file_path);
 
-    for(auto i : idb.getSessions()) { emit taskAdded(i); log->writeLine("INFO","DEBUG||: adding a task");}
+    for(auto i : idb.getSessions()) { emit taskAdded(i); }
 
     log->writeLine("INFO","Successfully loaded database " + file_path);
 
@@ -133,7 +131,6 @@ void Controller::closeDatabase() {
     log->writeLine("INFO","Closed currently loaded database");
 
     emit databaseClosed();
-    log->writeLine("INFO","DEBUG||:AFTER CLOSE EMIT");
 }
 
 void Controller::importXMLFile(QString file_path) {

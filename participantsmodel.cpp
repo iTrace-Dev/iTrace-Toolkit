@@ -138,22 +138,16 @@ ParticipantsList* ParticipantsModel::getModelList() const {
 }
 
 void ParticipantsModel::setModelList(ParticipantsList* list) {
-    log->writeLine("INFO","DEBUG||:setmodel: start");
     beginResetModel(); // Must be called before the source of a model changes
 
     if(modelList) {// If the model is connected to a list already
-        log->writeLine("INFO","DEBUG||:setmodel: disconnect model");
         modelList->disconnect(this); // we disconnect it from the old list to prepare for the new one
-        log->writeLine("INFO","DEBUG||:setmodel: disconnected");
     }
 
     //delete modelList;
-    log->writeLine("INFO","DEBUG||:setmodel: set model");
     modelList = list;
-    log->writeLine("INFO","DEBUG||:setmodel: model set");
 
     if(modelList) { // If a valid list was set
-        log->writeLine("INFO","DEBUG||:setmodel: in if");
         connect(modelList, &ParticipantsList::preItemAppended, this, [=]() { // Connects this lambda to the preItemAppendedSignal
             const int index = modelList->items().size();
             beginInsertRows(QModelIndex(), index, index); // 2nd and 3rd parameters tell which indicies to start and end insertion
@@ -171,9 +165,6 @@ void ParticipantsModel::setModelList(ParticipantsList* list) {
         connect(modelList, &ParticipantsList::postItemRemoved, this, [=]() {
             endRemoveRows();
         });
-        log->writeLine("INFO","DEBUG||:setmodel: end of if");
     }
-    log->writeLine("INFO","DEBUG||:setmodel: end");
     endResetModel();
-    log->writeLine("INFO","DEBUG||:setmodel: very end");
 }
