@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file gaze.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,33 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef GAZE_H
+#define GAZE_H
+#include <string>
+#include <QSqlQuery>
+#include <QVariant>
+#include <iostream>
+#include <math.h>
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+class Gaze {
+public:
+    Gaze();
+    Gaze(QSqlQuery&);
 
-    QGuiApplication app(argc, argv);
+    bool isValid();
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    void print();
 
-    return app.exec();
-}
+    int left_validation, right_validation,
+        source_file_line = -1, source_file_col = -1;
+    long long event_time, system_time;
+    double x, y, left_pupil_diameter, right_pupil_diameter;
+    QString gaze_target = "", gaze_target_type = "",
+                source_token = "", source_token_xpath = "", source_token_syntatic_context = "";
+
+    //friend std::ostream& operator<<(std::ostream&,const Gaze&);
+
+};
+
+#endif // GAZE_H

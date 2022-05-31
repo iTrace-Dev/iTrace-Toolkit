@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file idtalgorithm.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,24 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef IDTALGORITHM_H
+#define IDTALGORITHM_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include "fixationalgorithm.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+class IDTAlgorithm : public FixationAlgorithm{
+public:
+    IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion);
+    ~IDTAlgorithm() {};
 
-    QGuiApplication app(argc, argv);
+    QVector<Fixation> generateFixations() override;
+    QString generateFixationSettings() override;
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+private:
+    Fixation computeFixationEstimate(QVector<Gaze>) override;
 
-    return app.exec();
-}
+    int duration_window;
+    int dispersion;
+};
+
+#endif // IDTALGORITHM_H

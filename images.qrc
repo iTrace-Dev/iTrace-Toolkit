@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>chain-open.png</file>
+        <file>chain-closed.png</file>
+        <file>loading_128.gif</file>
+        <file>file upload.png</file>
+        <file>folder upload.png</file>
+        <file>cross.png</file>
+    </qresource>
+</RCC>

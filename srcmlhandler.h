@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file srcmlhandler.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,29 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef SRCMLHANDLER_H
+#define SRCMLHANDLER_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include <QString>
+#include <QXmlQuery>
+#include <QXmlStreamReader>
+#include <QFile>
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    QGuiApplication app(argc, argv);
+class SRCMLHandler {
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+public:
+    SRCMLHandler() {};
+    SRCMLHandler(QString);
 
-    return app.exec();
-}
+    QVector<QString> getAllFilenames();
+
+    QString getUnitText(QString);
+    QString getUnitBody(QString);
+
+
+private:
+    QString file_path;
+};
+
+#endif // SRCMLHANDLER_H

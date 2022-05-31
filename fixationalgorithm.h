@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file fixationalgorithm.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,30 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef FIXATIONALGORITHM_H
+#define FIXATIONALGORITHM_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include "gaze.h"
+#include "fixation.h"
+#include <QVector>
 
-int main(int argc, char *argv[])
+class FixationAlgorithm
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+public:
+    FixationAlgorithm() {};
+    FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
+    virtual ~FixationAlgorithm() {};
 
-    QGuiApplication app(argc, argv);
+    virtual QVector<Fixation> generateFixations()=0;
+    virtual QString generateFixationSettings()=0;
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    QVector<Fixation>& getFixations();
 
-    return app.exec();
-}
+protected:
+    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
+
+    QVector<Gaze> session_gazes;
+    QVector<Fixation> fixations;
+};
+
+#endif // FIXATIONALGORITHM_H

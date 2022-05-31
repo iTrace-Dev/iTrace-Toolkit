@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file basicalgorithm.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,27 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef BASICALGORITHM_H
+#define BASICALGORITHM_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include "fixationalgorithm.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+class BasicAlgorithm: public FixationAlgorithm {
+public:
+    BasicAlgorithm(QVector<Gaze> gazes, int _window_size, int _radius, int _peak_threshold);
+    ~BasicAlgorithm() {};
 
-    QGuiApplication app(argc, argv);
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    QVector<Fixation> generateFixations() override;
 
-    return app.exec();
-}
+    QString generateFixationSettings() override;
+
+private:
+    Fixation computeFixationEstimate(QVector<Gaze>) override;
+
+    int window_size;
+    int radius;
+    int peak_threshold;
+};
+
+#endif // BASICALGORITHM_H

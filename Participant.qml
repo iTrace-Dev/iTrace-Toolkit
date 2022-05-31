@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file Participant.qml
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,41 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.3
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+import Participants 1.0
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+ListView {
+    implicitHeight: 250
+    implicitWidth: 250
+    clip: true // Makes it so elements outside of the listview are not visible
 
-    QGuiApplication app(argc, argv);
+    model: ParticipantsModel {
+        list: participants
+    }
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    delegate: RowLayout {
+        height: 20
+        CheckBox {
+            id: control
+            checked: model.done
 
-    return app.exec();
+            indicator.height: parent.height
+            indicator.width: parent.height
+            indicator.x: control.leftPadding
+
+            contentItem: Text {
+                id: checkName
+                text: model.description
+                leftPadding: control.indicator.width + control.spacing
+                verticalAlignment: Text.AlignVCenter
+                font.pointSize: 10
+
+            }
+
+            onClicked: model.done = checked // can do function stuff here
+        }
+    }
 }

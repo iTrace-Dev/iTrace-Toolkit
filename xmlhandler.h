@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file xmlhandler.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,44 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef XMLHANDLER_H
+#define XMLHANDLER_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include <QString>
+#include <QXmlStreamReader>
+#include <QXmlStreamAttributes>
+#include <QFile>
+#include <QVector>
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#include <iostream>
 
-    QGuiApplication app(argc, argv);
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+class XMLHandler {
+public:
+    XMLHandler();
+    XMLHandler(QString);
+    ~XMLHandler();
 
-    return app.exec();
-}
+    void addString(QString);
+
+    QString checkAndReturnError();
+
+    QString getXMLFileType();
+    QString getNextElementName();
+    QString getElementAttribute(QString);
+
+    QString getNextElementAsString();
+
+    void resetStream();
+    bool isAtEnd();
+
+    QString getFilePath() { return file_path; }
+private:
+    QString file_path;
+    QFile file;
+    QXmlStreamReader* xml;
+
+    int i = 0;
+};
+
+#endif // XMLHANDLER_H

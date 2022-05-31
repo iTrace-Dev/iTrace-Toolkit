@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 /********************************************************************************************************************************************************
-* @file main.cpp
+* @file ivtalgorithm.h
 *
 * @Copyright (C) 2022 i-trace.org
 *
@@ -10,31 +9,23 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#ifndef IVTALGORITHM_H
+#define IVTALGORITHM_H
 
-#include "participantsmodel.h"
-//#include "control.h"
-=======
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
+#include "fixationalgorithm.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+class IVTAlgorithm: public FixationAlgorithm {
+public:
+    IVTAlgorithm(QVector<Gaze> gazes, int _velocity, int _duration_ms);
+    ~IVTAlgorithm() {};
 
-    QGuiApplication app(argc, argv);
+    QVector<Fixation> generateFixations() override;
+    QString generateFixationSettings() override;
+private:
+    Fixation computeFixationEstimate(QVector<Gaze>) override;
 
-    QQmlApplicationEngine engine;
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    int velocity_threshold;
+    int duration_ms;
+};
 
-    return app.exec();
-}
+#endif // IVTALGORITHM_H
