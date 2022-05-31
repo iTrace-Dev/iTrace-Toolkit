@@ -11,7 +11,6 @@
 
 import QtQuick 2.15
 import QtQuick.Window 2.15
-<<<<<<< HEAD
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.3
@@ -572,12 +571,5 @@ Window {
 
 
 
-=======
-
-Window {
-    visible: true
-    width: 640
-    height: 480
-    title: qsTr("Hello World")
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
 }
+

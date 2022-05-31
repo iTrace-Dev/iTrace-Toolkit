@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>Participant.qml</file>
+        <file>Options.qml</file>
+        <file>Mapping.qml</file>
+        <file>Filter.qml</file>
     </qresource>
 </RCC>
