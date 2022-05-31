@@ -10,8 +10,13 @@
 ##########################################################################################################################################################################################################################################################
 
 QT += quick
+QT += widgets
+QT += sql
+QT += core
+QT += xmlpatterns xml
 
 CONFIG += c++11
+CONFIG += sql
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -25,7 +30,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-<<<<<<< HEAD
         basicalgorithm.cpp \
         controller.cpp \
         database.cpp \
@@ -43,14 +47,9 @@ SOURCES += \
 
 RESOURCES += qml.qrc \
     images.qrc
-=======
-        main.cpp
-
-RESOURCES += qml.qrc
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
+QML_IMPORT_PATH = $$PWD
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
 QML_DESIGNER_IMPORT_PATH =
@@ -59,7 +58,6 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-<<<<<<< HEAD
 
 # ICON
 RC_ICONS = iTrace.ico
@@ -82,5 +80,3 @@ HEADERS += \
 CONFIG += qmltypes
 QML_IMPORT_NAME = io.qt.examples.backend
 QML_IMPORT_MAJOR_VERSION = 1
-=======
->>>>>>> 73b168bc23d7cf768d99a7692d5c70b04ddc1b27
