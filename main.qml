@@ -278,7 +278,7 @@ Window {
             }
 
             ToolTip.visible: hovered | down
-            ToolTip.text: "Select a folder to upload all srcML or XML files inside it"
+            ToolTip.text: "Select a folder to recursively upload all srcML or XML files inside it"
 
             enabled: false
 

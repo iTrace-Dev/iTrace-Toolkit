@@ -170,24 +170,39 @@ void Controller::batchAddXML(QString folder_path) {
     emit setProgressBarToIndeterminate();
 
     changeFilePathOS(folder_path);
+
+    QDirIterator counter(folder_path, QDir::Files, QDirIterator::Subdirectories);
+    int count = 0;
+
+    while(counter.hasNext()) {
+        ++count;
+        counter.next();
+        if(count > 1000) {
+            emit stopProgressBar();
+            emit warning("File Search Too Large","The selected folder contained too many sub items.");
+            return;
+        }
+    }
+
+
     std::map<QString,std::pair<std::vector<QString>,bool>> files;
-    QDirIterator dir(folder_path);
+    QDirIterator dir(folder_path, QStringList() << "*.xml", QDir::Files, QDirIterator::Subdirectories);;
     while(dir.hasNext()) {
         QString filename = dir.next();
-        if(filename.endsWith(".xml")) {
-            changeFilePathOS(filename);
-            XMLHandler xml_file(filename);
-            QString type = xml_file.getXMLFileType();
-            if(type == "itrace_core" || type == "itrace_plugin") {
-                QString id = xml_file.getElementAttribute("session_id");
-                if(files.count(id) == 0) {
-                    auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
-                    insert.first->second.first.push_back(filename);
-                }
-                else { (files.find(id))->second.first.push_back(filename); }
-                if(type == "itrace_core") { files.find(id)->second.second = true; }
+        //if(filename.endsWith(".xml")) {
+        changeFilePathOS(filename);
+        XMLHandler xml_file(filename);
+        QString type = xml_file.getXMLFileType();
+        if(type == "itrace_core" || type == "itrace_plugin") {
+            QString id = xml_file.getElementAttribute("session_id");
+            if(files.count(id) == 0) {
+                auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
+                insert.first->second.first.push_back(filename);
             }
+            else { (files.find(id))->second.first.push_back(filename); }
+            if(type == "itrace_core") { files.find(id)->second.second = true; }
         }
+        //}
         QApplication::processEvents();
     }
     QString badPairWarn, alreadyInWarn;
