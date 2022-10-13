@@ -41,6 +41,8 @@ public:
     
     void startTransaction();
     void commit();
+
+    void executeLongQuery(QString);
     
     void insertCalibration(QString);
     void insertCalibrationPoint(QString,QString,QString,QString);
@@ -57,6 +59,7 @@ public:
 
     QString getSessionFromParticipantAndTask(QString,QString);
     QVector<QString> getSessions();
+    QVector<QString> getAllIDEContextIDs();
     QVector<QString> getGazeTargetsFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
@@ -65,8 +68,11 @@ public:
     QVector<QString> getFixationRunIDs();
     QVector<QVector<QString>> getFixationsFromRunID(QString);
 
+
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);
+    QString getUpdateGazeWithSyntacticInfoQuery(QString,QString,QString);
+    QString getUpdateGazeWithTokenInfoQuery(QString,QString,QString);
 
     QVector<QVector<QString>> runFilterQuery(QString);
 

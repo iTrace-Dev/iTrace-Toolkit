@@ -24,6 +24,8 @@ public:
     SRCMLHandler() {};
     SRCMLHandler(QString);
 
+    QString getFilePath() { return file_path; }
+
     QVector<QString> getAllFilenames();
 
     QString getUnitText(QString);

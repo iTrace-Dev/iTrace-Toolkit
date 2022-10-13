@@ -91,6 +91,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
         QApplication::processEvents();
     }
 
+    QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
@@ -105,7 +107,7 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
         QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
 
         if(cached_gazes.count(gaze_key) > 0) {
-            idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
+            big_query += idb.getUpdateGazeWithSyntacticInfoQuery(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
             continue;
         }
 
@@ -183,8 +185,10 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
             QApplication::processEvents();
         }
         cached_gazes.emplace(gaze_key,std::make_pair(xpath,syntactic_context));
-        idb.updateGazeWithSyntacticInfo(response[0],xpath,syntactic_context);
+        big_query += idb.getUpdateGazeWithSyntacticInfoQuery(response[0],xpath,syntactic_context);
     }
+
+    idb.executeLongQuery(big_query);
 }
 
 void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
@@ -207,6 +211,8 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
         }
     }
 
+    QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
     for(auto response : responses) {
@@ -221,7 +227,7 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
 
         QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
         if(cached_gazes.count(gaze_key) > 0) {
-            idb.updateGazeWithTokenInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
+            big_query += idb.getUpdateGazeWithTokenInfoQuery(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
             continue;
         }
         // If line_num > number of line in body
@@ -232,13 +238,13 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
         if(!(res_line < unit_body.size()) || !(res_col < unit_body[res_line].size())) {
             token = "WHITESPACE";
             cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
-            idb.updateGazeWithTokenInfo(response[0],token,token_type);
+            big_query += idb.getUpdateGazeWithTokenInfoQuery(response[0],token,token_type);
             continue;
         }
         setLineTextToken(unit_body[res_line],res_col,response[3],token,token_type);
 
         cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
-        idb.updateGazeWithTokenInfo(response[0],token,token_type);
+        big_query += idb.getUpdateGazeWithTokenInfoQuery(response[0],token,token_type);
         QApplication::processEvents();
     }
 }

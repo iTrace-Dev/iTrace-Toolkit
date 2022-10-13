@@ -337,6 +337,8 @@ void Controller::importPluginXML(const QString& file_path) {
     QString session_id,
             ide_plugin_type;
 
+    QVector<QString> all_ids = idb.getAllIDEContextIDs();
+
     while(!plugin_file.isAtEnd()) {
         QString element = plugin_file.getNextElementName();
 
@@ -357,7 +359,8 @@ void Controller::importPluginXML(const QString& file_path) {
             // Insert ide_context
 
             // Check if we are inserting duplicate data
-            if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            //if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            if (all_ids.contains(plugin_file.getElementAttribute("event_id"))) {
                 QString output = "Duplicate Plugin Context data in file: "+file_path+" with event_id: " + plugin_file.getElementAttribute(("event_id"));
                 emit outputToScreen("#F55904",output);
                 emit outputToScreen("#F55904",plugin_file.getElementAttribute(("event_id")));
@@ -367,6 +370,7 @@ void Controller::importPluginXML(const QString& file_path) {
 
             // The last 4 parameters are unused for the moment
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
+            all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
         QString report = idb.checkAndReturnError();
         if(report != "") {
@@ -464,6 +468,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
         QApplication::processEvents();
     }
+
     idb.commit();
     emit stopProgressBar();
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
@@ -476,6 +481,9 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
+
+    // Add srcML Archive to Files table
+    idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
 
     QVector<QString> all_files = srcml.getAllFilenames();
 
