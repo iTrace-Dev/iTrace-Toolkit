@@ -19,10 +19,11 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include <sqlite3.h>
+
 #include "gaze.h"
 
 #include <iostream>
-
 
 class Database {
 public:
@@ -30,20 +31,16 @@ public:
     Database(QString);
 
     void close();
-    
-    QString checkAndReturnError();
-    
     bool isDatabaseOpen();
+
     bool fileExists(const QString&);
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);
     bool pluginResponseExists(const QString&);
-    
+
     void startTransaction();
     void commit();
 
-    void executeLongQuery(QString);
-    
     void insertCalibration(QString);
     void insertCalibrationPoint(QString,QString,QString,QString);
     void insertCalibrationSample(QString,QString,QString,QString,QString,QString,QString);
@@ -57,28 +54,64 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
-    QString getSessionFromParticipantAndTask(QString,QString);
     QVector<QString> getSessions();
     QVector<QString> getAllIDEContextIDs();
+    QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
+    QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
     QVector<QString> getGazeTargetsFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
-    QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
-    QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
+    QString getSessionFromParticipantAndTask(QString,QString);
+
+    void updateGazeWithSyntacticInfo(QString,QString,QString);
+    void updateGazeWithTokenInfo(QString,QString,QString);
+
+    QString queryUpdateGazeWithSyntacticInfo(QString,QString,QString);
+    QString queryUpdateGazeWithTokenInfo(QString,QString,QString);
+
+    QVector<QVector<QString>> runFilterQuery(QString);
+    void executeLongUpdateQuery(QString);
+
+private:
+    sqlite3* db;
+    QString file_path;
+    bool open = false;
+};
+
+/*class Database {
+public:
+
+    QString checkAndReturnError();
+
+    void startTransaction();
+    void commit();
+
+    void executeLongQuery(QString);
+
+
+
+
+
+    QVector<QString> getAllIDEContextIDs();
+
+
+
+
+
     QVector<QString> getFixationRunIDs();
     QVector<QVector<QString>> getFixationsFromRunID(QString);
 
 
-    void updateGazeWithSyntacticInfo(QString,QString,QString);
-    void updateGazeWithTokenInfo(QString,QString,QString);
+
+
     QString getUpdateGazeWithSyntacticInfoQuery(QString,QString,QString);
     QString getUpdateGazeWithTokenInfoQuery(QString,QString,QString);
 
-    QVector<QVector<QString>> runFilterQuery(QString);
+
 
 private:
     QSqlDatabase db;
     QString file_path;
-};
+};*/
 
 #endif // DATABASE_H

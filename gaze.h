@@ -22,6 +22,8 @@ class Gaze {
 public:
     Gaze();
     Gaze(QSqlQuery&);
+    Gaze(char**);
+    Gaze(const Gaze&);
 
     bool isValid();
 

@@ -13,7 +13,6 @@
 
 Gaze::Gaze() {}
 
-
 Gaze::Gaze(QSqlQuery& gaze_data) {
 
     // Core Data
@@ -35,6 +34,48 @@ Gaze::Gaze(QSqlQuery& gaze_data) {
     source_token_xpath = gaze_data.value(13).toString();
     source_token_syntatic_context = gaze_data.value(14).toString();
 }//*/
+
+Gaze::Gaze(char** argv) {
+    // Core Data
+    event_time = QString(argv[0]).toLongLong();
+    x = QString(argv[1]).toDouble();
+    y = QString(argv[2]).toDouble();
+    system_time = QString(argv[3]).toLongLong();
+    left_pupil_diameter = QString(argv[4]).toDouble();
+    right_pupil_diameter = QString(argv[5]).toDouble();
+    left_validation = QString(argv[6]).toInt();
+    right_validation = QString(argv[7]).toInt();
+
+    // Plugin Data
+    gaze_target = QString(argv[8]);
+    gaze_target_type = QString(argv[9]);
+    source_file_line = QString(argv[10]).toInt();
+    source_file_col = QString(argv[11]).toInt();
+    source_token = QString(argv[12]);
+    source_token_xpath = QString(argv[13]);
+    source_token_syntatic_context = QString(argv[14]);
+}
+
+Gaze::Gaze(const Gaze& other) {
+    // Core Data
+    event_time = other.event_time;
+    x = other.x;
+    y = other.y;
+    system_time = other.system_time;
+    left_pupil_diameter = other.left_pupil_diameter;
+    right_pupil_diameter = other.right_pupil_diameter;
+    left_validation = other.left_validation;
+    right_validation = other.right_validation;
+
+    // Plugin Data
+    gaze_target = other.gaze_target;
+    gaze_target_type = other.gaze_target_type;
+    source_file_line = other.source_file_line;
+    source_file_col = other.source_file_col;
+    source_token = other.source_token;
+    source_token_xpath = other.source_token_xpath;
+    source_token_syntatic_context = other.source_token_syntatic_context;
+}
 
 
 // Determines if the gaze data is valid. Can be altered later.
