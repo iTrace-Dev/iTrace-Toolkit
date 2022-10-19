@@ -14,11 +14,10 @@
 void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& token_type) {
     // token_type is currently unused?
     QVector<QString> delimiters = {
-        "(",")","{","}",".","++","--","+","-",
-        "!","~",",","/","%","*","<<",">>",">>>",
-        "<","<=",">","<=","==","!=","@","&","^",
-        "|","&&","||","?",":","+=","-=","*=",
-        "/=","=",";" // Should we add -> (arrow operator)?
+        "(",")","{","}",".",",",
+        "=","+","-","*","/","%",
+        "@","|","&","^","<",">",
+        ":","?",
     };
     int start = col,
         end = col;
@@ -36,13 +35,15 @@ void setLineTextToken(QString source_line, int col, QString syntactic_context, Q
     // Operator or a delimiter
     else if(delimiters.contains(QString(source_line[col]))) {
         token = source_line[col];
-        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
+        //while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
+        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(QString(source_line[start-1]))) {
             --start;
             token = source_line[start] + token;
         }
-        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
+        //while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
+        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(QString(source_line[end+1]))) {
             ++end;
-            token += source_line[end];;
+            token += source_line[end];
         }
     }
     else {

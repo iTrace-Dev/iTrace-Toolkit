@@ -549,8 +549,9 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
     QString shortest = "";
     int passes = 1;
 
-    QVector<QStringList> candidates;
+
     while(possible.size() != 1) {
+        QVector<QStringList> candidates;
         if(passes > file_split.size()) { return shortest; }
         for(auto unit_path : possible) {
             if(passes > unit_path.size()) {
@@ -558,7 +559,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
                 continue;
             }
             QString unit_check = unit_path[unit_path.size() - passes].toLower();
-            QString file_check = file_split[file_split.size() - 1];
+            QString file_check = file_split[file_split.size() - passes];
             if(unit_check == file_check) {
                 candidates.push_back(unit_path);
             }
@@ -567,8 +568,8 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
         ++passes;
         QApplication::processEvents();
     }
-    if(candidates.size() == 0) { return ""; }
-    return candidates[0].join("/");
+    if(possible.size() == 0) { return ""; }
+    return possible[0].join("/");
 }
 
 
