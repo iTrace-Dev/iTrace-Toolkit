@@ -19,6 +19,13 @@ Database::Database(QString file_path) : Database() {
 
     std::cout << error << std::endl;
 
+    QString pragma_query =
+            "pragma journal_mode = WAL;"
+            "pragma synchronous = off;"
+            "pragma temp_store = memory;"
+            "pragma mmap_size = 30000000000;"
+            ;
+
     QString table_query =
             "CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER);"
             "CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
@@ -36,6 +43,8 @@ Database::Database(QString file_path) : Database() {
             "CREATE INDEX idx_event_time ON ide_context(event_time);"
             ;
 
+
+    //sqlite3_exec(db, pragma_query.toStdString().c_str(), NULL, 0, NULL);
 
     sqlite3_exec(db, table_query.toStdString().c_str(), NULL, 0, NULL);
 

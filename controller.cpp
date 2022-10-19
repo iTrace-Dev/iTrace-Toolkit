@@ -485,8 +485,9 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
     SRCMLHandler srcml(srcml_file_path);
 
     // Add srcML Archive to Files table
-    idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
-
+    if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
+    }
     QVector<QString> all_files = srcml.getAllFilenames();
 
     idb.startTransaction();
