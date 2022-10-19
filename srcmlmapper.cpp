@@ -71,6 +71,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
     QDomElement first = unit.documentElement().firstChildElement();
 
     QVector<QDomElement> parents; parents.push_back(first);
+
+
     while(parents.size() != 0) {
         QDomElement crnt = parents[parents.size() - 1];
 
@@ -91,6 +93,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
         QApplication::processEvents();
     }
 
+    //QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
@@ -98,8 +102,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
         int res_line = response[1].toInt(),
             res_col = response[2].toInt();
 
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }*/
 
         //THIS CAN CHANGE IN THE FUTURE
         QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
@@ -190,8 +194,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
 void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
     QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
 
-    QString report = idb.checkAndReturnError();
-    if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING TOP: " << report.toUtf8().constData() << std::endl; }
+    /*QString report = idb.checkAndReturnError();
+    if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING TOP: " << report.toUtf8().constData() << std::endl; }*/
 
     QStringList unit_body = srcml.getUnitBody(unit_path).split("\n");
     //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
@@ -207,6 +211,8 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
         }
     }
 
+    //QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
     for(auto response : responses) {
@@ -216,8 +222,8 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
         QString token = "",
                 token_type = "";
 
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING BOTTOM: " << report.toUtf8().constData() << std::endl; }
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING BOTTOM: " << report.toUtf8().constData() << std::endl; }*/
 
         QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
         if(cached_gazes.count(gaze_key) > 0) {

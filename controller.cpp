@@ -300,11 +300,11 @@ void Controller::importCoreXML(const QString& file_path) {
             // Insert gaze
             idb.insertGaze(core_file.getElementAttribute("event_id"),session_id,calibration_id,participant_id,core_file.getElementAttribute("tracker_time"),core_file.getElementAttribute("core_time"),core_file.getElementAttribute("x"),core_file.getElementAttribute("y"),core_file.getElementAttribute("left_x"),core_file.getElementAttribute("left_y"),core_file.getElementAttribute("left_pupil_diameter"),core_file.getElementAttribute("left_validation"),core_file.getElementAttribute("right_x"),core_file.getElementAttribute("right_y"),core_file.getElementAttribute("right_pupil_diameter"),core_file.getElementAttribute("right_validation"),core_file.getElementAttribute("user_left_x"),core_file.getElementAttribute("user_left_y"),core_file.getElementAttribute("user_left_z"),core_file.getElementAttribute("user_right_x"),core_file.getElementAttribute("user_right_y"),core_file.getElementAttribute("user_right_z"));
         }
-        QString report = idb.checkAndReturnError();
+        /*QString report = idb.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The followng SQLite Error occured while handling core file: "+report);
-        }
-        report = core_file.checkAndReturnError();
+        }*/
+        QString report = core_file.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The following XML Error occured while handling core file: "+report);
         }
@@ -337,8 +337,12 @@ void Controller::importPluginXML(const QString& file_path) {
     QString session_id,
             ide_plugin_type;
 
+    // Used for checking for duplicate data
+    QVector<QString> all_ids;// = idb.getAllIDEContextIDs();
+
     while(!plugin_file.isAtEnd()) {
         QString element = plugin_file.getNextElementName();
+        //std::cout << element << std::endl;
 
         if(element == "itrace_plugin") {
             session_id = plugin_file.getElementAttribute("session_id");
@@ -357,7 +361,8 @@ void Controller::importPluginXML(const QString& file_path) {
             // Insert ide_context
 
             // Check if we are inserting duplicate data
-            if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            //if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            if (all_ids.contains(plugin_file.getElementAttribute("event_id"))) {
                 QString output = "Duplicate Plugin Context data in file: "+file_path+" with event_id: " + plugin_file.getElementAttribute(("event_id"));
                 emit outputToScreen("#F55904",output);
                 emit outputToScreen("#F55904",plugin_file.getElementAttribute(("event_id")));
@@ -367,12 +372,13 @@ void Controller::importPluginXML(const QString& file_path) {
 
             // The last 4 parameters are unused for the moment
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
+            all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
-        QString report = idb.checkAndReturnError();
+        /*QString report = idb.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The followng SQLite Error occured while handling plugin file: "+report);
-        }
-        report = plugin_file.checkAndReturnError();
+        }*/
+        QString report = plugin_file.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The following XML Error occured while handling plugin file: "+report);
         }
@@ -464,6 +470,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
         QApplication::processEvents();
     }
+
     idb.commit();
     emit stopProgressBar();
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
@@ -477,6 +484,10 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
 
     SRCMLHandler srcml(srcml_file_path);
 
+    // Add srcML Archive to Files table
+    if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
+    }
     QVector<QString> all_files = srcml.getAllFilenames();
 
     idb.startTransaction();
@@ -562,7 +573,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
 
 
 void Controller::highlightFixations(QString dir, QString srcml_file_path) {
-    if(!idb.isDatabaseOpen()) {
+    /*if(!idb.isDatabaseOpen()) {
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
@@ -576,7 +587,7 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
         emit outputToScreen("black","Fixation Run: " + id);
         highlightTokens(idb.getFixationsFromRunID(id),SRCMLHandler(srcml_file_path),dir,id);
     }
-    emit outputToScreen("black",QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));*/
 }
 
 // WIP
