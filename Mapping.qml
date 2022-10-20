@@ -65,7 +65,7 @@ Popup {
         anchors.horizontalCenter: parent.horizontalCenter
         onClicked: {
             mappingMenu.close()
-            control.mapTokens(srcmlOpen.fileUrl, overwriteCheck.checked)
+            control.mapTokens(srcmlOpen.fileUrl, participantList.model.getModelList().getSelected(), overwriteCheck.checked)
         }
     }
 
