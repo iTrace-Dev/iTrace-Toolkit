@@ -80,7 +80,7 @@ public:
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
 
     //srcML Functions
-    Q_INVOKABLE void mapTokens(QString,bool);
+    Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool);
     QString findMatchingPath(QVector<QString>,QString);
 
     //Highlight Functions

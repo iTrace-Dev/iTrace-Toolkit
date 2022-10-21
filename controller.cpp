@@ -371,7 +371,7 @@ void Controller::importPluginXML(const QString& file_path) {
             }
 
             // The last 4 parameters are unused for the moment
-            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
+            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),session_id,plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
             all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
         /*QString report = idb.checkAndReturnError();
@@ -476,9 +476,17 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
-void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
+void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
+
+    QVector<QString> sessions;
+    for(auto i : tasks) { // Get the sessions that the user wants to use
+        QStringList values = i.split(" - ");
+        if(values[2] == "1") {
+            sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+        }
+    }
 
     changeFilePathOS(srcml_file_path);
 
@@ -513,8 +521,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
                 continue;
             }
 
-            mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
-            mapper.mapToken(srcml,unit_path,file->second,overwrite);
+            mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
+            mapper.mapToken(srcml,unit_path,file->second,overwrite,sessions);
         }
         emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
         emit setProgressBarValue(counter); ++counter;
