@@ -62,6 +62,39 @@ bool Database::isDatabaseOpen() {
     return open;
 }
 
+int getTableNamesCALLBACK(void* table_names, int argc, char** argv, char** azColName) {
+    QVector<QString>* x = (QVector<QString>*)table_names;
+    x->push_back(argv[0]);
+    return 0;
+}
+void Database::importExistingDatabase(QString file_path) {
+    startTransaction();
+
+    char* errmsg = 0;
+
+    QString attach_query = QString("ATTACH '%1' AS importing_db").arg(file_path);
+    int rc = sqlite3_exec(db, attach_query.toStdString().c_str(),NULL,0,&errmsg);
+    if(rc != SQLITE_OK) { std::cout << errmsg << std::endl; }
+
+
+    QVector<QString> table_names;
+    QString table_names_query = QString("SELECT name FROM sqlite_schema WHERE type='table'");
+    rc = sqlite3_exec(db,table_names_query.toStdString().c_str(),getTableNamesCALLBACK, (void*)&table_names, &errmsg);
+    if(rc != SQLITE_OK) { std::cout << errmsg << std::endl; }
+
+    QString raw_import_insert_query = QString("INSERT OR IGNORE INTO %1 SELECT * FROM importing_db.%2");
+    for(auto table_name : table_names) {
+        rc = sqlite3_exec(db,raw_import_insert_query.arg(table_name,table_name).toStdString().c_str(),NULL,0,&errmsg);
+        if(rc != SQLITE_OK) { std::cout << errmsg << std::endl; }
+    }
+
+    commit();
+
+    QString detach_query = QString("DETACH importing_db");
+    rc = sqlite3_exec(db,detach_query.toStdString().c_str(),NULL,0,&errmsg);
+    if(rc != SQLITE_OK) { std::cout << errmsg << std::endl; }
+}
+
 int exists_callback(void *count, int argc, char** argv, char** azColName) {
     int* x = (int*)count;
     *x = argc;
