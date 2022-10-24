@@ -33,6 +33,8 @@ public:
     void close();
     bool isDatabaseOpen();
 
+    void importExistingDatabase(QString);
+
     bool fileExists(const QString&);
     bool participantExists(const QString&);
     bool calibrationExists(const QString&);

@@ -160,6 +160,20 @@ void Controller::importXMLFile(QString file_path) {
     }
 }
 
+void Controller::importDatabaseFile(QString file_path) {
+    changeFilePathOS(file_path);
+
+    std::cout << "Importing DB : " << file_path << std::endl;
+
+    idb.importExistingDatabase(file_path);
+
+    for(auto i : idb.getSessions()) { emit taskAdded(i); }
+
+    log->writeLine("INFO","Successfully imported database " + file_path);
+    emit outputToScreen("black","Successfully imported database.");
+
+}
+
 void Controller::batchAddXML(QString folder_path) {
     log->writeLine("INFO","Scanning and adding all XML files in: "+folder_path);
     if(!idb.isDatabaseOpen()) {

@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE void loadDatabaseFile(QString);
     Q_INVOKABLE void closeDatabase();
     Q_INVOKABLE void importXMLFile(QString);
+    Q_INVOKABLE void importDatabaseFile(QString);
     Q_INVOKABLE void batchAddXML(QString);
     void importCoreXML(const QString&);
     void importPluginXML(const QString&);
