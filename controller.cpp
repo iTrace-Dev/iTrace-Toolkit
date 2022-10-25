@@ -505,6 +505,10 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
+    if(!srcml.isPositional()) {
+        emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
+        return;
+    }
 
     // Add srcML Archive to Files table
     if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {

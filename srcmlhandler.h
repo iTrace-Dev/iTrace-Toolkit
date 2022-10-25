@@ -24,6 +24,8 @@ public:
     SRCMLHandler() {};
     SRCMLHandler(QString);
 
+    bool isPositional();
+
     QString getFilePath() { return file_path; }
 
     QVector<QString> getAllFilenames();
