@@ -91,9 +91,9 @@ public:
 
     //Query Functions
     Q_INVOKABLE QString generateQuery(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
-    Q_INVOKABLE void loadQueryFile(QString, QString);
-    Q_INVOKABLE void saveQueryFile(QString, QString);
-    Q_INVOKABLE void generateQueriedData(QString,QString);
+    Q_INVOKABLE void loadQueryFile(QString,QString,QString);
+    Q_INVOKABLE void saveQueryFile(QString,QString);
+    Q_INVOKABLE void generateQueriedData(QString,QString,QString);
 
 
 signals:

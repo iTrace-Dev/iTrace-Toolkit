@@ -749,7 +749,7 @@ QString Controller::generateQuery(QString targets, QString token_types, QString 
     return query;
 }
 
-void Controller::loadQueryFile(QString file_path, QString output_type) {
+void Controller::loadQueryFile(QString file_path, QString output_type, QString output_url) {
     changeFilePathOS(file_path);
     QFile file(file_path);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -761,7 +761,7 @@ void Controller::loadQueryFile(QString file_path, QString output_type) {
 
     file.close();
 
-    generateQueriedData(data,output_type);
+    generateQueriedData(data,output_type,output_url);
 }
 
 void Controller::saveQueryFile(QString query, QString file_path) {
@@ -771,10 +771,12 @@ void Controller::saveQueryFile(QString query, QString file_path) {
     file.close();
 }
 
-void Controller::generateQueriedData(QString query, QString output_type) {
+void Controller::generateQueriedData(QString query, QString output_type, QString output_url) {
     QVector<QVector<QString>> data = idb.runFilterQuery(query);
     QString safeQuery = query.replace("\"", "\\\"");
-    QString savename = "fixation_query_"+QString::number(std::time(nullptr))+output_type;
+    QString savename = output_url+"/fixation_query_"+QString::number(std::time(nullptr))+output_type;
+    changeFilePathOS(savename);
+    std::cout << savename << std::endl;
     /////// DATABASE
     if(output_type == ".db3") {
         QSqlDatabase output = QSqlDatabase::addDatabase("QSQLITE","output");

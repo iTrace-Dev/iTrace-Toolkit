@@ -18,6 +18,7 @@ import QtQuick.Dialogs 1.2
 Popup {
     id: filter
     property var margin: 15 // TODO: Make this property in a config file or something that way if we want to change it we only change it in one spot
+    property string output_folder: "."
     x: margin; y: margin
     height: parent.height - 2 * margin
     width: parent.width - 2 * margin
@@ -376,7 +377,7 @@ Popup {
         }
         GridLayout {
             id: buttonGrid
-            columns: 2
+            columns: 3
             Button {
                 id: closeButton
                 Layout.fillWidth: true
@@ -384,12 +385,21 @@ Popup {
                 onClicked: filter.close()
             }
             Button {
+                id: setOutputFolderButton
+                Layout.fillWidth: true
+                text: "Output Folder"
+                onClicked: {
+                    folderSelect.open();
+                }
+            }
+
+            Button {
                 id: filterButton
                 Layout.fillWidth: true
                 text: "Filter"
                 onClicked: {
                     filter.close()
-                    control.generateQueriedData(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),exportBox.model[exportBox.currentIndex])
+                    control.generateQueriedData(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),exportBox.model[exportBox.currentIndex],filter.output_folder)
                 }
             }
         }
@@ -400,7 +410,7 @@ Popup {
         selectExisting: true
         nameFilters: ["Query Files (*.sql)","All Files (*.*)"]
         onAccepted: {
-            control.loadQueryFile(fileUrl,exportBox.model[exportBox.currentIndex])
+            control.loadQueryFile(fileUrl,exportBox.model[exportBox.currentIndex],output_folder)
         }
     }
     FileDialog {
@@ -411,6 +421,15 @@ Popup {
             control.saveQueryFile(control.generateQuery(fixationTargetFilter.text,fixationTokenFilter.text,fixationDurationFilterMin.text,fixationDurationFilterMax.text,fixationLineFilterMin.text,fixationLineFilterMax.text,fixationColFilterMin.text,fixationColFilterMax.text,rightMin.text,rightMax.text,leftMin.text,leftMax.text),fileUrl);
         }
     }
+
+    FileDialog {
+        id: folderSelect
+        selectFolder: true
+        onAccepted: {
+            filter.output_folder = fileUrl
+        }
+    }
+
     FileDialog {
         id: filterFileSave
         selectExisting: true
