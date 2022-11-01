@@ -44,6 +44,7 @@ SOURCES += \
         sqlite3.c \
         srcmlhandler.cpp \
         srcmlmapper.cpp \
+        stridemapper.cpp \
         xmlhandler.cpp
 
 RESOURCES += qml.qrc \

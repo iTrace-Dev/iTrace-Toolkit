@@ -29,7 +29,7 @@ Popup {
     Button {
         id: browseButton
         y: margin
-        text: "Browse for srcML Archive"
+        text: "Browse for srcML/Stride Archive"
         anchors.horizontalCenter: parent.horizontalCenter
         onClicked: {
             srcmlOpen.open()
@@ -72,7 +72,7 @@ Popup {
     FileDialog {
         id: srcmlOpen
         selectExisting: true
-        nameFilters: ["srcML Archive (*.xml; *.srcml)", "All Files (*.*)"]
+        nameFilters: ["srcML Archive (*.xml; *.srcml)", "Stride source (*.stride)", "All Files (*.*)"]
         onAccepted: {
             pathText.updateSelected(fileUrl.toString())
         }

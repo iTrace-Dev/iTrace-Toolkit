@@ -40,6 +40,7 @@
 #include "ivtalgorithm.h"
 #include "srcmlhandler.h"
 #include "srcmlmapper.h"
+#include "stridemapper.h"
 #include "logger.h"
 
 // Algorithm settings enums
