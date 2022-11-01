@@ -25,8 +25,8 @@ class SRCMLMapper
 {
 public:
     SRCMLMapper(Database& db) : idb(db) {};
-    void mapSyntax(SRCMLHandler&, QString, QString, bool);
-    void mapToken(SRCMLHandler&, QString, QString, bool);
+    void mapSyntax(SRCMLHandler&, QString, QString, bool, QVector<QString>);
+    void mapToken(SRCMLHandler&, QString, QString, bool, QVector<QString>);
 private:
     Database& idb;
 };

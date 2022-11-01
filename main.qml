@@ -56,7 +56,8 @@ Window {
 
         // mapTokensButton fixationSettingsButton genFixationDataButton queryFixationButton
         folderOpenButton.enabled = true;
-        xmlButton.enabled = true;
+        //xmlButton.enabled = true;
+        databaseImportButton.enabled = true;
         mapTokensButton.enabled = true;
         fixationSettingsButton.enabled = true;
         genFixationDataButton.enabled = true;
@@ -278,7 +279,7 @@ Window {
             }
 
             ToolTip.visible: hovered | down
-            ToolTip.text: "Select a folder to upload all srcML or XML files inside it"
+            ToolTip.text: "Select a folder to recursively upload all srcML or XML files inside it"
 
             enabled: false
 
@@ -303,35 +304,35 @@ Window {
         }
 
         Button {
-            id: xmlButton
+            id: databaseImportButton
             height: buttonHeight; width: equalWidth(parent.width, 2); // equalWidth(parent.width - buttonHeight, 2); // For if close button
             x: getRightX(folderOpenButton) + margin; y: getBottomY(loadedDatabaseText) + margin;
             onClicked: {
-                xmlOpen.open();
+                //xmlOpen.open();
+                databaseImportOpen.open();
             }
 
             ToolTip.visible: hovered | down
-            ToolTip.text: "Select individual srcML or XML files to upload"
+            ToolTip.text: "Select a previous iTrace Database to import"
+            //ToolTip.text: "Select individual srcML or XML files to upload"
 
             enabled: false
 
-//            Image {
-//                id: xmlUploadImg
-//                source: "file upload.png"
-//                anchors.top: parent.top
-//                anchors.bottom: parent.bottom
-//                anchors.left: xmlButtonText.right
-//                anchors.margins: 5
-//                fillMode: Image.PreserveAspectFit
-//            }
-
-            Text {
+            /*Text {
                 id: xmlButtonText
                 anchors.verticalCenter: parent.verticalCenter
                 color: parent.enabled ? "black" : "grey";
 //                x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
                 anchors.horizontalCenter: parent.horizontalCenter;
                 text: "Import From XML"
+            }*/
+            Text {
+                id: databaseImportButtonText
+                anchors.verticalCenter: parent.verticalCenter
+                color: parent.enabled ? "black" : "grey";
+                //x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
+                anchors.horizontalCenter: parent.horizontalCenter;
+                text: "Import from Database"
             }
         }
 
@@ -541,6 +542,16 @@ Window {
             control.importXMLFile(fileUrl)
         }
     }
+    FileDialog {
+        id: databaseImportOpen
+        selectExisting: true
+        nameFilters: ["SQLite Files (*.db3; *.db; *.sqlite; *.sqlite3)","All Files (*.*)"]
+        onAccepted: {
+            participantList.model.clearTasks()
+            control.importDatabaseFile(fileUrl);
+        }
+    }
+
     FileDialog { // FolderOpen
         id: folderOpen
         selectExisting: true
