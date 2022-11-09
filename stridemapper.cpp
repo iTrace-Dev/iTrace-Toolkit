@@ -1,6 +1,6 @@
 #include "stridemapper.h"
 
-void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overwrite) {
+void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
 
     QDomDocument unit;
@@ -36,15 +36,16 @@ void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overw
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
+        if(!valid_sessions.contains(response[1])) { continue; }
         ++i;
-        int res_line = response[1].toInt(),
-                res_col = response[2].toInt();
+        int res_line = response[2].toInt(),
+            res_col = response[3].toInt();
 
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }*/
 
         //THIS CAN CHANGE IN THE FUTURE
-        QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
+        QString gaze_key = project_path + "L" + response[2] + "C" + response[3];
 
         if(cached_gazes.count(gaze_key) > 0) {
             idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
