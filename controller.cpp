@@ -160,6 +160,20 @@ void Controller::importXMLFile(QString file_path) {
     }
 }
 
+void Controller::importDatabaseFile(QString file_path) {
+    changeFilePathOS(file_path);
+
+    std::cout << "Importing DB : " << file_path << std::endl;
+
+    idb.importExistingDatabase(file_path);
+
+    for(auto i : idb.getSessions()) { emit taskAdded(i); }
+
+    log->writeLine("INFO","Successfully imported database " + file_path);
+    emit outputToScreen("black","Successfully imported database.");
+
+}
+
 void Controller::batchAddXML(QString folder_path) {
     log->writeLine("INFO","Scanning and adding all XML files in: "+folder_path);
     if(!idb.isDatabaseOpen()) {
@@ -170,24 +184,39 @@ void Controller::batchAddXML(QString folder_path) {
     emit setProgressBarToIndeterminate();
 
     changeFilePathOS(folder_path);
+
+    QDirIterator counter(folder_path, QDir::Files, QDirIterator::Subdirectories);
+    int count = 0;
+
+    while(counter.hasNext()) {
+        ++count;
+        counter.next();
+        if(count > 1000) {
+            emit stopProgressBar();
+            emit warning("File Search Too Large","The selected folder contained too many sub items.");
+            return;
+        }
+    }
+
+
     std::map<QString,std::pair<std::vector<QString>,bool>> files;
-    QDirIterator dir(folder_path);
+    QDirIterator dir(folder_path, QStringList() << "*.xml", QDir::Files, QDirIterator::Subdirectories);;
     while(dir.hasNext()) {
         QString filename = dir.next();
-        if(filename.endsWith(".xml")) {
-            changeFilePathOS(filename);
-            XMLHandler xml_file(filename);
-            QString type = xml_file.getXMLFileType();
-            if(type == "itrace_core" || type == "itrace_plugin") {
-                QString id = xml_file.getElementAttribute("session_id");
-                if(files.count(id) == 0) {
-                    auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
-                    insert.first->second.first.push_back(filename);
-                }
-                else { (files.find(id))->second.first.push_back(filename); }
-                if(type == "itrace_core") { files.find(id)->second.second = true; }
+        //if(filename.endsWith(".xml")) {
+        changeFilePathOS(filename);
+        XMLHandler xml_file(filename);
+        QString type = xml_file.getXMLFileType();
+        if(type == "itrace_core" || type == "itrace_plugin") {
+            QString id = xml_file.getElementAttribute("session_id");
+            if(files.count(id) == 0) {
+                auto insert = files.emplace(id,std::make_pair(std::vector<QString>(),false));
+                insert.first->second.first.push_back(filename);
             }
+            else { (files.find(id))->second.first.push_back(filename); }
+            if(type == "itrace_core") { files.find(id)->second.second = true; }
         }
+        //}
         QApplication::processEvents();
     }
     QString badPairWarn, alreadyInWarn;
@@ -285,11 +314,11 @@ void Controller::importCoreXML(const QString& file_path) {
             // Insert gaze
             idb.insertGaze(core_file.getElementAttribute("event_id"),session_id,calibration_id,participant_id,core_file.getElementAttribute("tracker_time"),core_file.getElementAttribute("core_time"),core_file.getElementAttribute("x"),core_file.getElementAttribute("y"),core_file.getElementAttribute("left_x"),core_file.getElementAttribute("left_y"),core_file.getElementAttribute("left_pupil_diameter"),core_file.getElementAttribute("left_validation"),core_file.getElementAttribute("right_x"),core_file.getElementAttribute("right_y"),core_file.getElementAttribute("right_pupil_diameter"),core_file.getElementAttribute("right_validation"),core_file.getElementAttribute("user_left_x"),core_file.getElementAttribute("user_left_y"),core_file.getElementAttribute("user_left_z"),core_file.getElementAttribute("user_right_x"),core_file.getElementAttribute("user_right_y"),core_file.getElementAttribute("user_right_z"));
         }
-        QString report = idb.checkAndReturnError();
+        /*QString report = idb.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The followng SQLite Error occured while handling core file: "+report);
-        }
-        report = core_file.checkAndReturnError();
+        }*/
+        QString report = core_file.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The following XML Error occured while handling core file: "+report);
         }
@@ -322,8 +351,12 @@ void Controller::importPluginXML(const QString& file_path) {
     QString session_id,
             ide_plugin_type;
 
+    // Used for checking for duplicate data
+    QVector<QString> all_ids;// = idb.getAllIDEContextIDs();
+
     while(!plugin_file.isAtEnd()) {
         QString element = plugin_file.getNextElementName();
+        //std::cout << element << std::endl;
 
         if(element == "itrace_plugin") {
             session_id = plugin_file.getElementAttribute("session_id");
@@ -342,7 +375,8 @@ void Controller::importPluginXML(const QString& file_path) {
             // Insert ide_context
 
             // Check if we are inserting duplicate data
-            if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            //if(idb.pluginResponseExists(plugin_file.getElementAttribute(("event_id")))) {
+            if (all_ids.contains(plugin_file.getElementAttribute("event_id"))) {
                 QString output = "Duplicate Plugin Context data in file: "+file_path+" with event_id: " + plugin_file.getElementAttribute(("event_id"));
                 emit outputToScreen("#F55904",output);
                 emit outputToScreen("#F55904",plugin_file.getElementAttribute(("event_id")));
@@ -351,13 +385,14 @@ void Controller::importPluginXML(const QString& file_path) {
             }
 
             // The last 4 parameters are unused for the moment
-            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
+            idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),session_id,plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
+            all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
-        QString report = idb.checkAndReturnError();
+        /*QString report = idb.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The followng SQLite Error occured while handling plugin file: "+report);
-        }
-        report = plugin_file.checkAndReturnError();
+        }*/
+        QString report = plugin_file.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The following XML Error occured while handling plugin file: "+report);
         }
@@ -449,19 +484,36 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
         QApplication::processEvents();
     }
+
     idb.commit();
     emit stopProgressBar();
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
-void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
+void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
+
+    QVector<QString> sessions;
+    for(auto i : tasks) { // Get the sessions that the user wants to use
+        QStringList values = i.split(" - ");
+        if(values[2] == "1") {
+            sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+        }
+    }
 
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
+    if(!srcml.isPositional()) {
+        emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
+        return;
+    }
 
+    // Add srcML Archive to Files table
+    if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
+    }
     QVector<QString> all_files = srcml.getAllFilenames();
 
     idb.startTransaction();
@@ -487,8 +539,8 @@ void Controller::mapTokens(QString srcml_file_path, bool overwrite = true) {
                 continue;
             }
 
-            mapper.mapSyntax(srcml,unit_path,file->second,overwrite);
-            mapper.mapToken(srcml,unit_path,file->second,overwrite);
+            mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
+            mapper.mapToken(srcml,unit_path,file->second,overwrite,sessions);
         }
         emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
         emit setProgressBarValue(counter); ++counter;
@@ -523,8 +575,9 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
     QString shortest = "";
     int passes = 1;
 
-    QVector<QStringList> candidates;
+
     while(possible.size() != 1) {
+        QVector<QStringList> candidates;
         if(passes > file_split.size()) { return shortest; }
         for(auto unit_path : possible) {
             if(passes > unit_path.size()) {
@@ -532,7 +585,7 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
                 continue;
             }
             QString unit_check = unit_path[unit_path.size() - passes].toLower();
-            QString file_check = file_split[file_split.size() - 1];
+            QString file_check = file_split[file_split.size() - passes];
             if(unit_check == file_check) {
                 candidates.push_back(unit_path);
             }
@@ -541,13 +594,13 @@ QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
         ++passes;
         QApplication::processEvents();
     }
-    if(candidates.size() == 0) { return ""; }
-    return candidates[0].join("/");
+    if(possible.size() == 0) { return ""; }
+    return possible[0].join("/");
 }
 
 
 void Controller::highlightFixations(QString dir, QString srcml_file_path) {
-    if(!idb.isDatabaseOpen()) {
+    /*if(!idb.isDatabaseOpen()) {
         emit warning("Database Error","There is no Database currently loaded.");
         return;
     }
@@ -561,7 +614,7 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
         emit outputToScreen("black","Fixation Run: " + id);
         highlightTokens(idb.getFixationsFromRunID(id),SRCMLHandler(srcml_file_path),dir,id);
     }
-    emit outputToScreen("black",QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));
+    emit outputToScreen("black",QString("Done Highlighting! Time elapsed: %1").arg(timer.elapsed() / 1000.0));*/
 }
 
 // WIP
@@ -696,7 +749,7 @@ QString Controller::generateQuery(QString targets, QString token_types, QString 
     return query;
 }
 
-void Controller::loadQueryFile(QString file_path, QString output_type) {
+void Controller::loadQueryFile(QString file_path, QString output_type, QString output_url) {
     changeFilePathOS(file_path);
     QFile file(file_path);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -708,7 +761,7 @@ void Controller::loadQueryFile(QString file_path, QString output_type) {
 
     file.close();
 
-    generateQueriedData(data,output_type);
+    generateQueriedData(data,output_type,output_url);
 }
 
 void Controller::saveQueryFile(QString query, QString file_path) {
@@ -718,10 +771,12 @@ void Controller::saveQueryFile(QString query, QString file_path) {
     file.close();
 }
 
-void Controller::generateQueriedData(QString query, QString output_type) {
+void Controller::generateQueriedData(QString query, QString output_type, QString output_url) {
     QVector<QVector<QString>> data = idb.runFilterQuery(query);
     QString safeQuery = query.replace("\"", "\\\"");
-    QString savename = "fixation_query_"+QString::number(std::time(nullptr))+output_type;
+    QString savename = output_url+"/fixation_query_"+QString::number(std::time(nullptr))+output_type;
+    changeFilePathOS(savename);
+    std::cout << savename << std::endl;
     /////// DATABASE
     if(output_type == ".db3") {
         QSqlDatabase output = QSqlDatabase::addDatabase("QSQLITE","output");

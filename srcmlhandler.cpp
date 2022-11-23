@@ -11,8 +11,28 @@
 
 #include "srcmlhandler.h"
 
+#include <iostream>
+
 SRCMLHandler::SRCMLHandler(QString path) {
     file_path = path;
+}
+
+bool SRCMLHandler::isPositional() {
+    QFile file(file_path);
+    file.open(QIODevice::ReadOnly);
+    QXmlStreamReader parser(&file);
+    parser.readNextStartElement();
+
+    if(parser.name() == "unit") {
+        for(auto decl : parser.namespaceDeclarations()) {
+            if(decl.prefix() == "pos") {
+                file.close();
+                return true;
+            }
+        }
+    }
+    file.close();
+    return false;
 }
 
 QVector<QString> SRCMLHandler::getAllFilenames() {

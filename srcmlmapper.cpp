@@ -14,11 +14,10 @@
 void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& token_type) {
     // token_type is currently unused?
     QVector<QString> delimiters = {
-        "(",")","{","}",".","++","--","+","-",
-        "!","~",",","/","%","*","<<",">>",">>>",
-        "<","<=",">","<=","==","!=","@","&","^",
-        "|","&&","||","?",":","+=","-=","*=",
-        "/=","=",";" // Should we add -> (arrow operator)?
+        "(",")","{","}",".",",",
+        "=","+","-","*","/","%",
+        "@","|","&","^","<",">",
+        ":","?",
     };
     int start = col,
         end = col;
@@ -36,13 +35,15 @@ void setLineTextToken(QString source_line, int col, QString syntactic_context, Q
     // Operator or a delimiter
     else if(delimiters.contains(QString(source_line[col]))) {
         token = source_line[col];
-        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
+        //while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(source_line[start-1]+token)) {
+        while(start - 1 >= 0 && !source_line[start - 1].isSpace() && delimiters.contains(QString(source_line[start-1]))) {
             --start;
             token = source_line[start] + token;
         }
-        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
+        //while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(token + source_line[end+1])) {
+        while(end + 1 <= source_line.size() - 1 && !source_line[end].isSpace() && delimiters.contains(QString(source_line[end+1]))) {
             ++end;
-            token += source_line[end];;
+            token += source_line[end];
         }
     }
     else {
@@ -57,7 +58,7 @@ void setLineTextToken(QString source_line, int col, QString syntactic_context, Q
 }
 
 
-void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
+void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
 
     QString unit_data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + srcml.getUnitText(unit_path) + "\n</xml>";
@@ -71,6 +72,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
     QDomElement first = unit.documentElement().firstChildElement();
 
     QVector<QDomElement> parents; parents.push_back(first);
+
+
     while(parents.size() != 0) {
         QDomElement crnt = parents[parents.size() - 1];
 
@@ -91,18 +94,21 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
         QApplication::processEvents();
     }
 
+    //QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
+        if(!valid_sessions.contains(response[1])) { continue; }
         ++i;
-        int res_line = response[1].toInt(),
-            res_col = response[2].toInt();
+        int res_line = response[2].toInt(),
+            res_col = response[3].toInt();
 
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }*/
 
         //THIS CAN CHANGE IN THE FUTURE
-        QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
+        QString gaze_key = project_path + "L" + response[2] + "C" + response[3];
 
         if(cached_gazes.count(gaze_key) > 0) {
             idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
@@ -187,11 +193,11 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
     }
 }
 
-void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite) {
+void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
 
-    QString report = idb.checkAndReturnError();
-    if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING TOP: " << report.toUtf8().constData() << std::endl; }
+    /*QString report = idb.checkAndReturnError();
+    if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING TOP: " << report.toUtf8().constData() << std::endl; }*/
 
     QStringList unit_body = srcml.getUnitBody(unit_path).split("\n");
     //std::cout << "UNIT BODY SIZE: " << unit_body.size() << std::endl;;
@@ -201,25 +207,29 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
     // This is NOT an exhaustive check, plugins should by default be 1-indexed. This is only a small check.
     bool one_indexed = true;
     for(auto response : responses) {
-        if(response[1].toInt() == 0 || response[2].toInt() == 0) {
+        //if(valid_sessions.contains(response[1])) { continue; }
+        if(response[2].toInt() == 0 || response[3].toInt() == 0) {
             one_indexed = false;
             break;
         }
     }
 
+    //QString big_query = "";
+
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     //std::cout << "RESPONSES SIZE TOKEN: " << responses.size() << std::endl;
     for(auto response : responses) {
-        int res_line = response[1].toInt(),
-            res_col = response[2].toInt();
+        if(!valid_sessions.contains(response[1])) { continue; }
+        int res_line = response[2].toInt(),
+            res_col = response[3].toInt();
         if(one_indexed) { --res_line; --res_col; }
         QString token = "",
                 token_type = "";
 
-        QString report = idb.checkAndReturnError();
-        if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING BOTTOM: " << report.toUtf8().constData() << std::endl; }
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN TOKEN MAPPING BOTTOM: " << report.toUtf8().constData() << std::endl; }*/
 
-        QString gaze_key = project_path+"L"+response[1]+"C"+response[2];
+        QString gaze_key = project_path+"L"+response[2]+"C"+response[3];
         if(cached_gazes.count(gaze_key) > 0) {
             idb.updateGazeWithTokenInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
             continue;
@@ -235,7 +245,7 @@ void SRCMLMapper::mapToken(SRCMLHandler& srcml, QString unit_path, QString proje
             idb.updateGazeWithTokenInfo(response[0],token,token_type);
             continue;
         }
-        setLineTextToken(unit_body[res_line],res_col,response[3],token,token_type);
+        setLineTextToken(unit_body[res_line],res_col,response[4],token,token_type);
 
         cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
         idb.updateGazeWithTokenInfo(response[0],token,token_type);

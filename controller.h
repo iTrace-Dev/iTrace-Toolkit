@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE void loadDatabaseFile(QString);
     Q_INVOKABLE void closeDatabase();
     Q_INVOKABLE void importXMLFile(QString);
+    Q_INVOKABLE void importDatabaseFile(QString);
     Q_INVOKABLE void batchAddXML(QString);
     void importCoreXML(const QString&);
     void importPluginXML(const QString&);
@@ -80,7 +81,7 @@ public:
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
 
     //srcML Functions
-    Q_INVOKABLE void mapTokens(QString,bool);
+    Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool);
     QString findMatchingPath(QVector<QString>,QString);
 
     //Highlight Functions
@@ -90,9 +91,9 @@ public:
 
     //Query Functions
     Q_INVOKABLE QString generateQuery(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
-    Q_INVOKABLE void loadQueryFile(QString, QString);
-    Q_INVOKABLE void saveQueryFile(QString, QString);
-    Q_INVOKABLE void generateQueriedData(QString,QString);
+    Q_INVOKABLE void loadQueryFile(QString,QString,QString);
+    Q_INVOKABLE void saveQueryFile(QString,QString);
+    Q_INVOKABLE void generateQueriedData(QString,QString,QString);
 
 
 signals:
