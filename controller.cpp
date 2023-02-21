@@ -505,7 +505,7 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
-    if(!srcml.isPositional()) {
+    if(!srcml_file_path.endsWith(".stride",Qt::CaseInsensitive) && !srcml.isPositional()) {
         emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
         return;
     }
@@ -547,6 +547,7 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
 
             if (file->second.endsWith(".stride")) {
                 strideMapper.mapSyntax(unit_path, file->second, overwrite);
+                strideMapper.mapToken(unit_path, file->second, overwrite);
             }
             else {
                 mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);

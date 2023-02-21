@@ -234,7 +234,7 @@ int getGazesForSyntacticMappingCALLBACK(void *gazes, int argc, char** argv, char
     return 0;
 }
 QVector<QVector<QString>> Database::getGazesForSyntacticMapping(QString file_path, bool overwrite) {
-    QString query = QString("SELECT event_time,session_id,source_file_line,source_file_col,source_token_syntactic_context FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC;");
+    QString query = QString("SELECT event_time,session_id,source_file_line,source_file_col,source_token_syntactic_context,gaze_target FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC;");
     QVector<QVector<QString>> data;
     sqlite3_exec(db, query.toStdString().c_str(), getGazesForSyntacticMappingCALLBACK, (void*)&data, NULL);
     return data;
@@ -248,7 +248,7 @@ int getGazesForSourceMappingCALLBACK(void *gazes, int argc, char** argv, char** 
     return 0;
 }
 QVector<QVector<QString>> Database::getGazesForSourceMapping(QString file_path, bool overwrite) {
-    QString query = QString("SELECT event_time,session_id,source_file_line,source_file_col,source_token_syntactic_context FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NOT NULL AND source_token IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC;");
+    QString query = QString("SELECT event_time,session_id,source_file_line,source_file_col,source_token_syntactic_context,gaze_target FROM ide_context WHERE source_file_path = \"%1\" AND source_file_line >= 0 AND source_file_line IS NOT NULL AND source_file_col >= 0 AND source_file_col IS NOT NULL").arg(file_path) + (overwrite ? " AND source_token_syntactic_context IS NOT NULL AND source_token IS NULL " : " ") + QString("ORDER BY source_file_line ASC, source_file_col ASC;");
     QVector<QVector<QString>> data;
     sqlite3_exec(db, query.toStdString().c_str(), getGazesForSourceMappingCALLBACK, (void*)&data, NULL);
     return data;
