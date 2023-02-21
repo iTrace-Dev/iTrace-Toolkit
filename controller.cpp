@@ -546,8 +546,8 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
             }
 
             if (file->second.endsWith(".stride")) {
-                strideMapper.mapSyntax(unit_path, file->second, overwrite);
-                strideMapper.mapToken(unit_path, file->second, overwrite);
+                strideMapper.mapSyntax(unit_path, file->second, overwrite,sessions);
+                strideMapper.mapToken(unit_path, file->second, overwrite,sessions);
             }
             else {
                 mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
