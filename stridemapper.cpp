@@ -1,6 +1,6 @@
 #include "stridemapper.h"
 
-void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overwrite) {
+void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
 
     QDomDocument unit;
@@ -37,10 +37,16 @@ void StrideMapper::mapSyntax(QString unit_path, QString project_path, bool overw
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
+        if(!valid_sessions.contains(response[1])) { continue; }
         ++i;
+        int res_line = response[2].toInt(),
+            res_col = response[3].toInt();
+
+        /*QString report = idb.checkAndReturnError();
+        if(report != "") { std::cout << "IDB ERROR IN SYNTAX MAPPING: " << report.toUtf8().constData() << std::endl; }*/
 
         //THIS CAN CHANGE IN THE FUTURE
-        QString gaze_key = project_path + "L" + response[1] + "C" + response[2];
+        QString gaze_key = project_path + "L" + response[2] + "C" + response[3];
 
         if(cached_gazes.count(gaze_key) > 0) {
             idb.updateGazeWithSyntacticInfo(response[0],cached_gazes.at(gaze_key).first,cached_gazes.at(gaze_key).second);
@@ -176,7 +182,7 @@ QString token_at(const QString& whole_expression, int char_index)
     }
 }
 
-void StrideMapper::mapToken(QString unit_path, QString project_path, bool overwrite) {
+void StrideMapper::mapToken(QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSourceMapping(project_path,overwrite);
 
     QDomDocument unit;
@@ -213,6 +219,7 @@ void StrideMapper::mapToken(QString unit_path, QString project_path, bool overwr
     std::map<QString,std::pair<QString,QString>> cached_gazes;
     int i = -1;
     for(auto response : responses) {
+        if(!valid_sessions.contains(response[1])) { continue; }
         ++i;
         QString xpath = response[5];
         QString gaze_key = xpath;
@@ -230,7 +237,6 @@ void StrideMapper::mapToken(QString unit_path, QString project_path, bool overwr
             QStringList params = xpath.mid(QString("substring").length()).replace('(',"").replace(')',"").split(", ");
             QString attr = fetch_attribute(params.value(0), &file);
             token = token_at(attr, params.value(1).toInt());
-            std::cout << "Found token " << token.toStdString() << " at " << attr.toStdString() << "@" << params.value(1).toStdString() << std::endl;
             token_type = "expression";
         }
         else {
@@ -252,8 +258,6 @@ void StrideMapper::mapToken(QString unit_path, QString project_path, bool overwr
             }
         }
 
-        // TEMP:
-        std::cout << "At " << i << " mapped " << xpath.toStdString() << " to " << token.toStdString() << ";" << token_type.toStdString() << std::endl;
         cached_gazes.insert(std::make_pair(gaze_key,std::make_pair(token,token_type)));
         idb.updateGazeWithTokenInfo(response[0],token,token_type);
     }

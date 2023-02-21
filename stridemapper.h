@@ -14,8 +14,8 @@ class StrideMapper
 {
 public:
     StrideMapper(Database& db) : idb(db) {};
-    void mapSyntax(QString, QString, bool);
-    void mapToken(QString, QString, bool);
+    void mapSyntax(QString, QString, bool, QVector<QString>);
+    void mapToken(QString, QString, bool, QVector<QString>);
 private:
     Database& idb;
 };
