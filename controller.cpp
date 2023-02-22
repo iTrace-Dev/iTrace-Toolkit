@@ -490,7 +490,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
-void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true) {
+void Controller::mapTokens(QString srcml_file_paths, QVector<QString> tasks, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
 
@@ -502,24 +502,34 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
         }
     }
 
-    changeFilePathOS(srcml_file_path);
-
-    SRCMLHandler srcml(srcml_file_path);
-    if(!srcml_file_path.endsWith(".stride",Qt::CaseInsensitive) && !srcml.isPositional()) {
-        emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
-        return;
-    }
-  
-    // Add srcML Archive to Files table
-    if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
-        idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
-    }
-
     QVector<QString> all_files;
-    if (srcml_file_path.endsWith(".stride",Qt::CaseInsensitive))
-        all_files.append(srcml_file_path);
-    else
-        all_files = srcml.getAllFilenames();
+    std::unique_ptr<SRCMLHandler> srcml;
+    for (auto srcml_file_path : srcml_file_paths.split(QRegExp(",?file:///")))
+    {
+        if (srcml_file_path.isEmpty())
+            continue;
+
+        changeFilePathOS(srcml_file_path);
+
+        bool isStride = srcml_file_path.endsWith(".stride",Qt::CaseInsensitive);
+
+        if (!isStride) {
+            srcml.reset(new SRCMLHandler(srcml_file_path));
+            if(!srcml->isPositional()) {
+                emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
+                return;
+            }
+        }
+        // Add srcML Archive to Files table
+        if(!idb.fileExists(QCryptographicHash::hash(srcml->getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+            idb.insertFile(QCryptographicHash::hash(srcml->getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml_file_path,"srcml_archive");
+        }
+
+        if (isStride)
+            all_files.append(srcml_file_path);
+        else
+            all_files = srcml->getAllFilenames();
+    }
 
     idb.startTransaction();
 
@@ -550,8 +560,12 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
                 strideMapper.mapToken(unit_path, file->second, overwrite,sessions);
             }
             else {
-                mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
-                mapper.mapToken(srcml,unit_path,file->second,overwrite,sessions);
+                if (srcml.get() == nullptr) {
+                    emit warning("srcML Error","No srcML file found but need to map non-Stride files.");
+                    continue;
+                }
+                mapper.mapSyntax(*srcml,unit_path,file->second,overwrite,sessions);
+                mapper.mapToken(*srcml,unit_path,file->second,overwrite,sessions);
             }
         }
         emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));

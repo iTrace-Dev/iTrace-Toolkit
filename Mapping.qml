@@ -65,16 +65,17 @@ Popup {
         anchors.horizontalCenter: parent.horizontalCenter
         onClicked: {
             mappingMenu.close()
-            control.mapTokens(srcmlOpen.fileUrl, participantList.model.getModelList().getSelected(), overwriteCheck.checked)
+            control.mapTokens(srcmlOpen.fileUrls.toString(), participantList.model.getModelList().getSelected(), overwriteCheck.checked)
         }
     }
 
     FileDialog {
         id: srcmlOpen
         selectExisting: true
-        nameFilters: ["srcML Archive (*.xml; *.srcml)", "Stride source (*.stride)", "All Files (*.*)"]
+        selectMultiple: true
+        nameFilters: ["srcML Archive/Stride source (*.xml; *.srcml; *.stride)", "All Files (*.*)"]
         onAccepted: {
-            pathText.updateSelected(fileUrl.toString())
+            pathText.updateSelected(fileUrls.toString())
         }
     }
 }
