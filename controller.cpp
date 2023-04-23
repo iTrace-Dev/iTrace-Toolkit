@@ -366,6 +366,8 @@ void Controller::importPluginXML(const QString& file_path) {
             types["msvs"] = "vstudio_plugin";
             types["eclipse"] = "eclipse_plugin";
             types["atom"] = "atom_plugin";
+			types["sublime"] = "sublime_plugin";
+			types["vscode"] = "vscode_plugin";
             types["chrome"] = "chrome_plugin";
             ide_plugin_type = plugin_file.getElementAttribute("plugin_type").toLower();
             // Insert file
