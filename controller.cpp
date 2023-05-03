@@ -472,7 +472,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         idb.insertFixationRun(fixation_run_id,session_id,fixation_date_time,fixation_filter_settings);
 
         int fixation_order = 1;
-        for(auto fix = session_fixations.begin(); fix != session_fixations.end(); ++fix) {
+        for(auto fix = session_fixations.rbegin(); fix != session_fixations.rend(); ++fix) {
             QString fixation_id = QUuid::createUuid().toString();
             fixation_id.remove("{"); fixation_id.remove("}");
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
