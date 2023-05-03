@@ -366,10 +366,13 @@ void Controller::importPluginXML(const QString& file_path) {
             types["msvs"] = "vstudio_plugin";
             types["eclipse"] = "eclipse_plugin";
             types["atom"] = "atom_plugin";
+			types["sublime"] = "sublime_plugin";
+			types["vscode"] = "vscode_plugin";
             types["chrome"] = "chrome_plugin";
             ide_plugin_type = plugin_file.getElementAttribute("plugin_type").toLower();
+            QString file_type = types.find(ide_plugin_type) == types.end() ? "unsupported_plugin" : types.at(ide_plugin_type);
             // Insert file
-            idb.insertFile(QCryptographicHash::hash(plugin_file.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),session_id,plugin_file.getFilePath(),types.at(ide_plugin_type));
+            idb.insertFile(QCryptographicHash::hash(plugin_file.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),session_id,plugin_file.getFilePath(),file_type);
         }
         else if(element == "response") {
             // Insert ide_context
@@ -469,7 +472,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         idb.insertFixationRun(fixation_run_id,session_id,fixation_date_time,fixation_filter_settings);
 
         int fixation_order = 1;
-        for(auto fix = session_fixations.begin(); fix != session_fixations.end(); ++fix) {
+        for(auto fix = session_fixations.rbegin(); fix != session_fixations.rend(); ++fix) {
             QString fixation_id = QUuid::createUuid().toString();
             fixation_id.remove("{"); fixation_id.remove("}");
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
@@ -717,16 +720,16 @@ QString Controller::generateQuery(QString targets, QString token_types, QString 
     // Add in Targets
     if(targets != "") {
         QStringList target_list = targets.split(',');
-        query += QString("fixation_target = \"%1\"").arg(target_list[0]);
+        query += QString("(fixation_target = \"%1\"").arg(target_list[0]);
         for(auto i = target_list.begin()+1; i != target_list.end(); ++i) {
             query += QString(" OR fixation_target = \"%1\" ").arg(*i);
         }
-        query += " AND ";
+        query += ") AND ";
     }
     // Add in Tokens
     if(token_types != "") {
         QStringList token_list = token_types.split(',');
-        query += QString("(fixation_target = \"%1\"").arg(token_list[0]);
+        query += QString("(token = \"%1\"").arg(token_list[0]);
         for(auto i = token_list.begin()+1; i != token_list.end(); ++i) {
             query += QString(" OR token = \"%1\" ").arg(*i);
         }
@@ -773,7 +776,8 @@ void Controller::saveQueryFile(QString query, QString file_path) {
 
 void Controller::generateQueriedData(QString query, QString output_type, QString output_url) {
     QVector<QVector<QString>> data = idb.runFilterQuery(query);
-    QString safeQuery = query.replace("\"", "\\\"");
+    QString safeQuery = query;//.replace("\"", "\\\"");
+    //QString safeQuery = "'" + query.mid(1,query.length()-2) + "'";
     QString savename = output_url+"/fixation_query_"+QString::number(std::time(nullptr))+output_type;
     changeFilePathOS(savename);
     std::cout << savename << std::endl;
@@ -784,7 +788,7 @@ void Controller::generateQueriedData(QString query, QString output_type, QString
         output.open();
         output.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER, query TEXT)");
         for(auto i : data) {
-            output.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,\"%16\")").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery).replace("\"\"","\""));
+            output.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,'%16')").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery));
         }
         output.close();
         QSqlDatabase::removeDatabase("output");
@@ -799,6 +803,7 @@ void Controller::generateQueriedData(QString query, QString output_type, QString
     /////// XML
     else if(output_type == ".xml") {
         std::ofstream output(savename.toUtf8().constData());
+        safeQuery = safeQuery.replace("\"","&quot;");
         output << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<itrace_fixation_query query=\"" << safeQuery << "\">\n";
         for(auto fix : data) {
             output << "\t" << (QString("<fixation fixation_id=\"%1\" fixation_run_id=\"%2\" fixation_start_event_time=\"%3\" fixation_order_number=\"%4\" x=\"%5\" y=\"%6\" fixation_target=\"%7\" source_file_line=\"%8\" source_file_col=\"%9\" token=\"%10\" syntactic_category=\"%11\" xpath=\"%12\" left_pupil_diameter=\"%13\" right_pupil_diameter=\"%14\" duration=\"%15\" />").arg(fix[0]).arg(fix[1]).arg(fix[2]).arg(fix[3]).arg(fix[4]).arg(fix[5]).arg(fix[6]).arg(fix[7]).arg(fix[8]).arg(fix[9]).arg(fix[10]).arg(fix[11]).arg(fix[12]).arg(fix[13]).arg(fix[14])).toUtf8().constData() << "\n";
@@ -809,6 +814,7 @@ void Controller::generateQueriedData(QString query, QString output_type, QString
     /////// JSON
     else if(output_type == ".json") {
         std::ofstream output(savename.toUtf8().constData());
+        safeQuery = safeQuery.replace("\"","\\\"");
         output << "{\n\t\"query\": \"" << safeQuery << "\",\n";
         output << "\t\"fixations\": [\n";
         for(auto fix : data) {

@@ -184,7 +184,7 @@ Popup {
             columns: 1
             id: pupilLayout
             readonly property string min: "0.00"
-            readonly property string max: "3.50"
+            readonly property string max: "10.0"
             Text {
                 text: "Pupil Diameters (mm)"
                 font.pointSize: 10
