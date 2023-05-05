@@ -40,7 +40,9 @@ Database::Database(QString file_path) : Database() {
             "CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
             "CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
 
-            "CREATE INDEX idx_event_time ON ide_context(event_time);"
+            "CREATE INDEX idx_event_time_context ON ide_context(event_time);"
+            "CREATE INDEX idx_event_time_gaze ON gaze(event_time);"
+            "CREATE INDEX idx_fixation_id ON fixation(fixation_id);"
             ;
 
 

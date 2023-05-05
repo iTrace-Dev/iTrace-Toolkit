@@ -126,8 +126,8 @@ Popup {
                 TextField {
                     id: fixationLineFilterMin
                     Layout.fillWidth: true
-                    validator: IntValidator{bottom: 0}
-                    readonly property string defaultVal: "0"
+                    validator: IntValidator{bottom: -1}
+                    readonly property string defaultVal: "-1"
                     text: defaultVal
                 }
                 Text {
@@ -162,8 +162,8 @@ Popup {
                 TextField {
                     id: fixationColFilterMin
                     Layout.fillWidth: true
-                    validator: IntValidator{bottom: 0}
-                    readonly property string defaultVal: "0"
+                    validator: IntValidator{bottom: -1}
+                    readonly property string defaultVal: "-1"
                     text: defaultVal
                 }
                 Text {
