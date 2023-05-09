@@ -18,7 +18,8 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_DisableHighDpiScaling);
 
     QApplication app(argc, argv);
 
@@ -29,8 +30,6 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<ParticipantsList>("Participants", 1, 0, "ParticipantsList", QStringLiteral("Participants should not be created in QML"));
 
     ParticipantsList participants;
-
-
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

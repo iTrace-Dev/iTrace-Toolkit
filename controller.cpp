@@ -788,7 +788,9 @@ void Controller::generateQueriedData(QString query, QString output_type, QString
         output.open();
         output.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER, query TEXT)");
         for(auto i : data) {
-            output.exec(QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,'%16')").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery));
+            QString insert = QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,'%16')").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery);
+            std::cout << insert << std::endl;
+            output.exec(insert);
         }
         output.close();
         QSqlDatabase::removeDatabase("output");
