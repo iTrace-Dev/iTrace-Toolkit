@@ -72,6 +72,7 @@ Popup {
         ComboBox {
             id: algSelection
             model: ["BASIC","IDT","IVT"]
+            currentIndex: 1
             onActivated: enableAlgorithm(index)
         }
     }
@@ -99,7 +100,7 @@ Popup {
         height: parent.height - 4 * margin - algSelectionGrid.height - separatorLine.height - buttonGrid.height
         width: parent.width - 2 * margin
         columns: 2
-        visible: true
+        visible: false
 
         Layout.bottomMargin: margin
 
@@ -152,7 +153,7 @@ Popup {
         height: basicAlg.height
         width: basicAlg.width
         columns: 2
-        visible: false
+        visible: true
 
         Text {
             id: durationWindowLabel

@@ -22,20 +22,22 @@ import io.qt.examples.backend 1.0 // This flags as an error, but works perfectly
 
 Window {
     id: main
-    property int menuHeight: 40
+    property int menuHeight: 40;
     property int buttonHeight: 30;
-    property int margin: 15
+    property int margin: 15;
+    property int minHeight: 760;
+    property int minWidth: 420;
 
     property string iTraceRed: "#680314"
 
     visible: true
-    width: 420
-    height: 760 //+ menuHeight
-    maximumHeight: height
-    maximumWidth: width
-    minimumHeight: height
-    minimumWidth: width
-    title: qsTr("iTrace Toolkit")
+    width: minWidth
+    height: minHeight //+ menuHeight
+    /*maximumHeight: height
+    maximumWidth: width*/
+    minimumHeight: minHeight
+    minimumWidth: minWidth
+    title: qsTr("iTrace Toolkit V0.2.2")
 
     function getBottomY(obj) {
         return obj.y + obj.height;
