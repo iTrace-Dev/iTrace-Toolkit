@@ -22,78 +22,67 @@ double computeGazeDifference(QVector<Gaze> gazes) {
     double final = (xmax - xmin) + (ymax - ymin);
     return final;
 }
+long long getLengthOfWindow(QVector<Gaze> gazes) {
+    if(gazes.size() <= 1) { return 0; }
+    return gazes[gazes.size() - 1].system_time - gazes[0].system_time;
+}
+bool isWindowConsistenlySpaced(QVector<Gaze> gazes, int maximum_space) {
+    for(int i = 0; i < gazes.size() - 1; ++i) {
+        if(gazes[i+1].system_time - gazes[i].system_time > maximum_space) {
+            return false;
+        }
+    }
+    return true;
+}
 
-IDTAlgorithm::IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion) : FixationAlgorithm(gazes) {
+IDTAlgorithm::IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion, int _max_gaze_span) : FixationAlgorithm(gazes) {
     duration_window = _duration;
     dispersion = _dispersion;
+    max_gaze_span = _max_gaze_span;
 }
 
 QVector<Fixation> IDTAlgorithm::generateFixations() {
 
     //This code follows the IDT Algorithm
+    QVector<Gaze> window;
+    int i = 0;
 
-    //QVector<Gaze> window;
-    while(session_gazes.size() != 0) { // While there are still points
-        // Initialize the window over the first points to not cover the duration threshold
-        QVector<Gaze> window;
-        int i = 0;
-        while(window.size() != duration_window && session_gazes.size() != 0) {
-            window.push_back(session_gazes[i]);
-            ++i;
-        }
+    while(getLengthOfWindow(window) < duration_window && i < session_gazes.size()) {
+        window.push_back(session_gazes[i]);
+        ++i;
+    }
 
-        // If dispersion of window points <= threshold
-        if(computeGazeDifference(window) <= dispersion) {
-            // Add additional points to the window until dispersion > threshold
-            while(computeGazeDifference(window) <= dispersion && i < session_gazes.size()) {
+    while(i < session_gazes.size()) {
+        if((computeGazeDifference(window) <= dispersion) && (getLengthOfWindow(window) >= duration_window)) {
+            while(computeGazeDifference(window) <= dispersion) {
+                if(i < session_gazes.size() - 1) {
+                    window.push_back(session_gazes[i]);
+                    ++i;
+                }
+                else { break; }
+            }
+            if(isWindowConsistenlySpaced(window,max_gaze_span)) {
+                fixations.push_back(computeFixationEstimate(window));
+                window.clear();
                 window.push_back(session_gazes[i]);
                 ++i;
             }
-            // Not a fixation ant the centroid of the windows points
-            fixations.push_back(computeFixationEstimate(window));
-            // Remove window points from points
-            for(int x = 0; x < window.size(); ++x) {
-                session_gazes.pop_front();
+            else {
+                window.pop_front();
             }
         }
+        else if(getLengthOfWindow(window) < duration_window) {
+            window.push_back(session_gazes[i]);
+            ++i;
+        }
         else {
-           session_gazes.pop_front();
+            window.pop_front();
+            if(getLengthOfWindow(window) < duration_window) {
+                window.push_back(session_gazes[i]);
+                ++i;
+            }
         }
     }
-//    QVector<Gaze> window;
-//    int i = 0;
-
-//    while(i < duration_window && i < session_gazes.size()) {
-//        window.push_back(session_gazes[i]);
-//        ++i;
-//    }
-
-//    while(i < session_gazes.size()) {
-//        if((computeGazeDifference(window) <= dispersion) && (window.size() >= duration_window)) {
-//            while(computeGazeDifference(window) <= dispersion) {
-//                if(i < session_gazes.size() - 1) {
-//                    window.push_back(session_gazes[i]);
-//                    ++i;
-//                }
-//                else { break; }
-//            }
-//            fixations.push_back(computeFixationEstimate(window));
-//            window.clear();
-//            window.push_back(session_gazes[i]);
-//            ++i;
-//        }
-//        else if(window.size() < duration_window) {
-//            window.push_back(session_gazes[i]);
-//            ++i;
-//        }
-//        else {
-//            window.pop_front();
-//            if(window.size() < duration_window) {
-//                window.push_back(session_gazes[i]);
-//                ++i;
-//            }
-//        }
-//    }
 
     return fixations;
 }
@@ -113,6 +102,6 @@ Fixation IDTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
 }
 
 QString IDTAlgorithm::generateFixationSettings() {
-    return "IDT," + QString::number(dispersion) + "," + QString::number(duration_window);
+    return "IDT," + QString::number(dispersion) + "," + QString::number(duration_window) + "," + QString::number(max_gaze_span);
 }
 

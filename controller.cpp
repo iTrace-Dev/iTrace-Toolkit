@@ -449,7 +449,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             }
             else if(settings[0] == "IDT") {
                 //IDT-10-125 = IDT-duration_window-dispersion
-                algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt());
+                algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt(),settings[max_gaze_span].toInt());
             }
             else if(settings[0] == "IVT") {
                 //IVT-50-80 = IVT-velocity-duration
