@@ -45,7 +45,7 @@ Popup {
         if(algSelection.currentIndex === 0) {
             rtn = rtn + "-" + windowSize.text + "-" + radius.text + "-" + peak.text
         } else if (algSelection.currentIndex === 1) {
-            rtn = rtn + "-" + durationWindow.text + "-" + dispersion.text
+            rtn = rtn + "-" + durationWindow.text + "-" + dispersion.text + "-" + maxGazeSpan.text
         } else if (algSelection.currentIndex === 2) {
             rtn = rtn + "-" + velocity.text + "-" + duration.text
         }
@@ -157,14 +157,14 @@ Popup {
 
         Text {
             id: durationWindowLabel
-            text: qsTr("Duration Window: ")
+            text: qsTr("Duration Window (ms): ")
         }
         TextField {
             id: durationWindow
             Layout.fillWidth: true
             //Int validator requires input to be a number >1 and <MAXINT
             validator: IntValidator {bottom: 1}
-            readonly property string defaultVal: "10"
+            readonly property string defaultVal: "100"
             text: defaultVal
         }
         Text {
@@ -176,6 +176,17 @@ Popup {
             Layout.fillWidth: true
             validator: IntValidator{bottom: 1}
             readonly property string defaultVal: "125"
+            text: defaultVal
+        }
+        Text {
+            id: maxGazeSpanLabel
+            text: qsTr("Maximum Gaze Span (ms): ")
+        }
+        TextField {
+            id: maxGazeSpan
+            Layout.fillWidth: true
+            validator: IntValidator{bottom: 1}
+            readonly property string defaultVal: "1000"
             text: defaultVal
         }
         Item {
@@ -249,6 +260,7 @@ Popup {
                 //IDT Algorithm Reset
                 durationWindow.text = durationWindow.defaultVal
                 dispersion.text = dispersion.defaultVal
+                maxGazeSpan.text = maxGazeSpan.defaultVal
 
                 //IVT Algorithm Reset
                 velocity.text = velocity.defaultVal

@@ -51,7 +51,8 @@ enum basic {
 
 enum idt {
     duration_window = 1,
-    dispersion
+    dispersion,
+    max_gaze_span
 };
 
 enum ivt {
