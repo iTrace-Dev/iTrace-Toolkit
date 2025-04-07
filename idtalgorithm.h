@@ -16,7 +16,7 @@
 
 class IDTAlgorithm : public FixationAlgorithm{
 public:
-    IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion);
+    IDTAlgorithm(QVector<Gaze> gazes, int _duration, int _dispersion, int _max_gaze_span);
     ~IDTAlgorithm() {};
 
     QVector<Fixation> generateFixations() override;
@@ -27,6 +27,7 @@ private:
 
     int duration_window;
     int dispersion;
+    int max_gaze_span;
 };
 
 #endif // IDTALGORITHM_H
