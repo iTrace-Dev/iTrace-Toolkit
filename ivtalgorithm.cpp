@@ -11,10 +11,15 @@
 
 #include "ivtalgorithm.h"
 
+// Define M_PI if it's not already defined
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 //Helper Functions
 double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
     double vx = x1 - x2,
-           vy = y1 - y2;
+        vy = y1 - y2;
     double v = sqrt((vx*vx)+(vy*vy));
     return v;
 }
@@ -70,6 +75,50 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
             tmp.clear();
         }
     }
+
+    //Insert saccades
+    QString run_id = "1";
+    for (int i = 1; i < fixations.size(); ++i) {
+        const Fixation& startFix = fixations[i - 1];
+        const Fixation& endFix = fixations[i];
+
+        double dx = endFix.x - startFix.x;
+        double dy = endFix.y - startFix.y;
+        double amplitude = sqrt(dx * dx + dy * dy);
+        double direction = atan2(dy, dx) * 180.0 / M_PI;
+
+        if (direction < 0) direction += 360;
+
+        qint64 start_time = startFix.gaze_vec.back().system_time;
+        qint64 end_time = endFix.gaze_vec.front().system_time;
+        double duration = (end_time - start_time);
+
+        double peak_velocity = 0.0;
+        double velocity_sum = 0.0;
+        int count = 0;
+        QVector<QString> gaze_ids;
+
+        for (const Gaze& g : session_gazes) {
+            if (g.system_time >= start_time && g.system_time <= end_time) {
+                double v = calculateGazeVelocity(startFix.x, startFix.y, g.x, g.y);
+                peak_velocity = std::max(peak_velocity, v);
+                velocity_sum += v;
+                gaze_ids.push_back(QString::number(g.db_id));
+                ++count;
+            }
+        }
+
+        double avg_velocity = (count > 0) ? velocity_sum / count : 0;
+        QString saccade_id = QString::number(i); // Replace with actual logic
+        db.insertSaccade(saccade_id, QString::number(start_time), QString::number(end_time), QString::number(duration),
+                         QString::number(amplitude), QString::number(peak_velocity), QString::number(avg_velocity),
+                         QString::number(direction), run_id);
+
+        for (const QString& gid : gaze_ids) {
+            db.insertSaccadeGaze(saccade_id, gid);
+        }
+    }
+
     return fixations;
 }
 
@@ -77,7 +126,7 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     Fixation fixation;
 
     double x_total = 0,
-           y_total = 0;
+        y_total = 0;
     for(auto point : fixation_points) {
         x_total += point.x;
         y_total += point.y;

@@ -13,6 +13,8 @@
 #define IVTALGORITHM_H
 
 #include "fixationalgorithm.h"
+#include "math.h"
+#include "database.h"
 
 class IVTAlgorithm: public FixationAlgorithm {
 public:
@@ -26,6 +28,8 @@ private:
 
     int velocity_threshold;
     int duration_ms;
+
+    Database db;
 };
 
 #endif // IVTALGORITHM_H
