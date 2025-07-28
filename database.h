@@ -57,7 +57,8 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
-    void insertSaccade(QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    void insertSaccade(QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, QString,QString, QString, QString);
+
     void insertSaccadeGaze(QString, QString);
 
     QVector<QString> getSessions();

@@ -82,12 +82,15 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
         const Fixation& startFix = fixations[i - 1];
         const Fixation& endFix = fixations[i];
 
+        //const Gaze& origin = startFix.gaze_vec[startFix.gaze_vec.size() - 1];
+        //const Gaze& destination = endFix.gaze_vec[0];
+
         double dx = endFix.x - startFix.x;
         double dy = endFix.y - startFix.y;
         double amplitude = sqrt(dx * dx + dy * dy);
-        double direction = atan2(dy, dx) * 180.0 / M_PI;
 
-        if (direction < 0) direction += 360;
+        double direction = atan2(dy, dx) * 180.0 / M_PI;
+        if (direction < 0) direction += 360.0;
 
         qint64 start_time = startFix.gaze_vec.back().system_time;
         qint64 end_time = endFix.gaze_vec.front().system_time;
@@ -110,9 +113,24 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
 
         double avg_velocity = (count > 0) ? velocity_sum / count : 0;
         QString saccade_id = QString::number(i); // Replace with actual logic
-        db.insertSaccade(saccade_id, QString::number(start_time), QString::number(end_time), QString::number(duration),
-                         QString::number(amplitude), QString::number(peak_velocity), QString::number(avg_velocity),
-                         QString::number(direction), run_id);
+
+        QString start_fixation = QString::number(i - 1);
+        QString end_fixation = QString::number(i);
+        db.insertSaccade(saccade_id,
+                         run_id,
+                         QString::number(start_time),
+                         QString::number(end_time),
+                         start_fixation,
+                         end_fixation,
+                         QString::number(startFix.x),
+                         QString::number(startFix.y),
+                         QString::number(endFix.x),
+                         QString::number(endFix.y),
+                         QString::number(amplitude),
+                         QString::number(peak_velocity),
+                         QString::number(avg_velocity),
+                         QString::number(direction),
+                         QString::number(duration));
 
         for (const QString& gid : gaze_ids) {
             db.insertSaccadeGaze(saccade_id, gid);
