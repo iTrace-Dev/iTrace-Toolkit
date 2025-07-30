@@ -56,9 +56,11 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
-    //Declarations for inserting values into the attributes for the saccade and saccade_gaze tables
+    //Declarations for inserting values into the attributes for the saccade and saccade_gaze tables (issue 58)
     //void insertSaccade(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
-    //void insertSaccadeGaze(QString,QString);
+    void insertSaccadeGaze(QString,QString);
+    //Adding values one or two attributes at a time, will remove and uncomment the above when all values are properly implemented
+    void insertSacccade(QString, QString);
 
     QVector<QString> getSessions();
     QVector<QString> getAllIDEContextIDs();
