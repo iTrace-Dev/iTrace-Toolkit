@@ -28,11 +28,21 @@ public:
 
     QVector<Fixation>& getFixations();
 
+    //issue 58 - no overrides currently since only IVT will have access
+    //for now
+    QVector<Fixation> generateSaccades();
+    QVector<Fixation>& getSaccades();
+
 protected:
     virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
 
     QVector<Gaze> session_gazes;
     QVector<Fixation> fixations;
+
+    //issue 58 - a vector to store our saccades
+    //Also, not sure if we'll need a saccade estimate
+    QVector<Fixation> saccades;
+    Fixation computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // FIXATIONALGORITHM_H
