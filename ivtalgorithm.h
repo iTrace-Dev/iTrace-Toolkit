@@ -21,11 +21,18 @@ public:
 
     QVector<Fixation> generateFixations() override;
     QString generateFixationSettings() override;
+
+    //issue 58
+    QVector<Fixation> generateSaccades();
+
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
 
     int velocity_threshold;
     int duration_ms;
+
+    //issue 58
+    Fixation computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // IVTALGORITHM_H
