@@ -73,6 +73,51 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
     return fixations;
 }
 
+//issue 58 - creating a separate vector for saccades-mirrors the generateFixations() above
+QVector<Fixation> IVTAlgorithm::generateSaccades() {
+    std::vector<double> velocity_vector;
+    velocity_vector.push_back(0);
+
+    for(int i = 1; i < session_gazes.size(); ++i) {
+        velocity_vector.push_back(calculateGazeVelocity(session_gazes[i-1].x,session_gazes[i-1].y,session_gazes[i].x,session_gazes[i].y));
+    }
+    //Step 3 - Calculate saccade groupings
+    QVector<std::pair<Gaze,int>> saccade_groups;
+    int saccade_number = 1;
+    bool on_fixation = false;
+
+
+    for(int i = 0; i < session_gazes.size(); ++i) {
+        if(velocity_vector[i] > velocity_threshold) {
+            saccade_groups.push_back(std::make_pair(session_gazes[i],saccade_number));
+            on_fixation = false;
+        }
+        else if(!on_fixation) {
+            on_fixation = true;
+            ++saccade_number;
+        }
+    }
+    //Step 4 - Filter the saccade groupings-needs computeSaccadeEstimate to be implemented
+    QVector<Gaze> tmp;
+    for(int i = 1; i < saccade_groups.size() - 1; ++i) {
+        if(saccade_groups[i].second == saccade_groups[i+1].second) {
+            tmp.push_back(saccade_groups[i].first);
+        }
+        else if(saccade_groups[i].second == saccade_groups[i-1].second) {
+            tmp.push_back(saccade_groups[i].first);
+            Fixation sacc = computeSaccadeEstimate(tmp);
+            if(sacc.x > -1) { saccades.push_back(sacc); }
+            tmp.clear();
+        }
+        else {
+            Fixation sacc = computeSaccadeEstimate(tmp);
+            if(sacc.x > -1) { saccades.push_back(sacc); }
+            tmp.clear();
+        }
+    }
+    return saccades;
+}
+
 Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     Fixation fixation;
 
@@ -98,6 +143,14 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     }
     return fixation;
 }
+
+//convert to saccadeEstimate? Will be different from fixationEstimate
+// Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
+//    Fixation saccade;
+//  
+//    code goes here
+//    return saccade;
+//}
 
 QString IVTAlgorithm::generateFixationSettings() {
     return "IVT,"+QString::number(velocity_threshold)+","+QString::number(duration_ms);
