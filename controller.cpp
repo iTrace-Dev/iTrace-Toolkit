@@ -457,6 +457,9 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             }
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());
+
+	    //issue 58
+            //session_saccades.append(algorithm->generateSaccades());
             fixation_filter_settings = algorithm->generateFixationSettings();
             emit setProgressBarValue(counter); ++counter;
             QApplication::processEvents();
@@ -474,17 +477,35 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         int fixation_order = 1;
         for(auto fix = session_fixations.rbegin(); fix != session_fixations.rend(); ++fix) {
             QString fixation_id = QUuid::createUuid().toString();
-            fixation_id.remove("{"); fixation_id.remove("}");
+	    fixation_id.remove("{"); fixation_id.remove("}");
+		
+	    //issue 58 - creating the saccade_id attribute with the createUuid. This will be moved eventually
+	    QString saccade_id=QUuid::createUuid().toString();
+	    saccade_id.remove("{"); saccade_id.remove("}");
+            
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
-
-
+	   
+	    //issue 58
+            idb.insertSaccade(saccade_id, fixation_run_id);
+            
             ++fixation_order;
             std::set<long long> unique_gazes; // What does this even do? Check the py
             for(auto gaze : fix->gaze_vec) {
                 if(unique_gazes.find(gaze.event_time) != unique_gazes.end()) { continue; }
                 idb.insertFixationGaze(fixation_id,QString::number(gaze.event_time));
+
+		 //issue 58
+                idb.insertSaccadeGaze(saccade_id, QString::number(gaze.event_time));
             }
         }
+	//issue 58 - the idea is to introduce another vector for the saccades, but keep it as a fixation type
+	//We'll transfer the insertSaccade and insertSaccadeGaze here after
+
+        // for(auto sacc=session_saccades.rbegin(); sacc!=session_saccades.rend();++sacc){
+        //     QString saccade_id=QUuid::createUuid().toString();
+        //     saccade_id.remove("{");saccade_id.remove("}");
+        //     idb.(saccade_id, fixation_run_id);
+
         QApplication::processEvents();
     }
 
