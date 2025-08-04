@@ -145,12 +145,31 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
 }
 
 //convert to saccadeEstimate? Will be different from fixationEstimate
-// Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
-//    Fixation saccade;
-//  
+Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
+   Fixation saccade;
+
+    if (saccade_points.size() < 2) {
+        saccade.x = -1;
+        saccade.y = -1;
+        return saccade;
+    }
+
+    const Gaze& start = saccade_points.first();
+    const Gaze& end = saccade_points.last();
+
+    // Store gaze points
+    //saccade.gaze_vec = saccade_points;
+    for(size_t i = 0; i < saccade_points.size(); ++i){
+        saccade.gaze_vec.push_back(saccade_points[i]);
+    }
+
+    // Use midpoint as rough position
+    saccade.x = (start.x + end.x) / 2.0;
+    saccade.y = (start.y + end.y) / 2.0;
+
 //    code goes here
-//    return saccade;
-//}
+   return saccade;
+}
 
 QString IVTAlgorithm::generateFixationSettings() {
     return "IVT,"+QString::number(velocity_threshold)+","+QString::number(duration_ms);

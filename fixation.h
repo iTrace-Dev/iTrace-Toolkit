@@ -51,6 +51,7 @@ public:
     int start_x, start_y, end_x, end_y;
     double amplitude, peak_velocity, avg_velocity;
     double direction;
+
 };
 
 #endif // FIXATION_H

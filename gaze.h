@@ -16,6 +16,7 @@
 #include <QVariant>
 #include <iostream>
 #include <math.h>
+#include <utility> // issue 58
 
 
 class Gaze {
@@ -24,6 +25,9 @@ public:
     Gaze(QSqlQuery&);
     Gaze(char**);
     Gaze(const Gaze&);
+    // issue 58
+    Gaze& operator=(Gaze);
+    void swap(Gaze&);
 
     bool isValid();
 

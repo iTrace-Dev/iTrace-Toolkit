@@ -24,6 +24,7 @@ public:
 
     //issue 58
     QVector<Fixation> generateSaccades();
+    QVector<Gaze> gaze_vec;
 
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;

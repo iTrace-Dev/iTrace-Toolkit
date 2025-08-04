@@ -197,10 +197,10 @@ void Database::insertSaccadeGaze(QString saccade_id, QString event_time) {
 }
 
 //will remove once all attributes are implemented
-void Database::insertSaccade(QString saccade_id, QString fixation_run_id) {
-    QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id) VALUES (\"%1\", %2);").arg(saccade_id, fixation_run_id);
-    sqlite3_exec(db, query.toStdString().c_str(),NULL,0,NULL);
-}
+// void Database::insertSaccade(QString saccade_id, QString fixation_run_id) {
+//     QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id) VALUES (\"%1\", %2);").arg(saccade_id, fixation_run_id);
+//     sqlite3_exec(db, query.toStdString().c_str(),NULL,0,NULL);
+// }
 
 // The following parameters are unused here and should always be inserted as ""
 // source_token, source_token_type, source_token_xpath, source_token_sytnactic_context
