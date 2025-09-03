@@ -15,7 +15,6 @@ QVector<Fixation>& FixationAlgorithm::getFixations() {
     return fixations;
 }
 
-//issue 58 - adding a QVector of the Fixation class to return saccades
 QVector<Fixation>& FixationAlgorithm::getSaccades(){
     return saccades;
 }

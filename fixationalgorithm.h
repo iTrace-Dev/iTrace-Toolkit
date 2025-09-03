@@ -28,9 +28,8 @@ public:
 
     QVector<Fixation>& getFixations();
 
-    //issue 58 - no overrides currently since only IVT will have access
-    //for now
-    QVector<Fixation> generateSaccades();
+    //issue 58 - Adding virtual function for generating saccades
+    virtual QVector<Fixation> generateSaccades()=0;
     QVector<Fixation>& getSaccades();
 
 protected:

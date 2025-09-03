@@ -23,12 +23,13 @@ public:
     QString generateFixationSettings() override;
 
     //issue 58
-    QVector<Fixation> generateSaccades();
-    QVector<Gaze> gaze_vec;
+    QVector<Fixation> generateSaccades() override;
+
+    //issue 58-Connor
+    //QVector<Gaze> gaze_vec;
 
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
-
     int velocity_threshold;
     int duration_ms;
 

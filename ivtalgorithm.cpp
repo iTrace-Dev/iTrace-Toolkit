@@ -19,11 +19,33 @@ double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
     return v;
 }
 
+//additional helper functions for peak, average, and amplitude velocities
+double calculateAverageVelocity(QVector<Gaze> gazes ){
+    double totalVelocity= 0;
+    double averageVelocity=0;
+    for (int i=1;i>gazes.size();i++){
+        totalVelocity+=calculateGazeVelocity(gazes[i-1].x,gazes[i-1].y, gazes[i].x, gazes[i].y);
+    }
+    // for(auto point: gazes){
+    //     totalVelocity+=calculateGazeVelocity(gazes.first().x, gazes.first().y, gazes.last().x, gazes.last().y);
+    // }
+    averageVelocity=totalVelocity/gazes.size();
+
+    return averageVelocity;
+}
+
+double calculatePeakVelocity(QVector<Gaze> gazes){
+    double peakVelocity=0;
+    for(int i=0;i<gazes.size();i++){
+        if(peakVelocity<i){peakVelocity=i;}
+    }
+    return peakVelocity;
+}
+
 IVTAlgorithm::IVTAlgorithm(QVector<Gaze> gazes, int _velocity, int _duration_ms) : FixationAlgorithm(gazes){
     velocity_threshold = _velocity;
     duration_ms = _duration_ms;
 }
-
 QVector<Fixation> IVTAlgorithm::generateFixations() {
     //This code follows the IVT Algorithm
 
@@ -40,7 +62,6 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
     QVector<std::pair<Gaze,int>> fixation_groups;
     int fix_number = 1;
     bool on_saccade = false;
-
 
     for(int i = 0; i < session_gazes.size(); ++i) {
         if(velocity_vector[i] <= velocity_threshold) {
@@ -73,7 +94,7 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
     return fixations;
 }
 
-//issue 58 - creating a separate vector for saccades-mirrors the generateFixations() above
+//issue 58 - creating a separate vector for saccades
 QVector<Fixation> IVTAlgorithm::generateSaccades() {
     std::vector<double> velocity_vector;
     velocity_vector.push_back(0);
@@ -81,6 +102,7 @@ QVector<Fixation> IVTAlgorithm::generateSaccades() {
     for(int i = 1; i < session_gazes.size(); ++i) {
         velocity_vector.push_back(calculateGazeVelocity(session_gazes[i-1].x,session_gazes[i-1].y,session_gazes[i].x,session_gazes[i].y));
     }
+
     //Step 3 - Calculate saccade groupings
     QVector<std::pair<Gaze,int>> saccade_groups;
     int saccade_number = 1;
@@ -96,9 +118,11 @@ QVector<Fixation> IVTAlgorithm::generateSaccades() {
             on_fixation = true;
             ++saccade_number;
         }
+
     }
-    //Step 4 - Filter the saccade groupings-needs computeSaccadeEstimate to be implemented
+   // Step 4 - Filter the saccade groupings-needs computeSaccadeEstimate to be implemented
     QVector<Gaze> tmp;
+
     for(int i = 1; i < saccade_groups.size() - 1; ++i) {
         if(saccade_groups[i].second == saccade_groups[i+1].second) {
             tmp.push_back(saccade_groups[i].first);
@@ -144,31 +168,57 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     return fixation;
 }
 
-//convert to saccadeEstimate? Will be different from fixationEstimate
+//convert to saccadeEstimate? Will be different from above, will calculate start x and start y
 Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
-   Fixation saccade;
+    Fixation saccade;
 
-    if (saccade_points.size() < 2) {
-        saccade.x = -1;
-        saccade.y = -1;
+    double dx=0;
+    double dy=0;
+
+    for(auto point : saccade_points) {
+        saccade.start_x=saccade_points.first().x;
+        saccade.start_y=saccade_points.first().y;
+        saccade.end_x=saccade_points.last().x;
+        saccade.end_y=saccade_points.last().y;
+
+        dx=saccade_points.last().x-saccade_points.first().x;
+        dy=saccade_points.last().y-saccade_points.first().y;
+
+        saccade.amplitude=sqrt(dx*dx+dy*dy);
+        saccade.peak_velocity=calculatePeakVelocity(saccade_points);
+        saccade.avg_velocity=calculateAverageVelocity(saccade_points);
+
+        saccade.gaze_vec.push_back(point);
+    }
+    if(saccade_points.size() < 1) {
+        saccade.start_x = -1;
+        saccade.start_y = -1;
+        saccade.end_x=-1;
+        saccade.end_y=-1;
+        saccade.avg_velocity=-1;
+        saccade.amplitude=-1;
+        saccade.peak_velocity=-1;
         return saccade;
     }
-
-    const Gaze& start = saccade_points.first();
-    const Gaze& end = saccade_points.last();
-
-    // Store gaze points
-    //saccade.gaze_vec = saccade_points;
-    for(size_t i = 0; i < saccade_points.size(); ++i){
-        saccade.gaze_vec.push_back(saccade_points[i]);
+    if((saccade_points[saccade_points.size()-1].system_time - saccade_points[0].system_time) >= duration_ms) {
+        saccade.start_x = saccade_points.first().x;
+        saccade.start_y = saccade_points.first().y;
+        saccade.end_x = saccade_points.last().x;
+        saccade.end_y = saccade_points.last().y;
+        saccade.amplitude=sqrt(dx*dx-dy*dy);
+        saccade.avg_velocity=calculateAverageVelocity(saccade_points);
+        saccade.peak_velocity=calculatePeakVelocity(saccade_points);
     }
-
-    // Use midpoint as rough position
-    saccade.x = (start.x + end.x) / 2.0;
-    saccade.y = (start.y + end.y) / 2.0;
-
-//    code goes here
-   return saccade;
+    // else {
+    //     saccade.start_x = -1;
+    //     saccade.start_y = -1;
+    //     saccade.end_x=-1;
+    //     saccade.end_y=-1;
+    //     saccade.avg_velocity=-1;
+    //     saccade.amplitude=-1;
+    //     saccade.peak_velocity=-1;
+    // }
+    return saccade;
 }
 
 QString IVTAlgorithm::generateFixationSettings() {

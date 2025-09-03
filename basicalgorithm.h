@@ -21,7 +21,8 @@ public:
 
 
     QVector<Fixation> generateFixations() override;
-
+    QVector<Fixation> generateSaccades() override;
+    
     QString generateFixationSettings() override;
 
 private:

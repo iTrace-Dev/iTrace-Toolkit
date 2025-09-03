@@ -25,9 +25,10 @@ public:
     Gaze(QSqlQuery&);
     Gaze(char**);
     Gaze(const Gaze&);
-    // issue 58
-    Gaze& operator=(Gaze);
-    void swap(Gaze&);
+
+    // issue 58-Connor
+    // Gaze& operator=(Gaze);
+    // void swap(Gaze&);
 
     bool isValid();
 
