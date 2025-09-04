@@ -60,7 +60,7 @@ public:
     //void insertSaccade(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertSaccade(QString,QString,QString,QString,QString,QString,QString,QString,QString);
     //Adding values one or two attributes at a time, will remove and uncomment the above when all values are properly implemented
-    void insertSacccadeGaze(QString, QString);
+    void insertSaccadeGaze(QString, QString);
 
     QVector<QString> getSessions();
     QVector<QString> getAllIDEContextIDs();
