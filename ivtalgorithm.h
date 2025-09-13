@@ -23,6 +23,14 @@ public:
 
     QVector<Fixation> generateFixations() override;
     QString generateFixationSettings() override;
+
+
+    //issue 58
+    QVector<Saccade> generateSaccades() override;
+
+    //issue 58-Conner
+    //QVector<Gaze> gaze_vec;
+
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
 
@@ -30,6 +38,8 @@ private:
     int duration_ms;
 
     Database db;
+    //issue 58
+    Saccade computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // IVTALGORITHM_H

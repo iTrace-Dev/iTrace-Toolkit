@@ -87,6 +87,10 @@ QVector<Fixation> IDTAlgorithm::generateFixations() {
     return fixations;
 }
 
+QVector<Saccade> IDTAlgorithm::generateSaccades(){
+    return saccades;
+}
+
 Fixation IDTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     Fixation fixation;
     double x_total = 0, y_total = 0;

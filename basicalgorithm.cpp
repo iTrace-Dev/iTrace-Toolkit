@@ -115,6 +115,11 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
     return fixations;
 }
 
+
+QVector <Saccade> BasicAlgorithm::generateSaccades() {
+    return saccades;
+}
+
 Fixation BasicAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_gazes) {
     Fixation fixation;
     std::vector<double> x_pos, y_pos;

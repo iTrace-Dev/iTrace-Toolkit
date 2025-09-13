@@ -48,4 +48,25 @@ public:
     QString target = "", syntactic_category = "", token = "", xpath = "";
 };
 
+class Saccade {
+public:
+    Saccade();
+
+    void calculateDatabaseFields();
+
+    void print();
+
+    // This could maybe be moved to a set if we want to ignore duplicates
+    std::vector<Gaze> gaze_vec;
+    double x, y, left_pupil_diameter = 0, right_pupil_diameter = 0;
+    int source_file_line, source_file_col, duration = 0;
+    long long fixation_event_time = 0;
+    QString target = "", syntactic_category = "", token = "", xpath = "";
+
+    //issue 58 - I think we add these here?
+    int start_x, start_y, end_x, end_y;
+    double amplitude, peak_velocity, avg_velocity;
+    double direction;
+};
+
 #endif // FIXATION_H

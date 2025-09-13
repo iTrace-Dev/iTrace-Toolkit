@@ -28,11 +28,20 @@ public:
 
     QVector<Fixation>& getFixations();
 
+    //issue 58 - Adding virtual function for generating saccades
+    virtual QVector<Saccade> generateSaccades()=0;
+    QVector<Saccade>& getSaccades();
+
 protected:
     virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
 
     QVector<Gaze> session_gazes;
     QVector<Fixation> fixations;
+
+    //issue 58 - a vector to store our saccades
+    //Also, not sure if we'll need a saccade estimate
+    QVector<Saccade> saccades;
+    Saccade computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // FIXATIONALGORITHM_H

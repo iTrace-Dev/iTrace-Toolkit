@@ -433,6 +433,9 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     for(auto session_id : sessions) {
         //std::cout << "?" << std::endl;
         QVector<Fixation> session_fixations;
+        QVector<Saccade> session_saccades;
+
+
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
         for(auto gaze_target : gaze_targets) {
