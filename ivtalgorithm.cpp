@@ -142,12 +142,12 @@ QVector<Fixation> IVTAlgorithm::generateSaccades() {
         else if(saccade_groups[i].second == saccade_groups[i-1].second) {
             tmp.push_back(saccade_groups[i].first);
             Fixation sacc = computeSaccadeEstimate(tmp);
-            if(sacc.x > -1) { saccades.push_back(sacc); }
+            if(sacc.start_x > -1) { saccades.push_back(sacc); }
             tmp.clear();
         }
         else {
             Fixation sacc = computeSaccadeEstimate(tmp);
-            if(sacc.x > -1) { saccades.push_back(sacc); }
+            if(sacc.start_x > -1) { saccades.push_back(sacc); }
             tmp.clear();
         }
     }

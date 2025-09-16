@@ -49,7 +49,7 @@ public:
 
      //issue 58 - I think we add these here?
     int start_x, start_y, end_x, end_y;
-    double amplitude, peak_velocity, avg_velocity;
+    double amplitude, peak_velocity, average_velocity;
     double direction;
     long long start_time=-1;
     long long end_time=-1;
