@@ -19,27 +19,39 @@ double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
     return v;
 }
 
-//additional helper functions for peak, average, and amplitude velocities
+//issue 58 - additonal helper functions for saccade attributes (peak velocity, average velocity, direction)
 double calculateAverageVelocity(QVector<Gaze> gazes ){
     double totalVelocity= 0;
     double averageVelocity=0;
-    for (int i=1;i>gazes.size();i++){
+    for (int i=1;i<gazes.size();i++){
         totalVelocity+=calculateGazeVelocity(gazes[i-1].x,gazes[i-1].y, gazes[i].x, gazes[i].y);
     }
-    // for(auto point: gazes){
-    //     totalVelocity+=calculateGazeVelocity(gazes.first().x, gazes.first().y, gazes.last().x, gazes.last().y);
-    // }
     averageVelocity=totalVelocity/gazes.size();
-
     return averageVelocity;
 }
 
 double calculatePeakVelocity(QVector<Gaze> gazes){
     double peakVelocity=0;
-    for(int i=0;i<gazes.size();i++){
-        if(peakVelocity<i){peakVelocity=i;}
+    double tmp=0;
+    for(int i=1;i<gazes.size();i++){
+        tmp=calculateGazeVelocity(gazes[i-1].x,gazes[i-1].y, gazes[i].x, gazes[i].y);
+        if(peakVelocity<tmp){peakVelocity=tmp;}
     }
     return peakVelocity;
+}
+
+double calculateGazeDirection(QVector <Gaze> gazes){
+    double dx=0;
+    double dy=0;
+    double radians=0;
+    double degrees=0;
+    for (int i=1;i<gazes.size();i++){
+         dx=gazes[i].x-gazes[i-1].x;
+         dy=gazes[i].y-gazes[i-1].y;
+         radians=atan2(dx,dy);
+         degrees=radians*(180/M_PI);
+    }
+    return degrees;
 }
 
 IVTAlgorithm::IVTAlgorithm(QVector<Gaze> gazes, int _velocity, int _duration_ms) : FixationAlgorithm(gazes){
@@ -176,7 +188,7 @@ Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
     double dy=0;
 
     for(auto point : saccade_points) {
-        saccade.start_x=saccade_points.first().x;
+           saccade.start_x=saccade_points.first().x;
         saccade.start_y=saccade_points.first().y;
         saccade.end_x=saccade_points.last().x;
         saccade.end_y=saccade_points.last().y;
@@ -186,7 +198,8 @@ Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
 
         saccade.amplitude=sqrt(dx*dx+dy*dy);
         saccade.peak_velocity=calculatePeakVelocity(saccade_points);
-        saccade.avg_velocity=calculateAverageVelocity(saccade_points);
+        saccade.average_velocity=calculateAverageVelocity(saccade_points);
+        saccade.direction=calculateGazeDirection(saccade_points);
 
         saccade.gaze_vec.push_back(point);
     }
@@ -195,20 +208,23 @@ Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
         saccade.start_y = -1;
         saccade.end_x=-1;
         saccade.end_y=-1;
-        saccade.avg_velocity=-1;
+        saccade.average_velocity=-1;
         saccade.amplitude=-1;
         saccade.peak_velocity=-1;
+        saccade.direction=-1;
         return saccade;
     }
-    if((saccade_points[saccade_points.size()-1].system_time - saccade_points[0].system_time) >= duration_ms) {
-        saccade.start_x = saccade_points.first().x;
-        saccade.start_y = saccade_points.first().y;
-        saccade.end_x = saccade_points.last().x;
-        saccade.end_y = saccade_points.last().y;
-        saccade.amplitude=sqrt(dx*dx-dy*dy);
-        saccade.avg_velocity=calculateAverageVelocity(saccade_points);
-        saccade.peak_velocity=calculatePeakVelocity(saccade_points);
-    }
+    //not sure if we'll need the below
+    // if((saccade_points[saccade_points.size()-1].system_time - saccade_points[0].system_time) >= duration_ms) {
+    //     saccade.start_x = saccade_points.first().x;
+    //     saccade.start_y = saccade_points.first().y;
+    //     saccade.end_x = saccade_points.last().x;
+    //     saccade.end_y = saccade_points.last().y;
+    //     saccade.amplitude=sqrt(dx*dx-dy*dy);
+    //     saccade.avg_velocity=calculateAverageVelocity(saccade_points);
+    //     saccade.peak_velocity=calculatePeakVelocity(saccade_points);
+    //return saccade;
+    // }
     // else {
     //     saccade.start_x = -1;
     //     saccade.start_y = -1;

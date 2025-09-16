@@ -185,13 +185,15 @@ void Database::insertGaze(QString event_time, QString session_id, QString calibr
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
 
+//issue 58
 void Database::insertSaccadeGaze(QString saccade_id, QString event_time) {
     QString query = QString("INSERT INTO saccade_gaze(saccade_id,event_time) VALUES(\"%1\",%2);").arg(saccade_id,event_time);
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
 
-void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QString start_x, QString start_y,QString end_x, QString end_y,QString amplitude, QString peak_velocity, QString avg_velocity) {
-    QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity) VALUES (\"%1\", %2,%7,%8,%9,%10,%11, %12,%13);").arg(saccade_id, fixation_run_id, start_x, start_y,end_x,end_y,amplitude, peak_velocity, avg_velocity);
+//issue 58
+void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QString start_time, QString end_time, QString start_x, QString start_y,QString end_x, QString end_y,QString amplitude, QString peak_velocity, QString average_velocity,QString direction,QString duration) {
+    QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity,direction,duration) VALUES (\"%1\", %2, %3, %4, %7,%8,%9,%10,%11, %12,%13,%14,%15);").arg(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y,end_x,end_y,amplitude, peak_velocity, average_velocity,direction,duration);
     sqlite3_exec(db, query.toStdString().c_str(),NULL,0,NULL);
 }
 
