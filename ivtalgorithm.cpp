@@ -14,12 +14,12 @@
 //Helper Functions
 double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
     double vx = x1 - x2,
-           vy = y1 - y2;
+        vy = y1 - y2;
     double v = sqrt((vx*vx)+(vy*vy));
     return v;
 }
 
-//issue 58 - additonal helper functions for saccade attributes (peak velocity, average velocity, direction)
+
 double calculateAverageVelocity(QVector<Gaze> gazes ){
     double totalVelocity= 0;
     double averageVelocity=0;
@@ -39,6 +39,7 @@ double calculatePeakVelocity(QVector<Gaze> gazes){
     }
     return peakVelocity;
 }
+
 
 double calculateGazeDirection(QVector <Gaze> gazes){
     double dx=0;
@@ -107,7 +108,7 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
 }
 
 //issue 58 - creating a separate vector for saccades
-QVector<Fixation> IVTAlgorithm::generateSaccades() {
+QVector<Saccade> IVTAlgorithm::generateSaccades() {
     std::vector<double> velocity_vector;
     velocity_vector.push_back(0);
 
@@ -132,6 +133,7 @@ QVector<Fixation> IVTAlgorithm::generateSaccades() {
         }
 
     }
+
    // Step 4 - Filter the saccade groupings-needs computeSaccadeEstimate to be implemented
     QVector<Gaze> tmp;
 
@@ -141,13 +143,13 @@ QVector<Fixation> IVTAlgorithm::generateSaccades() {
         }
         else if(saccade_groups[i].second == saccade_groups[i-1].second) {
             tmp.push_back(saccade_groups[i].first);
-            Fixation sacc = computeSaccadeEstimate(tmp);
-            if(sacc.start_x > -1) { saccades.push_back(sacc); }
+            Saccade sacc = computeSaccadeEstimate(tmp);
+            if(sacc.start_x>-1) { saccades.push_back(sacc); }
             tmp.clear();
         }
         else {
-            Fixation sacc = computeSaccadeEstimate(tmp);
-            if(sacc.start_x > -1) { saccades.push_back(sacc); }
+            Saccade sacc = computeSaccadeEstimate(tmp);
+            if(sacc.start_x>-1) { saccades.push_back(sacc); }
             tmp.clear();
         }
     }
@@ -158,7 +160,7 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     Fixation fixation;
 
     double x_total = 0,
-           y_total = 0;
+        y_total = 0;
     for(auto point : fixation_points) {
         x_total += point.x;
         y_total += point.y;
@@ -181,14 +183,14 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
 }
 
 //convert to saccadeEstimate? Will be different from above, will calculate start x and start y
-Fixation IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
-    Fixation saccade;
+Saccade IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
+    Saccade saccade;
 
     double dx=0;
     double dy=0;
 
     for(auto point : saccade_points) {
-           saccade.start_x=saccade_points.first().x;
+        saccade.start_x=saccade_points.first().x;
         saccade.start_y=saccade_points.first().y;
         saccade.end_x=saccade_points.last().x;
         saccade.end_y=saccade_points.last().y;

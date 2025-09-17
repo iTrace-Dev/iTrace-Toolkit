@@ -13,6 +13,8 @@
 #define IVTALGORITHM_H
 
 #include "fixationalgorithm.h"
+#include "math.h"
+#include "database.h"
 
 class IVTAlgorithm: public FixationAlgorithm {
 public:
@@ -22,10 +24,11 @@ public:
     QVector<Fixation> generateFixations() override;
     QString generateFixationSettings() override;
 
-    //issue 58
-    QVector<Fixation> generateSaccades() override;
 
-    //issue 58-Connor
+    //issue 58
+    QVector<Saccade> generateSaccades() override;
+
+    //issue 58-Conner
     //QVector<Gaze> gaze_vec;
 
 private:
@@ -33,8 +36,9 @@ private:
     int velocity_threshold;
     int duration_ms;
 
+    Database db;
     //issue 58
-    Fixation computeSaccadeEstimate(QVector<Gaze>);
+    Saccade computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // IVTALGORITHM_H

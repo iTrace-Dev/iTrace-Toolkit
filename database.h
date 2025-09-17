@@ -24,6 +24,7 @@
 #include "gaze.h"
 
 #include <iostream>
+#include <QDebug>
 
 class Database {
 public:
@@ -78,9 +79,9 @@ public:
 
     QVector<QVector<QString>> runFilterQuery(QString);
     void executeLongUpdateQuery(QString);
+    sqlite3* db;
 
 private:
-    sqlite3* db;
     QString file_path;
     bool open = false;
 };

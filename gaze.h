@@ -31,15 +31,16 @@ public:
     // void swap(Gaze&);
 
     bool isValid();
-
     void print();
+
+    int db_id = -1;
 
     int left_validation, right_validation,
         source_file_line = -1, source_file_col = -1;
     long long event_time, system_time;
     double x, y, left_pupil_diameter, right_pupil_diameter;
     QString gaze_target = "", gaze_target_type = "",
-                source_token = "", source_token_xpath = "", source_token_syntatic_context = "";
+        source_token = "", source_token_xpath = "", source_token_syntatic_context = "";
 
     //friend std::ostream& operator<<(std::ostream&,const Gaze&);
 

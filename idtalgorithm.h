@@ -22,7 +22,7 @@ public:
     QVector<Fixation> generateFixations() override;
     QString generateFixationSettings() override;
 
-    QVector<Fixation> generateSaccades() override;
+    QVector<Saccade> generateSaccades() override;
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
 

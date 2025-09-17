@@ -15,6 +15,7 @@ QVector<Fixation>& FixationAlgorithm::getFixations() {
     return fixations;
 }
 
-QVector<Fixation>& FixationAlgorithm::getSaccades(){
+
+QVector<Saccade>& FixationAlgorithm::getSaccades(){
     return saccades;
 }
