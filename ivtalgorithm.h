@@ -33,7 +33,6 @@ public:
 
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
-
     int velocity_threshold;
     int duration_ms;
 

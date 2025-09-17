@@ -115,7 +115,6 @@ QVector<Fixation> BasicAlgorithm::generateFixations() {
     return fixations;
 }
 
-
 QVector <Saccade> BasicAlgorithm::generateSaccades() {
     return saccades;
 }

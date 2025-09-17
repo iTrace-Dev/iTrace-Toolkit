@@ -63,6 +63,9 @@ void Fixation::calculateDatabaseFields() {
     right_pupil_diameter = right_pupil_diameter / double(gaze_count);
     duration = end_time - start_time;
 
+    //issue 58 - to get the start and end time for the saccade table
+    this->start_time=start_time;
+    this->end_time=end_time;
 }
 
 void Fixation::print() {

@@ -435,7 +435,6 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         QVector<Fixation> session_fixations;
         QVector<Saccade> session_saccades;
 
-
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
         for(auto gaze_target : gaze_targets) {
@@ -460,6 +459,10 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             }
             else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
             session_fixations.append(algorithm->generateFixations());
+
+	        //issue 58
+            session_saccades.append(algorithm->generateSaccades());
+
             fixation_filter_settings = algorithm->generateFixationSettings();
             emit setProgressBarValue(counter); ++counter;
             QApplication::processEvents();
@@ -468,18 +471,26 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
             item->calculateDatabaseFields();
         }
-        std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+
+        //issue 58-september
+        for(auto saccadeItem=session_saccades.begin();saccadeItem!=session_saccades.end();++saccadeItem){
+            saccadeItem->calculateDatabaseFields();
+        }
+         std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+        //issue 58
+        std::sort(session_saccades.begin(), session_saccades.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+
         QString fixation_run_id = QString::number(ms.count());
         QString fixation_date_time = fixation_run_id; // This will probably be changed in the future
         idb.insertFixationRun(fixation_run_id,session_id,fixation_date_time,fixation_filter_settings);
 
         int fixation_order = 1;
         for(auto fix = session_fixations.rbegin(); fix != session_fixations.rend(); ++fix) {
-            QString fixation_id = QUuid::createUuid().toString();
+            QString fixation_id = QUuid::createUuid().toString();  
             fixation_id.remove("{"); fixation_id.remove("}");
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
-
 
             ++fixation_order;
             std::set<long long> unique_gazes; // What does this even do? Check the py
@@ -488,6 +499,21 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 idb.insertFixationGaze(fixation_id,QString::number(gaze.event_time));
             }
         }
+
+        //issue 58
+        for(auto sac = session_saccades.rbegin();sac != session_saccades.rend(); ++sac){
+        QString saccade_id=QUuid::createUuid().toString();
+        saccade_id.remove("{"); saccade_id.remove("}");
+        idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
+
+
+        std::set<long long> unique_gazes;
+        for (auto saccade_gaze: sac->gaze_vec){
+            if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
+            idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
+        }
+        }
+
         QApplication::processEvents();
     }
 
@@ -790,10 +816,16 @@ void Controller::generateQueriedData(QString query, QString output_type, QString
         output.setDatabaseName(savename);
         output.open();
         output.exec("CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER, query TEXT)");
+        output.exec("CREATE TABLE IF NOT EXISTS saccade(saccade_id TEXT PRIMARY KEY, fixation_run_id INTEGER FOREIGN KEY (fixation_run_id) REFERENCES fixation_run(fixation_run_id)");
         for(auto i : data) {
             QString insert = QString("INSERT INTO fixation(fixation_id,fixation_run_id,fixation_start_event_time,fixation_order_number,x,y,fixation_target,source_file_line,source_file_col,token,syntactic_category,xpath,left_pupil_diameter,right_pupil_diameter,duration,query) VALUES(\"%1\",%2,%3,%4,%5,%6,\"%7\",%8,%9,%10,%11,%12,%13,%14,%15,'%16')").arg(i[0]).arg(i[1]).arg(i[2]).arg(i[3]).arg(i[4]).arg(i[5]).arg(i[6]).arg(i[7]).arg(i[8]).arg(i[9] == "null" ? "null" : "\""+i[9]+"\"").arg(i[10] == "null" ? "null" : "\""+i[10]+"\"").arg(i[11] == "null" ? "null" : "\""+i[11]+"\"").arg(i[12]).arg(i[13]).arg(i[14]).arg(safeQuery);
             std::cout << insert << std::endl;
             output.exec(insert);
+        }
+        for(auto i: data){
+            QString saccade_insert =QString("INSERT INTO saccade(saccade_id, fixation_run_id)VALUES(\"%1\",%2)").arg(i[0]).arg(i[1]);
+            std::cout<<saccade_insert<<std::endl;
+            output.exec(saccade_insert);
         }
         output.close();
         QSqlDatabase::removeDatabase("output");

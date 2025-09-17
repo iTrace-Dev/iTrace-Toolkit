@@ -41,8 +41,8 @@ Database::Database(QString file_path) : Database() {
             "CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
 
             //Creates the saccade and saccde_gaze tables if they do not already exist
-            "CREATE TABLE IF NOT EXISTS saccade(saccade_id INTEGER PRIMARY KEY, fixation_run_id INTEGER, start_time REAL, end_time REAL, start_fixation TEXT, end_fixation TEXT, start_x INTEGER, start_y INTEGER, end_x INTEGER, end_y INTEGER, amplitude REAL, peak_velocity REAL, average_velocity REAL, direction REAL, duration REAL, FOREIGN KEY (fixation_run_id) REFERENCES fixation_run(fixation_run_id));"
-            "CREATE TABLE IF NOT EXISTS saccade_gaze(saccade_id INTEGER, event_time INTEGER, FOREIGN KEY (saccade_id) REFERENCES saccade(saccade_id), FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
+            "CREATE TABLE IF NOT EXISTS saccade(saccade_id TEXT PRIMARY KEY, fixation_run_id INTEGER, start_time REAL, end_time REAL, start_fixation TEXT, end_fixation TEXT, start_x INTEGER, start_y INTEGER, end_x INTEGER, end_y INTEGER, amplitude REAL, peak_velocity REAL, average_velocity REAL, direction REAL, duration REAL, FOREIGN KEY (fixation_run_id) REFERENCES fixation_run(fixation_run_id));"
+            "CREATE TABLE IF NOT EXISTS saccade_gaze(saccade_id TEXT, event_time INTEGER, FOREIGN KEY (saccade_id) REFERENCES saccade(saccade_id), FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
     
             "CREATE INDEX idx_event_time_context ON ide_context(event_time);"
             "CREATE INDEX idx_event_time_gaze ON gaze(event_time);"
@@ -193,12 +193,17 @@ void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QStrin
     QString query=QString("INSERT INTO saccade(saccade_id,fixation_run_id,start_time,end_time,start_fixation,end_fixation,start_x,start_y,end_x,end_y,amplitude,peak_velocity,average_velocity,direction,duration) VALUES(%1,%2,%3,%4,\"%5\",\"%6\",%7,%8,%9,%10,%11,%12,%13,%14,%15);").arg(saccade_id,fixation_run_id,start_time,end_time,start_fixation,end_fixation,start_x,start_y,end_x,end_y,amplitude,peak_velocity,average_velocity,direction,duration);
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
-
+//issue 58
 void Database::insertSaccadeGaze(QString saccade_id, QString event_time) {
-    QString query = QString("INSERT INTO saccade_gaze(saccade_id,event_time) VALUES(%1,%2);").arg(saccade_id,event_time);
+    QString query = QString("INSERT INTO saccade_gaze(saccade_id,event_time) VALUES(\"%1\",%2);").arg(saccade_id,event_time);
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
 
+//issue 58
+void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QString start_time, QString end_time, QString start_x, QString start_y,QString end_x, QString end_y,QString amplitude, QString peak_velocity, QString average_velocity,QString direction,QString duration) {
+    QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity,direction,duration) VALUES (\"%1\", %2, %3, %4, %7,%8,%9,%10,%11, %12,%13,%14,%15);").arg(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y,end_x,end_y,amplitude, peak_velocity, average_velocity,direction,duration);
+    sqlite3_exec(db, query.toStdString().c_str(),NULL,0,NULL);
+}
 
 // The following parameters are unused here and should always be inserted as ""
 // source_token, source_token_type, source_token_xpath, source_token_sytnactic_context

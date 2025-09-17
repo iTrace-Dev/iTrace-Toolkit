@@ -95,3 +95,30 @@ void Gaze::print() {
               << source_token_xpath.toUtf8().constData() << source_token_syntatic_context.toUtf8().constData() << std::endl;
 
 }
+
+//issue 58-Connor
+// void Gaze::swap(Gaze& other){// issue 58
+//     left_validation = other.left_validation;
+//     right_validation = other.right_validation;
+//     source_file_line = other.source_file_line;
+//     source_file_col = other.source_file_col;
+//     event_time = other.event_time;
+//     system_time = other.system_time;
+//     x = other.x;
+//     y = other.y;
+//     left_pupil_diameter = other.left_pupil_diameter;
+//     right_pupil_diameter = other.right_pupil_diameter;
+//     gaze_target = other.gaze_target;
+//     gaze_target_type = other.gaze_target_type;
+//     source_token = other.source_token;
+//     source_token_xpath = other.source_token_xpath;
+//     source_token_syntatic_context = other.source_token_syntatic_context;
+// }
+
+// Gaze& Gaze::operator=(Gaze other){// issue 58
+//     if(this == &other){
+//         return *this;
+//     }
+//     swap(other);
+//     return *this;
+// }

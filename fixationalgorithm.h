@@ -12,9 +12,13 @@
 #ifndef FIXATIONALGORITHM_H
 #define FIXATIONALGORITHM_H
 
+#define _USE_MATH_DEFINES
 #include "gaze.h"
 #include "fixation.h"
 #include <QVector>
+#include <QMap>
+#include <cmath>
+#include <math.h>
 
 class FixationAlgorithm
 {
@@ -32,6 +36,7 @@ public:
     virtual QVector<Saccade> generateSaccades()=0;
     QVector<Saccade>& getSaccades();
 
+
 protected:
     virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
 
@@ -42,6 +47,7 @@ protected:
     //Also, not sure if we'll need a saccade estimate
     QVector<Saccade> saccades;
     Saccade computeSaccadeEstimate(QVector<Gaze>);
+
 };
 
 #endif // FIXATIONALGORITHM_H
