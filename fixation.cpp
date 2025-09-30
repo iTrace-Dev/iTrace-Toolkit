@@ -64,8 +64,8 @@ void Fixation::calculateDatabaseFields() {
     duration = end_time - start_time;
 
     //issue 58 - to get the start and end time for the saccade table
-    this->start_time=start_time;
-    this->end_time=end_time;
+    //this->start_time=start_time;
+    //this->end_time=end_time;
 }
 
 void Fixation::print() {
@@ -96,8 +96,8 @@ void Saccade::calculateDatabaseFields() {
         }
 
 
-        left_pupil_diameter += isnan(gaze.left_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.left_pupil_diameter;
-        right_pupil_diameter += isnan(gaze.right_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.right_pupil_diameter;
+        //left_pupil_diameter += isnan(gaze.left_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.left_pupil_diameter;
+        //right_pupil_diameter += isnan(gaze.right_pupil_diameter) || gaze.left_pupil_diameter == -1.0 ? 0 : gaze.right_pupil_diameter;
 
         QString candidate_key = gaze.gaze_target + "\t";
         candidate_key += (gaze.source_file_line == -1 ? QString("") : QString::number(gaze.source_file_line)) + "\t";
@@ -115,15 +115,15 @@ void Saccade::calculateDatabaseFields() {
     }
 
     QStringList fields = most_frequent.first.split("\t");
-    target = fields[0] == "" ? "" : fields[0];
-    source_file_line = fields[1] == "" ? -1 : fields[1].toInt();
-    source_file_col = fields[2] == "" ? -1 : fields[2].toInt();
-    token = fields[3] == "" ? "" : fields[3];
-    syntactic_category = fields[4] == "" ? "" : fields[4];
-    xpath = fields[5] == "" ? "" : fields[5];
+    //target = fields[0] == "" ? "" : fields[0];
+    //source_file_line = fields[1] == "" ? -1 : fields[1].toInt();
+    //source_file_col = fields[2] == "" ? -1 : fields[2].toInt();
+    //token = fields[3] == "" ? "" : fields[3];
+    //syntactic_category = fields[4] == "" ? "" : fields[4];
+    //xpath = fields[5] == "" ? "" : fields[5];
 
-    left_pupil_diameter = left_pupil_diameter / double(gaze_count);
-    right_pupil_diameter = right_pupil_diameter / double(gaze_count);
+    //left_pupil_diameter = left_pupil_diameter / double(gaze_count);
+    //right_pupil_diameter = right_pupil_diameter / double(gaze_count);
     duration = end_time - start_time;
 
     //issue 58 - to get the start and end time for the saccade table
@@ -131,6 +131,6 @@ void Saccade::calculateDatabaseFields() {
     this->end_time=end_time;
 }
 
-void Saccade::print() {
+/*void Saccade::print() {
     std::cout << fixation_event_time << "," << x << "," << y << "," << target.toUtf8().constData() << "," << source_file_line << "," << source_file_col << "," << token.toUtf8().constData() << "," << syntactic_category.toUtf8().constData() << "," << xpath.toUtf8().constData() << "," << left_pupil_diameter << "," << right_pupil_diameter << "," << duration << std::endl;
-}
+}*/

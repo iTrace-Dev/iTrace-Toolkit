@@ -48,11 +48,11 @@ public:
     QString target = "", syntactic_category = "", token = "", xpath = "";
 
      //issue 58 - I think we add these here? //Conner - leaving this here for the time being
-    int start_x, start_y, end_x, end_y;
-    double amplitude, peak_velocity, average_velocity;
-    double direction;
-    long long start_time=-1;
-    long long end_time=-1;
+    //int start_x, start_y, end_x, end_y;
+    //double amplitude, peak_velocity, average_velocity;
+    //double direction;
+    //long long start_time=-1;
+    //long long end_time=-1;
 };
 
 //issue 58 - adding the saccade class
@@ -62,13 +62,14 @@ public:
 
     void calculateDatabaseFields();
 
-    void print();
+    //void print();
 
     std::vector<Gaze> gaze_vec;
-    double x, y, left_pupil_diameter = 0, right_pupil_diameter = 0;
-    int source_file_line, source_file_col, duration = 0;
+    double x, y; //left_pupil_diameter = 0, right_pupil_diameter = 0;
+    //int source_file_line, source_file_col,
+    int duration = 0;
     long long fixation_event_time = 0;
-    QString target = "", syntactic_category = "", token = "", xpath = "";
+    //QString target = "", syntactic_category = "", token = "", xpath = "";
 
     int start_x, start_y, end_x, end_y;
     double amplitude, peak_velocity, average_velocity;
