@@ -433,7 +433,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     for(auto session_id : sessions) {
         //std::cout << "?" << std::endl;
         QVector<Fixation> session_fixations;
-        QVector<Fixation> session_saccades; 
+        QVector<Saccade> session_saccades;
 
         QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
@@ -480,7 +480,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 
         //issue 58
-        std::sort(session_saccades.begin(), session_saccades.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+        std::sort(session_saccades.begin(), session_saccades.end(), [](const Saccade& a, const Saccade& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
 
         QString fixation_run_id = QString::number(ms.count());
         QString fixation_date_time = fixation_run_id; // This will probably be changed in the future

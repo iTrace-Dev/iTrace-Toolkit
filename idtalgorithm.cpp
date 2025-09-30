@@ -87,7 +87,7 @@ QVector<Fixation> IDTAlgorithm::generateFixations() {
     return fixations;
 }
 
-QVector<Fixation> IDTAlgorithm::generateSaccades(){
+QVector<Saccade> IDTAlgorithm::generateSaccades(){
     return saccades;
 }
 
