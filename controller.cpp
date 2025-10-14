@@ -329,7 +329,7 @@ void Controller::importCoreXML(const QString& file_path) {
 
     log->writeLine("INFO","Core file successfully imported "+file_path);
 
-    emit taskAdded(participant_id + " - " + task_name);
+    emit taskAdded(participant_id + " - " + task_name + " - " + session_id);
     emit outputToScreen("black",QString("Core file imported. Took %1 seconds").arg(time.elapsed() / 1000.0));
 
 }
@@ -419,8 +419,9 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     std::vector<QString> sessions;
     for(auto i : tasks) { // Get the sessions that the user wants to use
         QStringList values = i.split(" - ");
-        if(values[2] == "1") {
-            sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+        if(values[3] == "1") {
+            //sessions.push_back(idb.getSessionFromSessionID(values[2]));
+            sessions.push_back(values[2]);
             counter += idb.getGazeTargetsFromSession(sessions.back()).size();
         }
     }

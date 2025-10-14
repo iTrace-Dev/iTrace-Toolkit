@@ -37,7 +37,7 @@ Window {
     maximumWidth: width*/
     minimumHeight: minHeight
     minimumWidth: minWidth
-    title: qsTr("iTrace Toolkit V0.2.2")
+    title: qsTr("iTrace Toolkit V0.2.3")
 
     function getBottomY(obj) {
         return obj.y + obj.height;

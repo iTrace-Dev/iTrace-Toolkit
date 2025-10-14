@@ -206,11 +206,11 @@ void Database::insertWebContext(QString event_time, QString browser_type, QStrin
 
 int getSessionsCALLBACK(void *sessions, int argc, char** argv, char** azColName) {
     QVector<QString>* x = (QVector<QString>*)sessions;
-    x->push_back(argv[0] + QString(" - ") + argv[1]);
+    x->push_back(argv[0] + QString(" - ") + argv[1] + QString(" - ") + argv[2]);
     return 0;
 }
 QVector<QString> Database::getSessions() {
-    QString query = QString("SELECT participant_id, task_name FROM session;");
+    QString query = QString("SELECT participant_id, task_name, session_id FROM session;");
     QVector<QString> data;
     sqlite3_exec(db, query.toStdString().c_str(), getSessionsCALLBACK, (void*)&data, NULL);
     return data;
@@ -315,6 +315,10 @@ QString Database::getSessionFromParticipantAndTask(QString participant_id, QStri
     sqlite3_exec(db, query.toStdString().c_str(), getSessionFromParticipantAndTaskCALLBACK, (void*)&id, NULL);
     return id;
 }
+
+// QString Database::getSessionFromSessionID(QString session_id) {
+//     QString query = QString("SELECT se")
+// }
 
 
 void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
