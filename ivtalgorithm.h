@@ -24,17 +24,14 @@ public:
 
     //issue 58
     QVector<Saccade> generateSaccades() override;
-
-    //issue 58-Connor
-    //QVector<Gaze> gaze_vec;
+    QVector<Saccade> generateSaccades(const QVector<Fixation>&);
 
 private:
     Fixation computeFixationEstimate(QVector<Gaze>) override;
+    Saccade computeSaccadeEstimate(QVector<Gaze>);//issue 58
+
     int velocity_threshold;
     int duration_ms;
-
-    //issue 58
-    Saccade computeSaccadeEstimate(QVector<Gaze>);
 };
 
 #endif // IVTALGORITHM_H

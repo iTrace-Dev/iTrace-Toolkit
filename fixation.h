@@ -51,8 +51,8 @@ public:
     //int start_x, start_y, end_x, end_y;
     //double amplitude, peak_velocity, average_velocity;
     //double direction;
-    //long long start_time=-1;
-    //long long end_time=-1;
+    long long start_time=-1;
+    long long end_time=-1;
 };
 
 //issue 58 - adding the saccade class

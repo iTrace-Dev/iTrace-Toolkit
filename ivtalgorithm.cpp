@@ -58,6 +58,7 @@ IVTAlgorithm::IVTAlgorithm(QVector<Gaze> gazes, int _velocity, int _duration_ms)
     velocity_threshold = _velocity;
     duration_ms = _duration_ms;
 }
+
 QVector<Fixation> IVTAlgorithm::generateFixations() {
     //This code follows the IVT Algorithm
 
@@ -107,52 +108,64 @@ QVector<Fixation> IVTAlgorithm::generateFixations() {
 }
 
 //issue 58 - creating a separate vector for saccades
-QVector<Saccade> IVTAlgorithm::generateSaccades() {
-    std::vector<double> velocity_vector;
-    velocity_vector.push_back(0);
+QVector<Saccade> IVTAlgorithm::generateSaccades(const QVector<Fixation>& fixations) {
+    QVector<Saccade> saccades;
 
-    for(int i = 1; i < session_gazes.size(); ++i) {
-        velocity_vector.push_back(calculateGazeVelocity(session_gazes[i-1].x,session_gazes[i-1].y,session_gazes[i].x,session_gazes[i].y));
+    // Must have at least 2 valid fixations to form a saccade
+    QVector<Fixation> validFixations;
+    for (const Fixation& f : fixations) {
+        if (f.x != -1 && f.y != -1)
+            validFixations.push_back(f);
     }
 
-    //Step 3 - Calculate saccade groupings
-    QVector<std::pair<Gaze,int>> saccade_groups;
-    int saccade_number = 1;
-    bool on_fixation = false;
+    if (validFixations.size() < 2)
+        return saccades;
 
+    for (int i = 0; i < validFixations.size() - 1; ++i) {
+        Saccade sacc;
 
-    for(int i = 0; i < session_gazes.size(); ++i) {
-        if(velocity_vector[i] > velocity_threshold) {
-            saccade_groups.push_back(std::make_pair(session_gazes[i],saccade_number));
-            on_fixation = false;
-        }
-        else if(!on_fixation) {
-            on_fixation = true;
-            ++saccade_number;
-        }
+        sacc.start_x = validFixations[i].x;
+        sacc.start_y = validFixations[i].y;
+        sacc.start_time = validFixations[i].fixation_event_time;
 
+        sacc.end_x = validFixations[i + 1].x;
+        sacc.end_y = validFixations[i + 1].y;
+        sacc.end_time = validFixations[i + 1].fixation_event_time;
+
+        sacc.duration = sacc.end_time - sacc.start_time;
+
+        double dx = sacc.end_x - sacc.start_x;
+        double dy = sacc.end_y - sacc.start_y;
+        sacc.amplitude = sqrt(dx * dx + dy * dy);
+        sacc.direction = atan2(dy, dx) * (180.0 / M_PI);
+
+        QVector<Gaze> pair;
+        if (!validFixations[i].gaze_vec.empty())
+            pair.push_back(validFixations[i].gaze_vec.back());
+        if (!validFixations[i + 1].gaze_vec.empty())
+            pair.push_back(validFixations[i + 1].gaze_vec.front());
+
+        sacc.average_velocity = calculateAverageVelocity(pair);
+        sacc.peak_velocity = calculatePeakVelocity(pair);
+
+        saccades.push_back(sacc);
     }
-   // Step 4 - Filter the saccade groupings-needs computeSaccadeEstimate to be implemented
-    QVector<Gaze> tmp;
 
-    for(int i = 1; i < saccade_groups.size() - 1; ++i) {
-        if(saccade_groups[i].second == saccade_groups[i+1].second) {
-            tmp.push_back(saccade_groups[i].first);
-        }
-        else if(saccade_groups[i].second == saccade_groups[i-1].second) {
-            tmp.push_back(saccade_groups[i].first);
-            Saccade sacc = computeSaccadeEstimate(tmp);
-            if(sacc.start_x > -1) { saccades.push_back(sacc); }
-            tmp.clear();
-        }
-        else {
-            Saccade sacc = computeSaccadeEstimate(tmp);
-            if(sacc.start_x > -1) { saccades.push_back(sacc); }
-            tmp.clear();
-        }
-    }
     return saccades;
 }
+
+QVector<Saccade> IVTAlgorithm::generateSaccades() {
+    // Use already-stored fixations if available
+    if (fixations.isEmpty()) {
+        fixations = generateFixations();
+    }
+
+    // Generate saccades between those fixations
+    QVector<Saccade> saccadesList = generateSaccades(fixations);
+    return saccadesList;
+}
+
+
 
 Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
     Fixation fixation;
@@ -188,51 +201,53 @@ Saccade IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
     double dy=0;
 
     for(auto point : saccade_points) {
-           saccade.start_x=saccade_points.first().x;
-        saccade.start_y=saccade_points.first().y;
-        saccade.end_x=saccade_points.last().x;
-        saccade.end_y=saccade_points.last().y;
+        saccade.start_x = saccade_points.first().x;
+        saccade.start_y = saccade_points.first().y;
+        saccade.end_x = saccade_points.last().x;
+        saccade.end_y = saccade_points.last().y;
 
-        dx=saccade_points.last().x-saccade_points.first().x;
-        dy=saccade_points.last().y-saccade_points.first().y;
+        dx = saccade_points.last().x - saccade_points.first().x;
+        dy = saccade_points.last().y - saccade_points.first().y;
 
-        saccade.amplitude=sqrt(dx*dx+dy*dy);
-        saccade.peak_velocity=calculatePeakVelocity(saccade_points);
-        saccade.average_velocity=calculateAverageVelocity(saccade_points);
-        saccade.direction=calculateGazeDirection(saccade_points);
+        saccade.amplitude = sqrt(dx*dx + dy*dy);
+        saccade.peak_velocity = calculatePeakVelocity(saccade_points);
+        saccade.average_velocity = calculateAverageVelocity(saccade_points);
+        saccade.direction = calculateGazeDirection(saccade_points);
 
         saccade.gaze_vec.push_back(point);
     }
+
     if(saccade_points.size() < 1) {
         saccade.start_x = -1;
         saccade.start_y = -1;
-        saccade.end_x=-1;
-        saccade.end_y=-1;
-        saccade.average_velocity=-1;
-        saccade.amplitude=-1;
-        saccade.peak_velocity=-1;
-        saccade.direction=-1;
+        saccade.end_x = -1;
+        saccade.end_y = -1;
+        saccade.average_velocity = -1;
+        saccade.amplitude = -1;
+        saccade.peak_velocity = -1;
+        saccade.direction = -1;
         return saccade;
     }
+
     //not sure if we'll need the below
     // if((saccade_points[saccade_points.size()-1].system_time - saccade_points[0].system_time) >= duration_ms) {
     //     saccade.start_x = saccade_points.first().x;
     //     saccade.start_y = saccade_points.first().y;
     //     saccade.end_x = saccade_points.last().x;
     //     saccade.end_y = saccade_points.last().y;
-    //     saccade.amplitude=sqrt(dx*dx-dy*dy);
-    //     saccade.avg_velocity=calculateAverageVelocity(saccade_points);
-    //     saccade.peak_velocity=calculatePeakVelocity(saccade_points);
-    //return saccade;
+    //     saccade.amplitude = sqrt(dx*dx - dy*dy);
+    //     saccade.avg_velocity = calculateAverageVelocity(saccade_points);
+    //     saccade.peak_velocity = calculatePeakVelocity(saccade_points);
+    //     return saccade;
     // }
     // else {
     //     saccade.start_x = -1;
     //     saccade.start_y = -1;
-    //     saccade.end_x=-1;
-    //     saccade.end_y=-1;
-    //     saccade.avg_velocity=-1;
-    //     saccade.amplitude=-1;
-    //     saccade.peak_velocity=-1;
+    //     saccade.end_x = -1;
+    //     saccade.end_y = -1;
+    //     saccade.avg_velocity = -1;
+    //     saccade.amplitude = -1;
+    //     saccade.peak_velocity = -1;
     // }
     return saccade;
 }

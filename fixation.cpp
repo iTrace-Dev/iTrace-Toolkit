@@ -80,8 +80,11 @@ void Saccade::calculateDatabaseFields() {
     long long start_time = -1, end_time = -1;
     int gaze_count = 0;
     std::map<QString,int> candidate_targets;
+
     for(auto gaze : gaze_vec) {
-        if(!gaze.isValid()) { continue; }
+        if(!gaze.isValid()) {
+            //qDebug() << "Skipping invalid gaze point";
+            continue; }
         if(fixation_event_time == 0 || fixation_event_time > gaze.event_time) {
             fixation_event_time = gaze.event_time;
         }
@@ -109,6 +112,12 @@ void Saccade::calculateDatabaseFields() {
         if(candidate_targets.count(candidate_key) == 0) { candidate_targets.emplace(candidate_key,1); }
         else { ++(candidate_targets.find(candidate_key)->second); }
     }
+
+    /*if (gaze_count == 0) {
+        qWarning() << "No valid gaze points found for this saccade!";
+        return;
+    }*/
+
     std::pair<QString,int> most_frequent = std::make_pair(QString(""),0);
     for(auto candidate = candidate_targets.begin(); candidate != candidate_targets.end(); ++candidate) {
         if(most_frequent.first == "" || most_frequent.second < candidate->second) { most_frequent = *candidate; }
@@ -129,6 +138,14 @@ void Saccade::calculateDatabaseFields() {
     //issue 58 - to get the start and end time for the saccade table
     this->start_time=start_time;
     this->end_time=end_time;
+
+    /*qDebug() << "Saccade calculated:";
+    qDebug() << "  Gaze count:" << gaze_count;
+    qDebug() << "  Start time:" << start_time;
+    qDebug() << "  End time:" << end_time;
+    qDebug() << "  Duration:" << duration;
+    qDebug() << "  Most frequent target:" << most_frequent.first;
+    qDebug() << "-----------------------------";*/
 }
 
 /*void Saccade::print() {
