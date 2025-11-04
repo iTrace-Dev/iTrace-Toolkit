@@ -284,6 +284,29 @@ QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
     return gaze_targets;
 }
 
+int getGazesFromSessionCALLBACK(void *gazes, int argc, char** argv, char** azColName) {
+    QVector<Gaze>* x = (QVector<Gaze>*)gazes;
+    Gaze data(argv);
+    if(data.isValid()) {
+        x->push_back(data);
+    }
+    else {
+        if(x->size() != 0) {
+            x->push_back(Gaze(x->last()));
+        }
+        else {
+            x->push_back(Gaze());
+        }
+    }
+    return 0;
+}
+QVector<Gaze> Database::getGazesFromSession(QString session_id) {
+    QVector<Gaze> gazes;
+    QString query = QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 ORDER BY gaze.event_time ASC;").arg(session_id);
+    sqlite3_exec(db, query.toStdString().c_str(), getGazesFromSessionCALLBACK, (void*)&gazes, NULL);
+    return gazes;
+}
+
 int getGazesFromSessionAndTargetCALLBACK(void *gazes, int argc, char** argv, char** azColName) {
     QVector<Gaze>* x = (QVector<Gaze>*)gazes;
     Gaze data(argv);

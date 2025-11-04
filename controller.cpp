@@ -435,39 +435,36 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         QVector<Fixation> session_fixations;
         QVector<Saccade> session_saccades;
 
-        QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
-        for(auto gaze_target : gaze_targets) {
-            //emit outputToScreen("black","Generating fixations for gaze_target: "+gaze_target);
-            QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
-            if(gazes.length() == 0) {
-                continue;
-            }
-            FixationAlgorithm* algorithm;
-            QStringList settings = algSettings.split("-");
-            if(settings[0] == "BASIC") {
-                //BASIC-4-35-40 = BASIC-window_size-radius-peak
-                algorithm = new BasicAlgorithm(gazes,settings[window_size].toInt(),settings[radius].toInt(),settings[peak].toInt());
-            }
-            else if(settings[0] == "IDT") {
-                //IDT-10-125 = IDT-duration_window-dispersion
-                algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt(),settings[max_gaze_span].toInt());
-            }
-            else if(settings[0] == "IVT") {
-                //IVT-50-80 = IVT-velocity-duration
-                algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
-            }
-            else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
-            session_fixations.append(algorithm->generateFixations());
-
-	        //issue 58
-            session_saccades.append(algorithm->generateSaccades());
-
-            fixation_filter_settings = algorithm->generateFixationSettings();
-            emit setProgressBarValue(counter); ++counter;
-            QApplication::processEvents();
-            delete algorithm;
+        QVector<Gaze> gazes = idb.getGazesFromSession(session_id);
+        if(gazes.length() == 0) {
+            continue;
         }
+        FixationAlgorithm* algorithm;
+        QStringList settings = algSettings.split("-");
+        if(settings[0] == "BASIC") {
+            //BASIC-4-35-40 = BASIC-window_size-radius-peak
+            algorithm = new BasicAlgorithm(gazes,settings[window_size].toInt(),settings[radius].toInt(),settings[peak].toInt());
+        }
+        else if(settings[0] == "IDT") {
+            //IDT-10-125 = IDT-duration_window-dispersion
+            algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt(),settings[max_gaze_span].toInt());
+        }
+        else if(settings[0] == "IVT") {
+            //IVT-50-80 = IVT-velocity-duration
+            algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
+        }
+        else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
+
+        session_fixations.append(algorithm->generateFixations());
+        session_saccades.append(algorithm->generateSaccades());
+
+        fixation_filter_settings = algorithm->generateFixationSettings();
+        emit setProgressBarValue(counter); ++counter;
+        QApplication::processEvents();
+        delete algorithm;
+
+
         for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
             item->calculateDatabaseFields();
         }
@@ -502,16 +499,17 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
 
         //issue 58
         for(auto sac = session_saccades.rbegin();sac != session_saccades.rend(); ++sac){
-        QString saccade_id=QUuid::createUuid().toString();
-        saccade_id.remove("{"); saccade_id.remove("}");
-        idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
+            QString saccade_id=QUuid::createUuid().toString();
+            saccade_id.remove("{");
+            saccade_id.remove("}");
+            idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
 
 
-        std::set<long long> unique_gazes;
-        for (auto saccade_gaze: sac->gaze_vec){
-            if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
-            idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
-        }
+            std::set<long long> unique_gazes;
+            for (auto saccade_gaze: sac->gaze_vec){
+                if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
+                idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
+            }
         }
 
         QApplication::processEvents();
