@@ -15,6 +15,7 @@
 #define _USE_MATH_DEFINES
 #include "gaze.h"
 #include "fixation.h"
+#include "saccade.h"
 #include <QVector>
 #include <QMap>
 #include <cmath>

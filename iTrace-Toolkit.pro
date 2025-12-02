@@ -41,6 +41,7 @@ SOURCES += \
         logger.cpp \
         main.cpp \
         participantsmodel.cpp \
+        saccade.cpp \
         sqlite3.c \
         srcmlhandler.cpp \
         srcmlmapper.cpp \
@@ -74,6 +75,7 @@ HEADERS += \
     ivtalgorithm.h \
     logger.h \
     participantsmodel.h \
+    saccade.h \
     sqlite3.h \
     srcmlhandler.h \
     srcmlmapper.h \
