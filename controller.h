@@ -80,6 +80,7 @@ public:
 
     //Fixation Functions
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
+    Q_INVOKABLE void correctFixationData(QVector<QString>,QString);
 
     //srcML Functions
     Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool);

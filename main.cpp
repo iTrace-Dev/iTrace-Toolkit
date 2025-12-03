@@ -12,12 +12,14 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QLoggingCategory>
 
 #include "participantsmodel.h"
 //#include "control.h"
 
 int main(int argc, char *argv[])
 {
+    QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
     //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_DisableHighDpiScaling);
 

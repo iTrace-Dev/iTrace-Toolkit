@@ -64,6 +64,7 @@ Window {
         fixationSettingsButton.enabled = true;
         genFixationDataButton.enabled = true;
         queryFixationButton.enabled = true;
+        correctFixationsButton.enabled = true;
     }
 
 //    Rectangle {
@@ -386,7 +387,7 @@ Window {
     Rectangle {
         id: analysisTab
         x: margin; y: getBottomY(analysisTabLabel)
-        width: parent.width - 2 * margin; height: 3 * margin + 2 * buttonHeight
+        width: parent.width - 2 * margin; height: 4 * margin + 3 * buttonHeight
         border.color: iTraceRed
         border.width: 3
 
@@ -427,6 +428,24 @@ Window {
             }
             function generateFixations(algorithm) {
                 control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
+            }
+        }
+        
+        Button{
+            id: correctFixationsButton
+            x: margin; y: getBottomY(genFixationDataButton) + margin;
+            height: buttonHeight; width: equalWidth(parent.width, 2)
+            text: "Correct Fixations"
+            
+            enabled: false
+            
+            onClicked: {
+                console.log("Correct fixations button clicked")
+                console.log(participantList.model.getModelList().getSelected())
+                correctFixations(options.getSettings())
+            }
+            function correctFixations(algorithm){
+                control.correctFixationData(participantList.model.getModelList().getSelected(), algorithm)
             }
         }
 
