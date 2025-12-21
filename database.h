@@ -64,6 +64,8 @@ public:
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
     QString getSessionFromParticipantAndTask(QString,QString);
+    
+    QVector<QVector<QString>> getAllFixations();
 
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);

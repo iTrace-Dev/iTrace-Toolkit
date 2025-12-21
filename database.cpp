@@ -316,6 +316,9 @@ QString Database::getSessionFromParticipantAndTask(QString participant_id, QStri
     return id;
 }
 
+QVector<QVector<QString>> Database::getAllFixations(){
+    QString query = QString("SELECT * from session_id");
+}
 
 void Database::updateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
     xpath.replace("\"","'");

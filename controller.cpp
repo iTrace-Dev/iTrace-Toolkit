@@ -650,10 +650,25 @@ void Controller::correctFixationData(QVector<QString> tasks, QString algSettings
     // example of algSettings = "IDT-100-125-1000"
     // "ALGORITHM_TYPE-DURATION_WINDOW-DISPERSION-MAXIMUM_GAZE_SPAN"
     
+    log->writeLine("INFO", "Correcting fixations:");
+    
     QElapsedTimer time;
     time.start();
     qDebug() << "correctFixationData cpp function called";
     
+    idb.startTransaction();
+    
+    // generate new fixation_run id
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    QString fixation_run_id = QString::number(ms.count());
+    QString fixation_date_time = fixation_run_id;
+    idb.insertFixationRun(fixation_run_id, session_id, fixation_date_time, algSettings);
+    
+    // ASSUMING: we need to correct fixations for a single fixation_run_id at a time
+    // ASSUMING: the fixation table contains fixations for only 1 fixation_run_id when the below getAllFixations() function is called
+    
+    
+    idb.commit();
     emit outputToScreen("black", QString("Fixations corrected. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 
     return;
