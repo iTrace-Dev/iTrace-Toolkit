@@ -10,6 +10,7 @@
 ********************************************************************************************************************************************************/
 
 #include "database.h"
+#include <QDebug>
 
 Database::Database() { }
 
@@ -20,34 +21,34 @@ Database::Database(QString file_path) : Database() {
     std::cout << error << std::endl;
 
     QString pragma_query =
-            "pragma journal_mode = WAL;"
-            "pragma synchronous = off;"
-            "pragma temp_store = memory;"
-            "pragma mmap_size = 30000000000;"
-            ;
+        "pragma journal_mode = WAL;"
+        "pragma synchronous = off;"
+        "pragma temp_store = memory;"
+        "pragma mmap_size = 30000000000;"
+        ;
 
     QString table_query =
-            "CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER);"
-            "CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
-            "CREATE TABLE IF NOT EXISTS session(session_id INTEGER PRIMARY KEY,participant_id TEXT,screen_width INTEGER, screen_height INTEGER,tracker_type TEXT, tracker_serial_number TEXT,session_date INTEGER, session_time INTEGER,screen_recording_start INTEGER,task_name TEXT,FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
-            "CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER);"
-            "CREATE TABLE IF NOT EXISTS calibration(calibration_id INTEGER PRIMARY KEY);"
-            "CREATE TABLE IF NOT EXISTS calibration_point(calibration_point_id TEXT,calibration_id INTEGER,calibration_x REAL,calibration_y REAL,FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id));"
-            "CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id));"
-            "CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
-            "CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,session_id INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL,FOREIGN KEY (event_time) REFERENCES gaze(event_time),FOREIGN KEY (session_id) REFERENCES session(session_id));"
-            "CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
-            "CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
-            "CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
+        "CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER);"
+        "CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
+        "CREATE TABLE IF NOT EXISTS session(session_id INTEGER PRIMARY KEY,participant_id TEXT,screen_width INTEGER, screen_height INTEGER,tracker_type TEXT, tracker_serial_number TEXT,session_date INTEGER, session_time INTEGER,screen_recording_start INTEGER,task_name TEXT,FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
+        "CREATE TABLE IF NOT EXISTS fixation(fixation_id TEXT PRIMARY KEY,fixation_run_id INTEGER,fixation_start_event_time INTEGER,fixation_order_number INTEGER,x INTEGER,y INTEGER,fixation_target TEXT,source_file_line INTEGER, source_file_col INTEGER,token TEXT,syntactic_category TEXT,xpath TEXT,left_pupil_diameter REAL,right_pupil_diameter REAL,duration INTEGER);"
+        "CREATE TABLE IF NOT EXISTS calibration(calibration_id INTEGER PRIMARY KEY);"
+        "CREATE TABLE IF NOT EXISTS calibration_point(calibration_point_id TEXT,calibration_id INTEGER,calibration_x REAL,calibration_y REAL,FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id));"
+        "CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id));"
+        "CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
+        "CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,session_id INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL,FOREIGN KEY (event_time) REFERENCES gaze(event_time),FOREIGN KEY (session_id) REFERENCES session(session_id));"
+        "CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
+        "CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
+        "CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
 
-            //Creates the saccade and saccde_gaze tables if they do not already exist
-            "CREATE TABLE IF NOT EXISTS saccade(saccade_id TEXT PRIMARY KEY, fixation_run_id INTEGER, start_time REAL, end_time REAL, start_fixation TEXT, end_fixation TEXT, start_x INTEGER, start_y INTEGER, end_x INTEGER, end_y INTEGER, amplitude REAL, peak_velocity REAL, average_velocity REAL, direction REAL, duration REAL, FOREIGN KEY (fixation_run_id) REFERENCES fixation_run(fixation_run_id));"
-            "CREATE TABLE IF NOT EXISTS saccade_gaze(saccade_id TEXT, event_time INTEGER, FOREIGN KEY (saccade_id) REFERENCES saccade(saccade_id), FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
-    
-            "CREATE INDEX idx_event_time_context ON ide_context(event_time);"
-            "CREATE INDEX idx_event_time_gaze ON gaze(event_time);"
-            "CREATE INDEX idx_fixation_id ON fixation(fixation_id);"
-            ;
+        //Creates the saccade and saccde_gaze tables if they do not already exist
+        "CREATE TABLE IF NOT EXISTS saccade(saccade_id TEXT PRIMARY KEY, fixation_run_id INTEGER, start_time REAL, end_time REAL, start_fixation TEXT, end_fixation TEXT, start_x INTEGER, start_y INTEGER, end_x INTEGER, end_y INTEGER, amplitude REAL, peak_velocity REAL, average_velocity REAL, direction REAL, duration REAL, FOREIGN KEY (fixation_run_id) REFERENCES fixation_run(fixation_run_id));"
+        "CREATE TABLE IF NOT EXISTS saccade_gaze(saccade_id TEXT, event_time INTEGER, FOREIGN KEY (saccade_id) REFERENCES saccade(saccade_id), FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
+
+        "CREATE INDEX idx_event_time_context ON ide_context(event_time);"
+        "CREATE INDEX idx_event_time_gaze ON gaze(event_time);"
+        "CREATE INDEX idx_fixation_id ON fixation(fixation_id);"
+        ;
 
 
     //sqlite3_exec(db, pragma_query.toStdString().c_str(), NULL, 0, NULL);
@@ -192,9 +193,20 @@ void Database::insertSaccadeGaze(QString saccade_id, QString event_time) {
 }
 
 //issue 58
-void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QString start_time, QString end_time, QString start_x, QString start_y,QString end_x, QString end_y,QString amplitude, QString peak_velocity, QString average_velocity,QString direction,QString duration) {
-    QString query=QString("INSERT INTO saccade(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity,direction,duration) VALUES (\"%1\", %2, %3, %4, %7,%8,%9,%10,%11, %12,%13,%14,%15);").arg(saccade_id, fixation_run_id, start_time, end_time, start_x, start_y,end_x,end_y,amplitude, peak_velocity, average_velocity,direction,duration);
-    sqlite3_exec(db, query.toStdString().c_str(),NULL,0,NULL);
+void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QString start_fixation_id, QString end_fixation_id, QString start_time, QString end_time, QString start_x, QString start_y, QString end_x, QString end_y, QString amplitude, QString peak_velocity, QString average_velocity, QString direction, QString duration){
+    QString query = QString("INSERT INTO saccade(saccade_id,fixation_run_id,start_fixation,end_fixation, start_time,end_time,start_x,start_y,end_x,end_y, amplitude,peak_velocity,average_velocity,direction,duration) VALUES(\"%1\",\"%2\",\"%3\",\"%4\",%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15);"
+                            ).arg(saccade_id, fixation_run_id, start_fixation_id, end_fixation_id, start_time, end_time, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity, direction, duration);
+
+    qDebug() << "I live";
+    char* errMsg = nullptr;
+    int rc = sqlite3_exec(db, query.toStdString().c_str(), NULL, 0, &errMsg);
+
+    if(rc != SQLITE_OK) {
+        qDebug() << "❌ Saccade Insert FAILED: " << errMsg;
+        sqlite3_free(errMsg);
+    } else {
+        qDebug() << "✔️ Saccade Insert OK: " << saccade_id;
+    }
 }
 
 // The following parameters are unused here and should always be inserted as ""

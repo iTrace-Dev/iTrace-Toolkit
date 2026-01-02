@@ -56,8 +56,8 @@ public:
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
-    //issue 58 - current 13/15 attributes added 
-    void insertSaccade(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    //issue 58 - current 13/15 attributes added
+    void insertSaccade(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     //issue 58
     void insertSaccadeGaze(QString, QString);
 

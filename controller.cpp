@@ -473,7 +473,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         for(auto saccadeItem=session_saccades.begin();saccadeItem!=session_saccades.end();++saccadeItem){
             saccadeItem->calculateDatabaseFields();
         }
-         std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
+        std::sort(session_fixations.begin(), session_fixations.end(), [](const Fixation& a, const Fixation& b) -> bool { return a.fixation_event_time > b.fixation_event_time; });
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 
         //issue 58
@@ -481,12 +481,14 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
 
         QString fixation_run_id = QString::number(ms.count());
         QString fixation_date_time = fixation_run_id; // This will probably be changed in the future
+        QVector<QString> fixation_ids_in_order; // issue 58
         idb.insertFixationRun(fixation_run_id,session_id,fixation_date_time,fixation_filter_settings);
 
         int fixation_order = 1;
         for(auto fix = session_fixations.rbegin(); fix != session_fixations.rend(); ++fix) {
-            QString fixation_id = QUuid::createUuid().toString();  
+            QString fixation_id = QUuid::createUuid().toString();
             fixation_id.remove("{"); fixation_id.remove("}");
+            fixation_ids_in_order.push_back(fixation_id);
             idb.insertFixation(fixation_id,fixation_run_id,QString::number(fix->fixation_event_time),QString::number(fixation_order),QString::number(fix->x),QString::number(fix->y),fix->target,QString::number(fix->source_file_line),QString::number(fix->source_file_col),fix->token == "" ? "null" : "\""+fix->token+"\"",fix->syntactic_category == "" ? "null" : "\""+fix->syntactic_category+"\"",fix->xpath == "" ? "null" : "\""+fix->xpath+"\"",QString::number(fix->left_pupil_diameter),QString::number(fix->right_pupil_diameter),QString::number(fix->duration));
 
             ++fixation_order;
@@ -498,18 +500,83 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
 
         //issue 58
+<<<<<<< HEAD
+        int fixationCount = fixation_ids_in_order.size();
+        int saccadeCount  = session_saccades.size();
+=======
         for(auto sac = session_saccades.rbegin();sac != session_saccades.rend(); ++sac){
             QString saccade_id=QUuid::createUuid().toString();
             saccade_id.remove("{");
             saccade_id.remove("}");
             idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
+<<<<<<< Updated upstream
 
 
+=======
+<<<<<<< HEAD
+>>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+
+        qDebug() << "FixationCount :" << fixationCount - 1;
+        qDebug() << "SaccadeCount :" << saccadeCount;
+
+        // We only link what is possible
+        int pairs = std::min(saccadeCount, fixationCount - 1); // One less then the number of fixations
+
+        qDebug() << "Pairs :" << pairs;
+
+
+        for (int i = 0; i < pairs; ++i) {
+            Saccade& sac = session_saccades[i];
+
+            QString saccade_id = QUuid::createUuid().toString();
+            saccade_id.remove("{");
+            saccade_id.remove("}");
+
+            QString start_fix = fixation_ids_in_order[i];
+            QString end_fix   = fixation_ids_in_order[i + 1];
+
+            idb.insertSaccade(
+                saccade_id,
+                fixation_run_id,
+                start_fix,
+                end_fix,
+                QString::number(sac.start_time),
+                QString::number(sac.end_time),
+                QString::number(sac.start_x),
+                QString::number(sac.start_y),
+                QString::number(sac.end_x),
+                QString::number(sac.end_y),
+                QString::number(sac.amplitude),
+                QString::number(sac.peak_velocity),
+                QString::number(sac.average_velocity),
+                QString::number(sac.direction),
+                QString::number(sac.duration)
+                );
+
+<<<<<<< HEAD
+        std::set<long long> unique_gazes;
+        for (auto saccade_gaze: sac.gaze_vec){
+            if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
+            idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
+        }
+=======
+=======
+
+
+>>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+>>>>>>> Stashed changes
             std::set<long long> unique_gazes;
             for (auto saccade_gaze: sac->gaze_vec){
                 if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
                 idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
             }
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+=======
+>>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+>>>>>>> Stashed changes
         }
 
         QApplication::processEvents();
