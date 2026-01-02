@@ -510,6 +510,7 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             saccade_id.remove("}");
             idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 
 =======
@@ -525,6 +526,20 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         qDebug() << "Pairs :" << pairs;
 
 
+=======
+<<<<<<< HEAD
+>>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+
+        qDebug() << "FixationCount :" << fixationCount - 1;
+        qDebug() << "SaccadeCount :" << saccadeCount;
+
+        // We only link what is possible
+        int pairs = std::min(saccadeCount, fixationCount - 1); // One less then the number of fixations
+
+        qDebug() << "Pairs :" << pairs;
+
+
+>>>>>>> Stashed changes
         for (int i = 0; i < pairs; ++i) {
             Saccade& sac = session_saccades[i];
 
@@ -564,6 +579,9 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
 
 
 >>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             std::set<long long> unique_gazes;
             for (auto saccade_gaze: sac->gaze_vec){
@@ -571,11 +589,17 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
             }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 <<<<<<< HEAD
 >>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
 =======
 >>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         }
 
