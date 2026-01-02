@@ -66,6 +66,7 @@ public:
     QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
     QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
     QVector<QString> getGazeTargetsFromSession(QString);
+    QVector<Gaze> getGazesFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
     QString getSessionFromParticipantAndTask(QString,QString);
