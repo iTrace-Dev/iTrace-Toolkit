@@ -197,7 +197,6 @@ void Database::insertSaccade(QString saccade_id, QString fixation_run_id, QStrin
     QString query = QString("INSERT INTO saccade(saccade_id,fixation_run_id,start_fixation,end_fixation, start_time,end_time,start_x,start_y,end_x,end_y, amplitude,peak_velocity,average_velocity,direction,duration) VALUES(\"%1\",\"%2\",\"%3\",\"%4\",%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15);"
                             ).arg(saccade_id, fixation_run_id, start_fixation_id, end_fixation_id, start_time, end_time, start_x, start_y, end_x, end_y, amplitude, peak_velocity, average_velocity, direction, duration);
 
-    qDebug() << "I live";
     char* errMsg = nullptr;
     int rc = sqlite3_exec(db, query.toStdString().c_str(), NULL, 0, &errMsg);
 

@@ -500,46 +500,12 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         }
 
         //issue 58
-<<<<<<< HEAD
         int fixationCount = fixation_ids_in_order.size();
         int saccadeCount  = session_saccades.size();
-=======
-        for(auto sac = session_saccades.rbegin();sac != session_saccades.rend(); ++sac){
-            QString saccade_id=QUuid::createUuid().toString();
-            saccade_id.remove("{");
-            saccade_id.remove("}");
-            idb.insertSaccade(saccade_id, fixation_run_id, QString::number(sac->start_time),QString::number(sac->end_time),QString::number(sac->start_x),QString::number(sac->start_y),QString::number(sac->end_x),QString::number(sac->end_y),QString::number(sac->amplitude), QString::number(sac->peak_velocity),QString::number(sac->average_velocity),QString::number(sac->direction),QString::number(sac->duration));
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
+        // A saccade connects fixation[i] → fixation[i+1]
+        int pairs = std::min(saccadeCount, fixationCount - 1);
 
-=======
-<<<<<<< HEAD
->>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
-
-        qDebug() << "FixationCount :" << fixationCount - 1;
-        qDebug() << "SaccadeCount :" << saccadeCount;
-
-        // We only link what is possible
-        int pairs = std::min(saccadeCount, fixationCount - 1); // One less then the number of fixations
-
-        qDebug() << "Pairs :" << pairs;
-
-
-=======
-<<<<<<< HEAD
->>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
-
-        qDebug() << "FixationCount :" << fixationCount - 1;
-        qDebug() << "SaccadeCount :" << saccadeCount;
-
-        // We only link what is possible
-        int pairs = std::min(saccadeCount, fixationCount - 1); // One less then the number of fixations
-
-        qDebug() << "Pairs :" << pairs;
-
-
->>>>>>> Stashed changes
         for (int i = 0; i < pairs; ++i) {
             Saccade& sac = session_saccades[i];
 
@@ -547,14 +513,14 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
             saccade_id.remove("{");
             saccade_id.remove("}");
 
-            QString start_fix = fixation_ids_in_order[i];
-            QString end_fix   = fixation_ids_in_order[i + 1];
+            QString start_fixation_id = fixation_ids_in_order[i];
+            QString end_fixation_id   = fixation_ids_in_order[i + 1];
 
             idb.insertSaccade(
                 saccade_id,
                 fixation_run_id,
-                start_fix,
-                end_fix,
+                start_fixation_id,
+                end_fixation_id,
                 QString::number(sac.start_time),
                 QString::number(sac.end_time),
                 QString::number(sac.start_x),
@@ -568,39 +534,15 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 QString::number(sac.duration)
                 );
 
-<<<<<<< HEAD
-        std::set<long long> unique_gazes;
-        for (auto saccade_gaze: sac.gaze_vec){
-            if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
-            idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
-        }
-=======
-=======
-
-
->>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             std::set<long long> unique_gazes;
-            for (auto saccade_gaze: sac->gaze_vec){
-                if(unique_gazes.find(saccade_gaze.event_time)!=unique_gazes.end()) {continue;}
-                idb.insertSaccadeGaze(saccade_id, QString::number(saccade_gaze.event_time));
+            for (const auto& saccade_gaze : sac.gaze_vec) {
+                if (unique_gazes.insert(saccade_gaze.event_time).second) {
+                    idb.insertSaccadeGaze(
+                        saccade_id,
+                        QString::number(saccade_gaze.event_time)
+                        );
+                }
             }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-<<<<<<< HEAD
->>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
-=======
->>>>>>> aa5d7a9ed3072e8c751b8c350637d3c1f1ba2812
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         }
 
         QApplication::processEvents();
