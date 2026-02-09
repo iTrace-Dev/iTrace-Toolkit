@@ -459,6 +459,10 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
         session_fixations.append(algorithm->generateFixations());
         session_saccades.append(algorithm->generateSaccades());
 
+        qDebug() << "DEBUG Controller: Algorithm type =" << settings[0];
+        qDebug() << "DEBUG Controller: Generated saccades =" << session_saccades.size();
+
+
         fixation_filter_settings = algorithm->generateFixationSettings();
         emit setProgressBarValue(counter); ++counter;
         QApplication::processEvents();

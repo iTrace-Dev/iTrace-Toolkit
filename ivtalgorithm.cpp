@@ -10,6 +10,7 @@
 ********************************************************************************************************************************************************/
 
 #include "ivtalgorithm.h"
+#include <QDebug>
 
 //Helper Functions
 double calculateGazeVelocity(double x1, double y1, double x2, double y2) {
@@ -117,6 +118,7 @@ QVector<Saccade> IVTAlgorithm::generateSaccades(const QVector<Fixation>& fixatio
         if (f.x != -1 && f.y != -1)
             validFixations.push_back(f);
     }
+    qDebug() << "DEBUG IVT: valid fixations =" << validFixations.size();
 
     if (validFixations.size() < 2)
         return saccades;
@@ -145,8 +147,18 @@ QVector<Saccade> IVTAlgorithm::generateSaccades(const QVector<Fixation>& fixatio
         if (!validFixations[i + 1].gaze_vec.empty())
             pair.push_back(validFixations[i + 1].gaze_vec.front());
 
+        for(const Gaze& g : pair)
+        {
+            sacc.gaze_vec.push_back(g);
+        }
+
         sacc.average_velocity = calculateAverageVelocity(pair);
         sacc.peak_velocity = calculatePeakVelocity(pair);
+
+        qDebug() << "DEBUG Saccade built:"
+                 << "start=" << sacc.start_time
+                 << "end=" << sacc.end_time
+                 << "gaze_vec size=" << sacc.gaze_vec.size();
 
         saccades.push_back(sacc);
     }
@@ -155,6 +167,9 @@ QVector<Saccade> IVTAlgorithm::generateSaccades(const QVector<Fixation>& fixatio
 }
 
 QVector<Saccade> IVTAlgorithm::generateSaccades() {
+    qDebug() << "DEBUG IVT: generateSaccades ENTERED";
+    qDebug() << "DEBUG IVT: total fixations received =" << fixations.size();
+
     // Use already-stored fixations if available
     if (fixations.isEmpty()) {
         fixations = generateFixations();
@@ -195,6 +210,9 @@ Fixation IVTAlgorithm::computeFixationEstimate(QVector<Gaze> fixation_points) {
 
 //convert to saccadeEstimate? Will be different from above, will calculate start x and start y
 Saccade IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
+    qDebug() << "computeSaccadeEstimate called with points:"
+             << saccade_points.size();
+
     Saccade saccade;
 
     double dx=0;
@@ -249,6 +267,10 @@ Saccade IVTAlgorithm::computeSaccadeEstimate(QVector<Gaze> saccade_points) {
     //     saccade.amplitude = -1;
     //     saccade.peak_velocity = -1;
     // }
+
+    qDebug() << "Returning saccade with gaze count:"
+             << saccade.gaze_vec.size();
+
     return saccade;
 }
 
