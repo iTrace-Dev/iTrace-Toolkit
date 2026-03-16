@@ -134,12 +134,33 @@ QVector<Saccade> IVTAlgorithm::generateSaccades(const QVector<Fixation>& fixatio
         sacc.end_y = validFixations[i + 1].y;
         sacc.end_time = validFixations[i + 1].fixation_event_time;
 
+        // Determine saccade type
+        if(validFixations[i].target == validFixations[i + 1].target)
+            sacc.saccade_type = "Normal";
+        else
+            sacc.saccade_type = "FileTransition";
+
         sacc.duration = sacc.end_time - sacc.start_time;
 
         double dx = sacc.end_x - sacc.start_x;
         double dy = sacc.end_y - sacc.start_y;
         sacc.amplitude = sqrt(dx * dx + dy * dy);
         sacc.direction = atan2(dy, dx) * (180.0 / M_PI);
+
+        int startLine = -1;
+        int endLine = -1;
+
+        if (!validFixations[i].gaze_vec.empty())
+            startLine = validFixations[i].gaze_vec[0].source_file_line;
+
+        if (!validFixations[i + 1].gaze_vec.empty())
+            endLine = validFixations[i + 1].gaze_vec[0].source_file_line;
+
+        if (startLine != endLine)
+            sacc.saccade_type = "FileTransition";
+        else
+            sacc.saccade_type = "Normal";
+
 
         QVector<Gaze> pair;
         if (!validFixations[i].gaze_vec.empty())

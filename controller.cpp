@@ -535,7 +535,8 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
                 QString::number(sac.peak_velocity),
                 QString::number(sac.average_velocity),
                 QString::number(sac.direction),
-                QString::number(sac.duration)
+                QString::number(sac.duration),
+                sac.saccade_type
                 );
 
             std::set<long long> unique_gazes;
