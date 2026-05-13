@@ -348,8 +348,17 @@ void Controller::importPluginXML(const QString& file_path) {
 
     idb.startTransaction();
 
+    // header data
     QString session_id,
             ide_plugin_type;
+
+    // text event data
+    QString timestamp = "0",
+            source_file_path = "",
+            source_file_line = "0",
+            source_file_col = "0",
+            inserted = "",
+            deleted = "";
 
     // Used for checking for duplicate data
     QVector<QString> all_ids;// = idb.getAllIDEContextIDs();
@@ -391,10 +400,39 @@ void Controller::importPluginXML(const QString& file_path) {
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),session_id,plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
             all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
-        /*QString report = idb.checkAndReturnError();
-        if(report != "") {
-            log->writeLine("WARNING","The followng SQLite Error occured while handling plugin file: "+report);
-        }*/
+        else if(element == "edit") {
+
+            // if data is similarly close to last one, combine
+            if (plugin_file.getElementAttribute("timestamp").toLongLong() - timestamp.toLongLong() <= 10 && source_file_line == plugin_file.getElementAttribute("source_file_line") &&
+                source_file_col == plugin_file.getElementAttribute("source_file_col") && source_file_path == plugin_file.getElementAttribute("source_file_path") &&
+                ( (inserted == "") ^ (deleted == "") ) && ( (plugin_file.getElementAttribute("inserted") == "") ^ (plugin_file.getElementAttribute("deleted") == "") )) {
+
+                // if
+                if (inserted == "" && deleted != "" && plugin_file.getElementAttribute("inserted") != "" && plugin_file.getElementAttribute("deleted") == "") {
+                    idb.updateTextEventWithInsertedText(timestamp, plugin_file.getElementAttribute("inserted"));
+                }
+                else if (inserted != "" && deleted == "" && plugin_file.getElementAttribute("inserted") == "" && plugin_file.getElementAttribute("deleted") != "") {
+                    idb.updateTextEventWithDeletedText(timestamp, plugin_file.getElementAttribute("deleted"));
+                }
+                else {
+                    // log
+                    log->writeLine("WARNING","Undefined text_event merging error");
+                }
+            }
+            // insert text_event
+            else {
+                idb.insertTextEvent(plugin_file.getElementAttribute("timestamp"),session_id,plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("inserted"),plugin_file.getElementAttribute("deleted"));
+            }
+
+            timestamp = plugin_file.getElementAttribute("timestamp");
+            source_file_path = plugin_file.getElementAttribute("source_file_path");
+            source_file_line = plugin_file.getElementAttribute("source_file_line");
+            source_file_col = plugin_file.getElementAttribute("source_file_col");
+            inserted = plugin_file.getElementAttribute("inserted");
+            deleted = plugin_file.getElementAttribute("deleted");
+
+        }
+
         QString report = plugin_file.checkAndReturnError();
         if(report != "") {
             log->writeLine("WARNING","The following XML Error occured while handling plugin file: "+report);

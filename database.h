@@ -54,6 +54,7 @@ public:
     void insertIDEContext(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertParticipant(QString,QString);
     void insertSession(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
+    void insertTextEvent(QString, QString, QString, QString, QString, QString, QString);
     void insertWebContext(QString,QString,QString,QString,QString);
 
     QVector<QString> getSessions();
@@ -67,9 +68,12 @@ public:
 
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);
+    void updateTextEventWithDeletedText(QString, QString);
+    void updateTextEventWithInsertedText(QString, QString);
 
-    QString queryUpdateGazeWithSyntacticInfo(QString,QString,QString);
-    QString queryUpdateGazeWithTokenInfo(QString,QString,QString);
+//    QString queryUpdateGazeWithSyntacticInfo(QString,QString,QString);
+//    QString queryUpdateGazeWithTokenInfo(QString,QString,QString);
+
 
     QVector<QVector<QString>> runFilterQuery(QString);
     void executeLongUpdateQuery(QString);

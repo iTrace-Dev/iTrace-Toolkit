@@ -393,7 +393,7 @@ Window {
         Button {
             id: mapTokensButton
             x: margin; y: margin;
-            height: buttonHeight; width: equalWidth(parent.width, 2)
+            height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Map Tokens"
 
             enabled: false
@@ -406,7 +406,7 @@ Window {
         Button {
             id: fixationSettingsButton
             x: getRightX(mapTokensButton) + margin; y: margin;
-            height: buttonHeight; width: equalWidth(parent.width, 2)
+            height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Fixation Settings"
 
             enabled: false
@@ -417,7 +417,7 @@ Window {
         Button {
             id: genFixationDataButton
             x: margin; y: getBottomY(mapTokensButton) + margin;
-            height: buttonHeight; width: equalWidth(parent.width, 2)
+            height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Generate Fixations"
 
             enabled: false
@@ -433,7 +433,7 @@ Window {
         Button {
             id: queryFixationButton
             x: getRightX(genFixationDataButton) + margin; y: getBottomY(mapTokensButton) + margin;
-            height: buttonHeight; width: equalWidth(parent.width, 2)
+            height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Query Fixations"
 
             enabled: false

@@ -19,13 +19,6 @@ Database::Database(QString file_path) : Database() {
 
     std::cout << error << std::endl;
 
-    QString pragma_query =
-            "pragma journal_mode = WAL;"
-            "pragma synchronous = off;"
-            "pragma temp_store = memory;"
-            "pragma mmap_size = 30000000000;"
-            ;
-
     QString table_query =
             "CREATE TABLE IF NOT EXISTS participant(participant_id TEXT PRIMARY KEY,session_length INTEGER);"
             "CREATE TABLE IF NOT EXISTS fixation_run(fixation_run_id INTEGER PRIMARY KEY,session_id INTEGER,date_time INTEGER,filter TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
@@ -36,6 +29,7 @@ Database::Database(QString file_path) : Database() {
             "CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id));"
             "CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
             "CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,session_id INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL,FOREIGN KEY (event_time) REFERENCES gaze(event_time),FOREIGN KEY (session_id) REFERENCES session(session_id));"
+            "CREATE TABLE IF NOT EXISTS text_event(timestamp INTEGER PRIMARY KEY, session_id INTEGER, source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER, inserted_text TEXT, deleted_text TEXT, FOREIGN KEY (session_id) REFERENCES session(session_id));"
             "CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
             "CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id INTEGER,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
             "CREATE TABLE IF NOT EXISTS files(file_hash TEXT PRIMARY KEY,session_id INTEGER,file_full_path TEXT,file_type TEXT,FOREIGN KEY (session_id) REFERENCES session(session_id));"
@@ -43,10 +37,8 @@ Database::Database(QString file_path) : Database() {
             "CREATE INDEX idx_event_time_context ON ide_context(event_time);"
             "CREATE INDEX idx_event_time_gaze ON gaze(event_time);"
             "CREATE INDEX idx_fixation_id ON fixation(fixation_id);"
+            "CREATE INDEX idx_text_event_id ON text_event(text_event_id);"
             ;
-
-
-    //sqlite3_exec(db, pragma_query.toStdString().c_str(), NULL, 0, NULL);
 
     sqlite3_exec(db, table_query.toStdString().c_str(), NULL, 0, NULL);
 
@@ -198,6 +190,11 @@ void Database::insertSession(QString session_id, QString participant_id, QString
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
 
+void Database::insertTextEvent(QString timestamp, QString session_id, QString source_file_path, QString source_file_line, QString source_file_col, QString inserted_text, QString deleted_text) {
+    QString query = QString("INSERT INTO text_event(timestamp,session_id,source_file_path,source_file_line,source_file_col,inserted_text,deleted_text) VALUES (%1,%2,\"%3\",%4,%5,\"%6\",\"%7\");").arg(timestamp,session_id,source_file_path,source_file_line,source_file_col,inserted_text,deleted_text);
+    sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
+}
+
 // Currently unused
 void Database::insertWebContext(QString event_time, QString browser_type, QString site_name, QString url, QString tag) {
     QString query = QString("INSERT INTO web_context(event_time,browser_type,site_name,url,tag) VALUES(%1,\"%2\",\"%3\",\"%4\",\"%5\");").arg(event_time,browser_type,site_name,url,tag);
@@ -341,12 +338,36 @@ void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString 
     }
 }
 
-QString Database::queryUpdateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
-    return QString("UPDATE ide_context SET source_token_xpath = \"%1\", source_token_syntactic_context = \"%2\" WHERE event_time = %3;").arg(xpath,syntactic_context,event_id);
+//QString Database::queryUpdateGazeWithSyntacticInfo(QString event_id, QString xpath, QString syntactic_context) {
+//    return QString("UPDATE ide_context SET source_token_xpath = \"%1\", source_token_syntactic_context = \"%2\" WHERE event_time = %3;").arg(xpath,syntactic_context,event_id);
+//}
+
+//QString Database::queryUpdateGazeWithTokenInfo(QString event_id, QString token, QString token_type) {
+//    return QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3;").arg(token.replace("'","''"),token_type == "" ? "null" : "\""+token_type+"\"",event_id);
+//}
+
+void Database::updateTextEventWithDeletedText(QString timestamp, QString deleted) {
+    QString query = QString("UPDATE text_event SET deleted_text = \"%1\" WHERE timestamp = %2;").arg(deleted, timestamp);
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, query.toStdString().c_str(),NULL,0,&zErrMsg);
+    if(rc != SQLITE_OK) {
+        std::cout << "updateTextEventWithDeletedText" << std::endl;
+        std::cout << query.toStdString() << std::endl;
+        std::cout << "Error: " << QString(zErrMsg).toStdString() << std::endl;
+    }
+
 }
 
-QString Database::queryUpdateGazeWithTokenInfo(QString event_id, QString token, QString token_type) {
-    return QString("UPDATE ide_context SET source_token = '%1',source_token_type = %2 WHERE event_time = %3;").arg(token.replace("'","''"),token_type == "" ? "null" : "\""+token_type+"\"",event_id);
+void Database::updateTextEventWithInsertedText(QString timestamp, QString inserted) {
+    QString query = QString("UPDATE text_event SET inserted_text = \"%1\" WHERE timestamp = %2;").arg(inserted, timestamp);
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, query.toStdString().c_str(),NULL,0,&zErrMsg);
+    if(rc != SQLITE_OK) {
+        std::cout << "updateTextEventWithInsertedText" << std::endl;
+        std::cout << query.toStdString() << std::endl;
+        std::cout << "Error: " << QString(zErrMsg).toStdString() << std::endl;
+    }
+
 }
 
 int runFilterQueryCALLBACK(void *fixs, int argc, char** argv, char** azColName) {
