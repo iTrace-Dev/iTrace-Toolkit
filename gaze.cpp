@@ -11,6 +11,8 @@
 
 #include "gaze.h"
 
+#include <iostream>
+
 Gaze::Gaze() {}
 
 Gaze::Gaze(QSqlQuery& gaze_data) {

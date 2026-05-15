@@ -81,9 +81,11 @@ public:
     //Fixation Functions
     Q_INVOKABLE void generateFixationData(QVector<QString>,QString);
 
+    //Edit Functions
+    Q_INVOKABLE void generateEditData(QVector<QString>,QString,QString);
+
     //srcML Functions
     Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool);
-    QString findMatchingPath(QVector<QString>,QString);
 
     //Highlight Functions
     Q_INVOKABLE void highlightFixations(QString,QString);

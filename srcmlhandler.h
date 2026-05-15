@@ -24,14 +24,14 @@ public:
     SRCMLHandler() {};
     SRCMLHandler(QString);
 
-    bool isPositional();
+    bool isPositional() const;
 
-    QString getFilePath() { return file_path; }
+    QString getFilePath() const { return file_path; }
 
-    QVector<QString> getAllFilenames();
+    QVector<QString> getAllFilenames() const;
 
-    QString getUnitText(QString);
-    QString getUnitBody(QString);
+    QString getUnitText(QString) const;
+    QString getUnitBody(QString) const ;
 
 
 private:

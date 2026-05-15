@@ -33,9 +33,12 @@ SOURCES += \
         basicalgorithm.cpp \
         controller.cpp \
         database.cpp \
+        edit.cpp \
+        editalgorithm.cpp \
         fixation.cpp \
         fixationalgorithm.cpp \
         gaze.cpp \
+        helperfunctions.cpp \
         idtalgorithm.cpp \
         ivtalgorithm.cpp \
         logger.cpp \
@@ -44,6 +47,7 @@ SOURCES += \
         sqlite3.c \
         srcmlhandler.cpp \
         srcmlmapper.cpp \
+        textevent.cpp \
         xmlhandler.cpp
 
 RESOURCES += qml.qrc \
@@ -67,9 +71,12 @@ HEADERS += \
     basicalgorithm.h \
     controller.h \
     database.h \
+    edit.h \
+    editalgorithm.h \
     fixation.h \
     fixationalgorithm.h \
     gaze.h \
+    helperfunctions.h \
     idtalgorithm.h \
     ivtalgorithm.h \
     logger.h \
@@ -77,6 +84,7 @@ HEADERS += \
     sqlite3.h \
     srcmlhandler.h \
     srcmlmapper.h \
+    textevent.h \
     xmlhandler.h
 
 CONFIG += qmltypes

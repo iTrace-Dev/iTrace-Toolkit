@@ -17,7 +17,7 @@ SRCMLHandler::SRCMLHandler(QString path) {
     file_path = path;
 }
 
-bool SRCMLHandler::isPositional() {
+bool SRCMLHandler::isPositional() const {
     QFile file(file_path);
     file.open(QIODevice::ReadOnly);
     QXmlStreamReader parser(&file);
@@ -35,7 +35,7 @@ bool SRCMLHandler::isPositional() {
     return false;
 }
 
-QVector<QString> SRCMLHandler::getAllFilenames() {
+QVector<QString> SRCMLHandler::getAllFilenames() const {
     QFile file(file_path);
     file.open(QIODevice::ReadOnly);
     QXmlStreamReader parser(&file);
@@ -54,7 +54,7 @@ QVector<QString> SRCMLHandler::getAllFilenames() {
     return files;
 }
 
-QString SRCMLHandler::getUnitText(QString unit_filename) {
+QString SRCMLHandler::getUnitText(QString unit_filename) const {
     QString srcml_namespace = "declare default element namespace \"http://www.srcML.org/srcML/src\"; declare namespace re=\"http://exslt.org/regular-expressions\";";
     QFile file(file_path);
     file.open(QIODevice::ReadOnly);
@@ -72,7 +72,7 @@ QString SRCMLHandler::getUnitText(QString unit_filename) {
     return results;
 }
 
-QString SRCMLHandler::getUnitBody(QString unit_filename) {
+QString SRCMLHandler::getUnitBody(QString unit_filename) const {
     QString srcml_namespace = "declare default element namespace \"http://www.srcML.org/srcML/src\"; declare namespace re=\"http://exslt.org/regular-expressions\";";
     QFile file(file_path);
     file.open(QIODevice::ReadOnly);

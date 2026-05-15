@@ -1,5 +1,5 @@
 /********************************************************************************************************************************************************
-* @file fixationalgorithm.h
+* @file textevent.h
 *
 * @Copyright (C) 2026 i-trace.org
 *
@@ -9,30 +9,22 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#ifndef FIXATIONALGORITHM_H
-#define FIXATIONALGORITHM_H
+#ifndef TEXTEVENT_H
+#define TEXTEVENT_H
+#include <QVariant>
+#include <QSqlQuery>
 
-#include "gaze.h"
-#include "fixation.h"
-#include <QVector>
-
-class FixationAlgorithm
-{
+class TextEvent {
 public:
-    FixationAlgorithm() {};
-    FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
-    virtual ~FixationAlgorithm() {};
+    TextEvent();
+    TextEvent(QSqlQuery&);
+    TextEvent(char** argv);
 
-    virtual QVector<Fixation> generateFixations()=0;
-    virtual QString generateFixationSettings()=0;
+    long long timestamp;
+    int source_file_line, source_file_col;
+    //int session_id;
+    QString source_file_path, inserted_text, deleted_text;
 
-    QVector<Fixation>& getFixations();
-
-protected:
-    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
-
-    QVector<Gaze> session_gazes;
-    QVector<Fixation> fixations;
 };
 
-#endif // FIXATIONALGORITHM_H
+#endif // TEXTEVENT_H

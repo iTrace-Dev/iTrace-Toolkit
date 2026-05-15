@@ -11,10 +11,8 @@
 
 #ifndef GAZE_H
 #define GAZE_H
-#include <string>
 #include <QSqlQuery>
 #include <QVariant>
-#include <iostream>
 #include <math.h>
 
 

@@ -1,7 +1,7 @@
 /********************************************************************************************************************************************************
 * @file fixation.h
 *
-* @Copyright (C) 2022 i-trace.org
+* @Copyright (C) 2026 i-trace.org
 *
 * This file is part of iTrace Infrastructure http://www.i-trace.org/.
 * iTrace Infrastructure is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

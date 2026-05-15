@@ -1,5 +1,5 @@
 /********************************************************************************************************************************************************
-* @file fixationalgorithm.h
+* @file editalgorithm.h
 *
 * @Copyright (C) 2026 i-trace.org
 *
@@ -9,30 +9,47 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#ifndef FIXATIONALGORITHM_H
-#define FIXATIONALGORITHM_H
+#ifndef EDITALGORITHM_H
+#define EDITALGORITHM_H
 
-#include "gaze.h"
-#include "fixation.h"
+#include "textevent.h"
+#include "edit.h"
+#include "srcmlhandler.h"
 #include <QVector>
+#include <QString>
+#include <QMap>
 
-class FixationAlgorithm
-{
+class EditAlgorithm {
 public:
-    FixationAlgorithm() {};
-    FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
-    virtual ~FixationAlgorithm() {};
+    EditAlgorithm() {};
+    EditAlgorithm(const QVector<TextEvent>& events, const SRCMLHandler& srcml_file);
+    virtual ~EditAlgorithm() {};
 
-    virtual QVector<Fixation> generateFixations()=0;
-    virtual QString generateFixationSettings()=0;
+    virtual void generateEdits()=0;
+    virtual QString generateEditSettings()=0;
 
-    QVector<Fixation>& getFixations();
+    QVector<Edit> getEdits();
+    QString applyTextEvents(QString starting_file_content, const QVector<TextEvent>& events);
 
 protected:
-    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
 
-    QVector<Gaze> session_gazes;
-    QVector<Fixation> fixations;
+    QVector<TextEvent> text_events;
+    QVector<Edit> edits;
+    QMap<QString, QString> file_states;
 };
 
-#endif // FIXATIONALGORITHM_H
+
+class NaiveAlgorithm: public EditAlgorithm {
+public:
+    NaiveAlgorithm(const QVector<TextEvent>& edits, const SRCMLHandler& srcml_file);
+    ~NaiveAlgorithm() {}
+
+    void generateEdits() override;
+    QString generateEditSettings() override;
+
+private:
+};
+
+
+
+#endif // EDITALGORITHM_H

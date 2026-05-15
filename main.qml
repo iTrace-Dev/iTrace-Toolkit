@@ -53,123 +53,18 @@ Window {
     }
 
     function swapDBButtons() {
-//        openDatabaseButton.enabled = !openDatabaseButton.enabled;
-//        createDatabaseButton.enabled = !createDatabaseButton.enabled;
 
-        // mapTokensButton fixationSettingsButton genFixationDataButton queryFixationButton
         folderOpenButton.enabled = true;
-        //xmlButton.enabled = true;
         databaseImportButton.enabled = true;
+
         mapTokensButton.enabled = true;
+        genEditsButton.enabled = true;
         fixationSettingsButton.enabled = true;
+        editSettingsButton.enabled = true;
         genFixationDataButton.enabled = true;
         queryFixationButton.enabled = true;
     }
 
-//    Rectangle {
-//        x: 0; y: 0
-//        width: main.width;
-//        height: 40;
-//        color: "light grey"
-//    }
-
-//    MenuBar {
-//        Menu {
-//            title: qsTr("File")
-//            Action {
-//                text: "Exit"
-//                onTriggered: {
-//                    main.close()
-//                }
-//            }
-//        }
-
-//        // Database Menu
-//        Menu {
-//            title: qsTr("Database")
-//            // Create New Database File
-//            Action {
-//                text: "Create New Database"
-//                onTriggered: {
-//                    databaseCreate.open()
-//                }
-//            }
-//            // Open Database File
-//            Action {
-//                text: "Open Database"
-//                onTriggered: {
-//                    databaseOpen.open()
-//                }
-//            }
-//            Action {
-//                text: "Close Database"
-//                onTriggered: {
-//                    control.closeDatabase()
-//                    participantList.model.clearTasks()
-//                }
-//            }
-
-//            // Load XML File(s) Submenu
-//            Menu {
-//                title: qsTr("Load XML")
-//                // Load Individual XML
-//                Action {
-//                    text: "Load XML File"
-//                    onTriggered: {
-//                        xmlOpen.open()
-//                    }
-//                }
-//                // Batch Load XML From File
-//                Action {
-//                    text: "Load XML From Folder"
-//                    onTriggered: {
-//                        folderOpen.open()
-//                    }
-//                }
-//            }
-
-//        }
-//        Menu {
-//            title: qsTr("Analyze")
-//            Action {
-//                text: "Fixation Settings"
-//                onTriggered: options.open()
-//            }
-//            Action {
-//                text: "Map Tokens"
-//                onTriggered:  {
-//                    mappingMenu.open()
-////                    control.mapTokens("C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
-//                }
-//            }
-//            Action {
-//                text: "Generate Fixation Data"
-//                onTriggered: {
-//                    generateFixations(options.getSettings())
-//                }
-//                function generateFixations(algorithm) {
-//                    control.generateFixationData(participantList.model.getModelList().getSelected(),algorithm)
-//                }
-//            }
-//            Action {
-//                text: "Query Fixation Data"
-//                onTriggered: filter.open()
-//            }
-//            Action {
-//                text: "Export Fixation Highlighting (WIP)"
-//                onTriggered: {
-//                    control.highlightFixations("C:/Users/Joshua/Desktop/iTrace/Output","C:/Users/Joshua/Desktop/iTrace/data/001/cppcheck.xml")
-//                }
-//            }
-//        }
-//        /*Menu {
-//            title: qsTr("Help")
-
-//        }
-//        Menu {
-//            title: qsTr("About")
-//        }*/
-//    }
 
     Controller {
         id: control
@@ -316,18 +211,9 @@ Window {
 
             ToolTip.visible: hovered | down
             ToolTip.text: "Select a previous iTrace Database to import"
-            //ToolTip.text: "Select individual srcML or XML files to upload"
 
             enabled: false
 
-            /*Text {
-                id: xmlButtonText
-                anchors.verticalCenter: parent.verticalCenter
-                color: parent.enabled ? "black" : "grey";
-//                x: parent.width/2 - width/2 - xmlUploadImg.width/2 - xmlUploadImg.anchors.margins/2
-                anchors.horizontalCenter: parent.horizontalCenter;
-                text: "Import From XML"
-            }*/
             Text {
                 id: databaseImportButtonText
                 anchors.verticalCenter: parent.verticalCenter
@@ -338,28 +224,6 @@ Window {
             }
         }
 
-//        Button {
-//            id: closeButton
-//            height: buttonHeight; width: buttonHeight;
-//            x: getRightX(xmlButton) + margin/2; y: getBottomY(loadedDatabaseText) + margin/2;
-//            onClicked: {
-//                control.closeDatabase()
-//                participantList.model.clearTasks();
-//                swapDBButtons();
-//            }
-
-//            ToolTip.visible: hovered | down
-//            ToolTip.text: "Close currently selected database"
-
-//            visible: false;
-
-//            Image {
-//                id: closeImg
-//                source: "cross.png";
-//                anchors.fill: parent
-//                anchors.margins: 5
-//            }
-//        }
 
         Text {
             id: loadedParticipantsText
@@ -391,8 +255,24 @@ Window {
         border.width: 3
 
         Button {
-            id: mapTokensButton
+            id: genEditsButton
             x: margin; y: margin;
+            height: buttonHeight; width: equalWidth(parent.width, 3)
+            text: "Generate Edits"
+
+            enabled: false
+
+            onClicked: {
+                editXmlOpen.open();
+            }
+            function generateEdits() {
+                control.generateEditData(participantList.model.getModelList().getSelected(),"Naive");
+            }
+        }
+
+        Button {
+            id: mapTokensButton
+            x: getRightX(genEditsButton) + margin; y: margin;
             height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Map Tokens"
 
@@ -415,8 +295,17 @@ Window {
         }
 
         Button {
+            id: editSettingsButton
+            x: margin;y: getBottomY(mapTokensButton) + margin;
+            height: buttonHeight; width: equalWidth(parent.width, 3)
+            text: "Edit Settings"
+
+            enabled: false
+        }
+
+        Button {
             id: genFixationDataButton
-            x: margin; y: getBottomY(mapTokensButton) + margin;
+            x: getRightX(editSettingsButton) + margin; y: getBottomY(mapTokensButton) + margin;
             height: buttonHeight; width: equalWidth(parent.width, 3)
             text: "Generate Fixations"
 
@@ -542,6 +431,14 @@ Window {
         nameFilters: ["iTrace XML (*.xml)", "SrcML Files (*.xml; *.srcml)", "All Files (*.*)"]
         onAccepted: {
             control.importXMLFile(fileUrl)
+        }
+    }
+    FileDialog {
+        id: editXmlOpen
+        selectExisting: true
+        nameFilters: ["iTrace XML (*.xml)", "All Files (*.*)"]
+        onAccepted: {
+            control.generateEditData(participantList.model.getModelList().getSelected(), "Naive", fileUrl);
         }
     }
     FileDialog {

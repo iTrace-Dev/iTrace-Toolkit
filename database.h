@@ -22,6 +22,7 @@
 #include <sqlite3.h>
 
 #include "gaze.h"
+#include "textevent.h"
 
 #include <iostream>
 
@@ -46,6 +47,9 @@ public:
     void insertCalibration(QString);
     void insertCalibrationPoint(QString,QString,QString,QString);
     void insertCalibrationSample(QString,QString,QString,QString,QString,QString,QString);
+    void insertEdit(QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    void insertEditRun(QString, QString, QString);
+    void insertEditTextEvent(QString, QString);
     void insertFile(QString,QString,QString,QString);
     void insertFixation(QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString,QString);
     void insertFixationGaze(QString,QString);
@@ -63,6 +67,7 @@ public:
     QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
     QVector<QString> getGazeTargetsFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
+    QVector<TextEvent> getTextEventsFromSession(QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
     QString getSessionFromParticipantAndTask(QString,QString);
 

@@ -1,7 +1,7 @@
 /********************************************************************************************************************************************************
 * @file controller.cpp
 *
-* @Copyright (C) 2022 i-trace.org
+* @Copyright (C) 2026 i-trace.org
 *
 * This file is part of iTrace Infrastructure http://www.i-trace.org/.
 * iTrace Infrastructure is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -10,6 +10,9 @@
 ********************************************************************************************************************************************************/
 
 #include "controller.h"
+#include "edit.h"
+#include "editalgorithm.h"
+#include "helperfunctions.h"
 
 /////////////////////////////////////////
 // HELPERS
@@ -531,6 +534,70 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     emit outputToScreen("black",QString("Fixation data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
 }
 
+void Controller::generateEditData(QVector<QString> tasks, QString algSettings, QString file_path) {
+    log->writeLine("INFO","Generating editing data with settings: " + algSettings);
+
+    QElapsedTimer time;
+    time.start();
+
+    int counter = 0;
+
+    changeFilePathOS(file_path);
+
+    std::vector<QString> sessions;
+    for(auto i : tasks) { // Get the sessions that the user wants to use
+        QStringList values = i.split(" - ");
+        if(values[2] == "1") {
+            sessions.push_back(idb.getSessionFromParticipantAndTask(values[0],values[1]));
+            counter += idb.getGazeTargetsFromSession(sessions.back()).size();
+        }
+    }
+
+    emit startProgressBar(0,counter);
+
+    idb.startTransaction();
+    counter = 1;
+
+    for(auto session_id : sessions) {
+        QVector<TextEvent> session_text_events = idb.getTextEventsFromSession(session_id);
+        if (session_text_events.length() == 0) {
+            continue;
+        }
+
+        EditAlgorithm* algorithm;
+        if (algSettings == "Naive") {
+            algorithm = new NaiveAlgorithm(session_text_events, SRCMLHandler(file_path));
+        }
+        else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + algSettings); return; } // Error handler
+
+        algorithm->generateEdits();
+        QVector<Edit> session_edits = algorithm->getEdits();
+
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        QString edit_run_id = QString::number(ms.count());
+        idb.insertEditRun(edit_run_id,session_id,algSettings);
+
+        int i = 1;
+        for (Edit edit : session_edits) {
+            QString edit_id = QUuid::createUuid().toString();
+            edit_id.remove("{"); edit_id.remove("}");
+            idb.insertEdit(edit_id, edit_run_id, QString::number(edit.text_event_start_timestamp), QString::number(edit.text_event_end_timestamp), QString::number(edit.category == "init" ? 0 : i++), QString::number(edit.duration), edit.starting_text, edit.ending_text, edit.category);
+            for (TextEvent edit_text_event : edit.text_event_vec) {
+                idb.insertEditTextEvent(edit_id,QString::number(edit_text_event.timestamp));
+            }
+        }
+
+        emit setProgressBarValue(counter); ++counter;
+        QApplication::processEvents();
+        delete algorithm;
+    }
+
+    idb.commit();
+    emit stopProgressBar();
+    emit outputToScreen("black",QString("Edit data generated. Elapsed time: %1").arg(time.elapsed() / 1000.0));
+
+}
+
 void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true) {
     QElapsedTimer timer;
     timer.start();
@@ -546,6 +613,7 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
+    std::cout << srcml.getUnitBody("data/src/main/java/it/nanowar/ofsteel/helloworld/HelloWorldMainLauncherClass.java") << std::endl;
     if(!srcml.isPositional()) {
         emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
         return;
@@ -600,44 +668,7 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
     }
 }
 
-// This should probably be a helper function
-QString Controller::findMatchingPath(QVector<QString> all_files, QString file) {
-    file.replace("\\","/");
-    file = file.toLower();
-    QVector<QStringList> possible;
-    QStringList file_split = file.split("/");
-    QString check = file_split[file_split.size()-1];
-    for(auto i : all_files) {
-        if(i.toLower().endsWith(check)) { possible.push_back(i.split("/")); }
-    }
-    if(possible.size() == 0) { return ""; }
-    else if(possible.size() == 1) { return possible[0].join("/"); }
 
-    QString shortest = "";
-    int passes = 1;
-
-
-    while(possible.size() != 1) {
-        QVector<QStringList> candidates;
-        if(passes > file_split.size()) { return shortest; }
-        for(auto unit_path : possible) {
-            if(passes > unit_path.size()) {
-                if(shortest == "") { shortest = unit_path.join("/"); }
-                continue;
-            }
-            QString unit_check = unit_path[unit_path.size() - passes].toLower();
-            QString file_check = file_split[file_split.size() - passes];
-            if(unit_check == file_check) {
-                candidates.push_back(unit_path);
-            }
-        }
-        possible = candidates;
-        ++passes;
-        QApplication::processEvents();
-    }
-    if(possible.size() == 0) { return ""; }
-    return possible[0].join("/");
-}
 
 
 void Controller::highlightFixations(QString dir, QString srcml_file_path) {

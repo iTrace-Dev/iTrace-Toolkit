@@ -1,5 +1,5 @@
 /********************************************************************************************************************************************************
-* @file fixationalgorithm.h
+* @file edit.cpp
 *
 * @Copyright (C) 2026 i-trace.org
 *
@@ -9,30 +9,7 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#ifndef FIXATIONALGORITHM_H
-#define FIXATIONALGORITHM_H
 
-#include "gaze.h"
-#include "fixation.h"
-#include <QVector>
+#include "edit.h"
 
-class FixationAlgorithm
-{
-public:
-    FixationAlgorithm() {};
-    FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
-    virtual ~FixationAlgorithm() {};
-
-    virtual QVector<Fixation> generateFixations()=0;
-    virtual QString generateFixationSettings()=0;
-
-    QVector<Fixation>& getFixations();
-
-protected:
-    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
-
-    QVector<Gaze> session_gazes;
-    QVector<Fixation> fixations;
-};
-
-#endif // FIXATIONALGORITHM_H
+Edit::Edit() {}

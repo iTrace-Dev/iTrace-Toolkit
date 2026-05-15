@@ -1,5 +1,5 @@
 /********************************************************************************************************************************************************
-* @file fixationalgorithm.h
+* @file helperfunctions.h
 *
 * @Copyright (C) 2026 i-trace.org
 *
@@ -9,30 +9,12 @@
 * You should have received a copy of the GNU General Public License along with iTrace Infrastructure. If not, see <https://www.gnu.org/licenses/>.
 ********************************************************************************************************************************************************/
 
-#ifndef FIXATIONALGORITHM_H
-#define FIXATIONALGORITHM_H
+#ifndef HELPERFUNCTIONS_H
+#define HELPERFUNCTIONS_H
 
-#include "gaze.h"
-#include "fixation.h"
-#include <QVector>
+#include <QString>
+#include <QStringList>
 
-class FixationAlgorithm
-{
-public:
-    FixationAlgorithm() {};
-    FixationAlgorithm(QVector<Gaze>& g) { session_gazes = g; }
-    virtual ~FixationAlgorithm() {};
+QString findMatchingPath(QVector<QString> all_files, QString file);
 
-    virtual QVector<Fixation> generateFixations()=0;
-    virtual QString generateFixationSettings()=0;
-
-    QVector<Fixation>& getFixations();
-
-protected:
-    virtual Fixation computeFixationEstimate(QVector<Gaze>)=0;
-
-    QVector<Gaze> session_gazes;
-    QVector<Fixation> fixations;
-};
-
-#endif // FIXATIONALGORITHM_H
+#endif // HELPERFUNCTIONS_H

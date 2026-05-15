@@ -11,7 +11,7 @@
 
 #include "srcmlmapper.h"
 
-void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& token_type) {
+void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& /*token_type*/) {
     // token_type is currently unused?
     QVector<QString> delimiters = {
         "(",")","{","}",".",",",
@@ -97,10 +97,8 @@ void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString proj
     //QString big_query = "";
 
     std::map<QString,std::pair<QString,QString>> cached_gazes;
-    int i = -1;
     for(auto response : responses) {
         if(!valid_sessions.contains(response[1])) { continue; }
-        ++i;
         int res_line = response[2].toInt(),
             res_col = response[3].toInt();
 
