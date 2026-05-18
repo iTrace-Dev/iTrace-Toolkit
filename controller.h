@@ -85,7 +85,7 @@ public:
     Q_INVOKABLE void generateEditData(QVector<QString>,QString,QString);
 
     //srcML Functions
-    Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool);
+    Q_INVOKABLE void mapTokens(QString,QVector<QString>,bool,QString,bool);
 
     //Highlight Functions
     Q_INVOKABLE void highlightFixations(QString,QString);

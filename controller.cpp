@@ -598,7 +598,12 @@ void Controller::generateEditData(QVector<QString> tasks, QString algSettings, Q
 
 }
 
-void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true) {
+void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true, QString editAlgorithm = "", bool process_edits = false) {
+    if (process_edits) {
+        generateEditData(tasks, editAlgorithm, srcml_file_path);
+    }
+
+
     QElapsedTimer timer;
     timer.start();
 
@@ -613,7 +618,6 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
     changeFilePathOS(srcml_file_path);
 
     SRCMLHandler srcml(srcml_file_path);
-    std::cout << srcml.getUnitBody("data/src/main/java/it/nanowar/ofsteel/helloworld/HelloWorldMainLauncherClass.java") << std::endl;
     if(!srcml.isPositional()) {
         emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
         return;

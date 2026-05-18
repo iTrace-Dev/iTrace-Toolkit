@@ -46,6 +46,7 @@ Popup {
         elide: Text.ElideMiddle
         function updateSelected(path) {
             tokenButton.enabled = path !== ""
+            calculateEditsCheck.enabled = path !== ""
             pathText.text = pathText.message + path.replace("file:///", "")
         }
     }
@@ -57,15 +58,41 @@ Popup {
         text: "Overwrite existing data?"
     }
 
+    CheckBox {
+        id: calculateEditsCheck
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: overwriteCheck.y + overwriteCheck.height + margin
+        text: "Calculate edits?"
+        enabled: false
+    }
+
+    GridLayout {
+        id: editAlgSelection
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: calculateEditsCheck.y + calculateEditsCheck.height + margin
+        width: parent.width - 2 * margin
+        columns: 2
+        Text {
+            id: editAlgorithmLabel
+            text: qsTr("Edit Detection Algorithm:")
+        }
+        ComboBox {
+            id: editAlgSelectionBox
+            model: ["Naive"]
+            currentIndex: 0
+            enabled: calculateEditsCheck.checked
+        }
+    }
+
     Button {
         id: tokenButton
-        x: margin; y: overwriteCheck.y + overwriteCheck.height + margin
+        x: margin; y: editAlgSelection.y + editAlgSelection.height + margin
         enabled: false
         text: "Identify Tokens"
         anchors.horizontalCenter: parent.horizontalCenter
         onClicked: {
             mappingMenu.close()
-            control.mapTokens(srcmlOpen.fileUrl, participantList.model.getModelList().getSelected(), overwriteCheck.checked)
+            control.mapTokens(srcmlOpen.fileUrl, participantList.model.getModelList().getSelected(), overwriteCheck.checked, editAlgSelectionBox.currentValue, calculateEditsCheck.checked)
         }
     }
 
