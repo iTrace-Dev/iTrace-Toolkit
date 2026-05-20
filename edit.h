@@ -15,17 +15,21 @@
 
 #include "textevent.h"
 #include <QString>
-#include <vector>
+#include <QVector>
 
 class Edit
 {
 public:
     Edit();
+    Edit(char**);
 
-    std::vector<TextEvent> text_event_vec;
+    QVector<TextEvent> text_event_vec;
     long long text_event_start_timestamp, text_event_end_timestamp;
     int duration = 0;
-    QString starting_text = "", ending_text = "", category = "";
+    QString source_file_path = "", starting_text = "", ending_text = "", category = "";
+
+    // only needed during token mapping
+    QString edit_id = "";
 
 };
 

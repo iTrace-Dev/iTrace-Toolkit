@@ -21,6 +21,7 @@
 
 #include <sqlite3.h>
 
+#include "edit.h"
 #include "gaze.h"
 #include "textevent.h"
 
@@ -47,7 +48,7 @@ public:
     void insertCalibration(QString);
     void insertCalibrationPoint(QString,QString,QString,QString);
     void insertCalibrationSample(QString,QString,QString,QString,QString,QString,QString);
-    void insertEdit(QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    void insertEdit(QString, QString, QString, QString, QString, QString, QString, QString, QString, QString);
     void insertEditRun(QString, QString, QString);
     void insertEditTextEvent(QString, QString);
     void insertFile(QString,QString,QString,QString);
@@ -66,13 +67,18 @@ public:
     QVector<QVector<QString>> getGazesForSyntacticMapping(QString,bool);
     QVector<QVector<QString>> getGazesForSourceMapping(QString,bool);
     QVector<QString> getGazeTargetsFromSession(QString);
+    QVector<QString> getGazeTargetPathsFromSession(QString);
     QVector<Gaze> getGazesFromSessionAndTarget(QString,QString);
+    QVector<Gaze> getGazesFromSessionAndFilePath(QString,QString);
     QVector<TextEvent> getTextEventsFromSession(QString);
     QVector<std::pair<QString,QString>> getFilesViewed();
+    QVector<QString> getFilesFromTextEventsFromSession(QString);
     QString getSessionFromParticipantAndTask(QString,QString);
+    QVector<Edit> getEditsOfFileFromSession(QString,QString);
 
     void updateGazeWithSyntacticInfo(QString,QString,QString);
     void updateGazeWithTokenInfo(QString,QString,QString);
+    void updateGazeWithEditInfo(QString,QString);
     void updateTextEventWithDeletedText(QString, QString);
     void updateTextEventWithInsertedText(QString, QString);
 

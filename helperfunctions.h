@@ -17,4 +17,6 @@
 
 QString findMatchingPath(QVector<QString> all_files, QString file);
 
+QString getSRCMLOutputFromCLI(const QString&, const QString&);
+
 #endif // HELPERFUNCTIONS_H

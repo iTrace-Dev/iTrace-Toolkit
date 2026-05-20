@@ -13,6 +13,14 @@
 
 #include <QString>
 #include <QStringList>
+#include <QTemporaryFile>
+#include <QDir>
+#include <QTextStream>
+#include <QProcess>
+
+#include <cstdio>
+
+//#include <srcml.h>
 
 // This should probably be a helper function
 QString findMatchingPath(QVector<QString> all_files, QString file) {
@@ -50,4 +58,26 @@ QString findMatchingPath(QVector<QString> all_files, QString file) {
     }
     if(possible.size() == 0) { return ""; }
     return possible[0].join("/");
+}
+
+QString getSRCMLOutputFromCLI(const QString& source_code, const QString& file_path) {
+
+    QString file_name = file_path.split("/").last();
+
+    QTemporaryFile temp_file(QDir::tempPath()+"/XXXXXX_"+file_name);
+    temp_file.open();
+
+    QTextStream out(&temp_file);
+    out << source_code;
+    temp_file.close();
+
+    QString cmd = QString("\"C:\\Program Files\\srcML\\bin\\srcml.exe\" %1 --archive --position ").arg(temp_file.fileName());
+
+    QProcess process;
+    process.start(cmd);
+    process.waitForFinished();
+    QString result = process.readAllStandardOutput();
+
+    return result;
+
 }

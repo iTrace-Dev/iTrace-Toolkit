@@ -22,7 +22,7 @@
 class EditAlgorithm {
 public:
     EditAlgorithm() {};
-    EditAlgorithm(const QVector<TextEvent>& events, const SRCMLHandler& srcml_file);
+    EditAlgorithm(const QVector<TextEvent>& events, const SRCMLHandler& srcml_file, QVector<QString> file_names);
     virtual ~EditAlgorithm() {};
 
     virtual void generateEdits()=0;
@@ -41,13 +41,22 @@ protected:
 
 class NaiveAlgorithm: public EditAlgorithm {
 public:
-    NaiveAlgorithm(const QVector<TextEvent>& edits, const SRCMLHandler& srcml_file);
+    NaiveAlgorithm(const QVector<TextEvent>& edits, const SRCMLHandler& srcml_file, QVector<QString> file_names);
     ~NaiveAlgorithm() {}
 
     void generateEdits() override;
     QString generateEditSettings() override;
+};
 
+class DynamicTemporalGapAlgorithm: public EditAlgorithm {
+public:
+    DynamicTemporalGapAlgorithm(const QVector<TextEvent>& edits, const SRCMLHandler& srcml_file, QVector<QString> file_names, int value);
+    ~DynamicTemporalGapAlgorithm() {}
+
+    void generateEdits() override;
+    QString generateEditSettings() override;
 private:
+    int scalar;
 };
 
 

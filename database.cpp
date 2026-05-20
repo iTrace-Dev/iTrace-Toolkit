@@ -30,9 +30,9 @@ Database::Database(QString file_path) : Database() {
             "CREATE TABLE IF NOT EXISTS calibration_point(calibration_point_id TEXT,calibration_id INTEGER,calibration_x REAL,calibration_y REAL,FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id));"
             "CREATE TABLE IF NOT EXISTS calibration_sample(calibration_point_id TEXT,left_x REAL, left_y REAL,left_validation REAL,right_x REAL, right_y REAL,right_validation REAL,FOREIGN KEY (calibration_point_id) REFERENCES calibration_point(calibration_point_id));"
             "CREATE TABLE IF NOT EXISTS gaze(event_time INTEGER PRIMARY KEY,session_id INTEGER,calibration_id INTEGER,participant_id TEXT, tracker_time INTEGER, system_time INTEGER, x REAL, y REAL,left_x REAL, left_y REAL, left_pupil_diameter REAL, left_validation INTEGER,right_x REAL, right_y REAL, right_pupil_diameter REAL, right_validation INTEGER,user_left_x REAL,user_left_y REAL,user_left_z REAL,user_right_x REAL,user_right_y REAL,user_right_z REAL,FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (calibration_id) REFERENCES calibration(calibration_id),FOREIGN KEY (participant_id) REFERENCES participant(participant_id));"
-            "CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,session_id INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL,FOREIGN KEY (event_time) REFERENCES gaze(event_time),FOREIGN KEY (session_id) REFERENCES session(session_id));"
+            "CREATE TABLE IF NOT EXISTS ide_context(event_time INTEGER,session_id INTEGER,time_stamp TEXT,ide_type TEXT,gaze_target TEXT,gaze_target_type TEXT,source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER,editor_line_height REAL,editor_font_height REAL, editor_line_base_x REAL, editor_line_base_y REAL,source_token TEXT,source_token_type TEXT, source_token_xpath TEXT, source_token_syntactic_context TEXT, x REAL, y REAL, edit_id TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time),FOREIGN KEY (session_id) REFERENCES session(session_id),FOREIGN KEY (edit_id) REFERENCES edit(edit_id));"
             "CREATE TABLE IF NOT EXISTS text_event(timestamp INTEGER PRIMARY KEY, session_id INTEGER, source_file_path TEXT, source_file_line INTEGER, source_file_col INTEGER, inserted_text TEXT, deleted_text TEXT, FOREIGN KEY (session_id) REFERENCES session(session_id));"
-            "CREATE TABLE IF NOT EXISTS edit(edit_id TEXT PRIMARY KEY,edit_run_id INTEGER,text_event_start_timestamp INTEGER,text_event_end_timestamp INTEGER,edit_order_number INTEGER,duration INTEGER,starting_text BLOB,ending_text BLOB,category TEXT);"
+            "CREATE TABLE IF NOT EXISTS edit(edit_id TEXT PRIMARY KEY,edit_run_id INTEGER, source_file_path TEXT, text_event_start_timestamp INTEGER,text_event_end_timestamp INTEGER,edit_order_number INTEGER,duration INTEGER,starting_text BLOB,ending_text BLOB,category TEXT);"
             "CREATE TABLE IF NOT EXISTS web_context(event_time INTEGER,browser_type TEXT,site_name TEXT,url TEXT,tag TEXT,FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
             "CREATE TABLE IF NOT EXISTS fixation_gaze(fixation_id TEXT,event_time INTEGER,FOREIGN KEY (fixation_id) REFERENCES fixation(fixation_id),FOREIGN KEY (event_time) REFERENCES gaze(event_time));"
             "CREATE TABLE IF NOT EXISTS edit_text_event(edit_id TEXT, text_event_timestamp INTEGER,FOREIGN KEY (edit_id) REFERENCES edit(edit_id),FOREIGN KEY (text_event_timestamp) REFERENCES text_event(timestamp));"
@@ -153,8 +153,8 @@ void Database::insertCalibrationSample(QString calibration_point_id, QString lef
     sqlite3_exec(db,query.toStdString().c_str(),NULL,0,NULL);
 }
 
-void Database::insertEdit(QString edit_id, QString edit_run_id, QString text_event_start_timestamp, QString text_event_end_timestamp, QString edit_order_number, QString duration, QString starting_text, QString ending_text, QString category) {
-    const char* sql = "INSERT INTO edit(edit_id,edit_run_id,text_event_start_timestamp,text_event_end_timestamp,edit_order_number,duration,starting_text,ending_text,category) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);";
+void Database::insertEdit(QString edit_id, QString edit_run_id, QString source_file_path, QString text_event_start_timestamp, QString text_event_end_timestamp, QString edit_order_number, QString duration, QString starting_text, QString ending_text, QString category) {
+    const char* sql = "INSERT INTO edit(edit_id,edit_run_id,source_file_path,text_event_start_timestamp,text_event_end_timestamp,edit_order_number,duration,starting_text,ending_text,category) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if(rc != SQLITE_OK) {
@@ -165,18 +165,19 @@ void Database::insertEdit(QString edit_id, QString edit_run_id, QString text_eve
     // Bind parameters (use TEXT for ids/numbers and BLOB for the source contents)
     sqlite3_bind_text(stmt, 1, edit_id.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 2, edit_run_id.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, text_event_start_timestamp.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, text_event_end_timestamp.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, edit_order_number.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, duration.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, source_file_path.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, text_event_start_timestamp.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, text_event_end_timestamp.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, edit_order_number.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, duration.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     QByteArray startBytes = starting_text.toUtf8();
-    sqlite3_bind_blob(stmt, 7, startBytes.constData(), startBytes.size(), SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 8, startBytes.constData(), startBytes.size(), SQLITE_TRANSIENT);
 
     QByteArray endBytes = ending_text.toUtf8();
-    sqlite3_bind_blob(stmt, 8, endBytes.constData(), endBytes.size(), SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 9, endBytes.constData(), endBytes.size(), SQLITE_TRANSIENT);
 
-    sqlite3_bind_text(stmt, 9, category.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 10, category.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     rc = sqlite3_step(stmt);
     if(rc != SQLITE_DONE) {
@@ -307,9 +308,21 @@ int getGazeTargetsFromSessionCALLBACK(void *gaze_targets, int /*argc*/, char** a
     return 0;
 }
 QVector<QString> Database::getGazeTargetsFromSession(QString session_id) {
-    QString query = QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context WHERE ide_context.gaze_target != \"\";");
+    QString query = QString("SELECT DISTINCT ide_context.gaze_target FROM ide_context WHERE ide_context.gaze_target != \"\" AND session_id = %1;").arg(session_id);
     QVector<QString> gaze_targets;
     sqlite3_exec(db, query.toStdString().c_str(), getGazeTargetsFromSessionCALLBACK, (void*)&gaze_targets, NULL);
+    return gaze_targets;
+}
+
+int getGazeTargetPathsFromSessionCALLBACK(void *gaze_targets, int /*argc*/, char** argv, char** /*azColName*/) {
+    QVector<QString>* x = (QVector<QString>*)gaze_targets;
+    x->push_back(argv[0]);
+    return 0;
+}
+QVector<QString> Database::getGazeTargetPathsFromSession(QString session_id) {
+    QString query = QString("SELECT DISTINCT ide_context.source_file_path FROM ide_context WHERE ide_context.source_file_path != \"\" AND session_id = %1;").arg(session_id);
+    QVector<QString> gaze_targets;
+    sqlite3_exec(db, query.toStdString().c_str(), getGazeTargetPathsFromSessionCALLBACK, (void*)&gaze_targets, NULL);
     return gaze_targets;
 }
 
@@ -333,6 +346,29 @@ QVector<Gaze> Database::getGazesFromSessionAndTarget(QString session_id, QString
     QVector<Gaze> gazes;
     QString query = QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.gaze_target = \"%2\" ORDER BY gaze.event_time ASC;").arg(session_id,gaze_target);
     sqlite3_exec(db, query.toStdString().c_str(), getGazesFromSessionAndTargetCALLBACK, (void*)&gazes, NULL);
+    return gazes;
+}
+
+int getGazesFromSessionAndFilePathCALLBACK(void *gazes, int /*argc*/, char** argv, char** /*azColName*/) {
+    QVector<Gaze>* x = (QVector<Gaze>*)gazes;
+    Gaze data(argv);
+    if(data.isValid()) {
+        x->push_back(data);
+    }
+    else {
+        if(x->size() != 0) {
+            x->push_back(Gaze(x->last()));
+        }
+        else {
+            x->push_back(Gaze());
+        }
+    }
+    return 0;
+}
+QVector<Gaze> Database::getGazesFromSessionAndFilePath(QString session_id, QString gaze_target) {
+    QVector<Gaze> gazes;
+    QString query = QString("SELECT gaze.event_time, gaze.x, gaze.y, gaze.system_time, gaze.left_pupil_diameter, gaze.right_pupil_diameter, gaze.left_validation, gaze.right_validation, ide_context.gaze_target, ide_context.gaze_target_type, ide_context.source_file_line, ide_context.source_file_col, ide_context.source_token, ide_context.source_token_xpath, ide_context.source_token_syntactic_context FROM gaze JOIN ide_context ON gaze.event_time=ide_context.event_time WHERE gaze.session_id = %1 AND ide_context.source_file_path = \"%2\" ORDER BY gaze.event_time ASC;").arg(session_id,gaze_target);
+    sqlite3_exec(db, query.toStdString().c_str(), getGazesFromSessionAndFilePathCALLBACK, (void*)&gazes, NULL);
     return gazes;
 }
 
@@ -362,6 +398,19 @@ QVector<std::pair<QString, QString> > Database::getFilesViewed() {
 }
 
 
+int getFilesFromTextEventsFromSessionCALLBACK(void *files, int /*argc*/, char** argv, char** /*azColName*/) {
+    QVector<QString>* x = (QVector<QString>*)files;
+    x->push_back(QString(argv[0]));
+    return 0;
+}
+QVector<QString> Database::getFilesFromTextEventsFromSession(QString session_id) {
+    QString query = QString("SELECT DISTINCT source_file_path FROM text_event WHERE session_id = \"%1\";").arg(session_id);
+    QVector<QString> files;
+    sqlite3_exec(db, query.toStdString().c_str(), getFilesFromTextEventsFromSessionCALLBACK, (void*)&files, NULL);
+    return files;
+}
+
+
 int getSessionFromParticipantAndTaskCALLBACK(void *id, int /*argc*/, char** argv, char** /*azColName*/) {
     QString* x = (QString*)id;
     *x = argv[0];
@@ -372,6 +421,20 @@ QString Database::getSessionFromParticipantAndTask(QString participant_id, QStri
     QString id;
     sqlite3_exec(db, query.toStdString().c_str(), getSessionFromParticipantAndTaskCALLBACK, (void*)&id, NULL);
     return id;
+}
+
+
+int getEditsOfFileFromSessionCALLBACK(void *edits, int /*argc*/, char** argv, char** /*azColName*/) {
+    QVector<Edit>* x = (QVector<Edit>*)edits;
+    Edit edit(argv);
+    x->push_back(edit);
+    return 0;
+}
+QVector<Edit> Database::getEditsOfFileFromSession(QString file_path, QString session_id) {
+    QString query = QString("SELECT * FROM edit JOIN edit_run ON edit.edit_run_id = edit_run.edit_run_id WHERE source_file_path = \"%1\" AND session_id = %2;").arg(file_path, session_id);
+    QVector<Edit> edits;
+    sqlite3_exec(db, query.toStdString().c_str(), getEditsOfFileFromSessionCALLBACK, (void*)&edits, NULL);
+    return edits;
 }
 
 
@@ -394,6 +457,17 @@ void Database::updateGazeWithTokenInfo(QString event_id, QString token, QString 
     int rc = sqlite3_exec(db, query.toStdString().c_str(),NULL,0,&zErrMsg);
     if(rc != SQLITE_OK) {
         std::cout << "updateGazeWithTokenInfo" << std::endl;
+        std::cout << query.toStdString() << std::endl;
+        std::cout << "Error: " << QString(zErrMsg).toStdString() << std::endl;
+    }
+}
+
+void Database::updateGazeWithEditInfo(QString event_id, QString edit_id) {
+    QString query = QString("UPDATE ide_context SET edit_id = \"%1\" WHERE event_time = %2;").arg(edit_id,event_id);
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, query.toStdString().c_str(),NULL,0,&zErrMsg);
+    if(rc != SQLITE_OK) {
+        std::cout << "updateGazeWithEditInfo" << std::endl;
         std::cout << query.toStdString() << std::endl;
         std::cout << "Error: " << QString(zErrMsg).toStdString() << std::endl;
     }

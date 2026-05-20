@@ -12,9 +12,22 @@
 #include "srcmlhandler.h"
 
 #include <iostream>
+#include <QDir>
+#include <QTextStream>
 
-SRCMLHandler::SRCMLHandler(QString path) {
+SRCMLHandler::SRCMLHandler(const QString& path) {
     file_path = path;
+}
+
+SRCMLHandler::SRCMLHandler(const QString&, const QString& file_contents) {
+    //temp_file.setFileName(QDir::tempPath()+"/XXXXXX_temp.xml");
+    temp_file.open();
+
+    QTextStream out(&temp_file);
+    out << file_contents;
+    temp_file.close();
+
+    file_path = temp_file.fileName();
 }
 
 bool SRCMLHandler::isPositional() const {
@@ -72,6 +85,24 @@ QString SRCMLHandler::getUnitText(QString unit_filename) const {
     return results;
 }
 
+QString SRCMLHandler::getSoleUnitText() const {
+    QString srcml_namespace = "declare default element namespace \"http://www.srcML.org/srcML/src\"; declare namespace re=\"http://exslt.org/regular-expressions\";";
+    QFile file(file_path);
+    file.open(QIODevice::ReadOnly);
+
+    QString query_string = QString("doc($file)//unit[@filename]");
+    QString full_xquery = srcml_namespace + query_string;
+
+    QXmlQuery query_results;
+    query_results.bindVariable("file",&file);
+    query_results.setQuery(full_xquery);
+    if(!query_results.isValid()) { return "INVALID QUERY"; }
+    QString results;
+    query_results.evaluateTo(&results);
+    file.close();
+    return results;
+}
+
 QString SRCMLHandler::getUnitBody(QString unit_filename) const {
     QString srcml_namespace = "declare default element namespace \"http://www.srcML.org/srcML/src\"; declare namespace re=\"http://exslt.org/regular-expressions\";";
     QFile file(file_path);
@@ -88,6 +119,37 @@ QString SRCMLHandler::getUnitBody(QString unit_filename) const {
     query_results.evaluateTo(&results);
     file.close();
     return results;
+}
+
+QString SRCMLHandler::getSoleUnitBody() const {
+    QString srcml_namespace = "declare default element namespace \"http://www.srcML.org/srcML/src\"; declare namespace re=\"http://exslt.org/regular-expressions\";";
+    QFile file(file_path);
+    file.open(QIODevice::ReadOnly);
+
+    QString query_string = QString("doc($file)//unit[@filename]/string()");
+    QString full_xquery = srcml_namespace + query_string;
+
+    QXmlQuery query_results;
+    query_results.bindVariable("file",&file);
+    query_results.setQuery(full_xquery);
+    if(!query_results.isValid()) { return "INVALID QUERY"; }
+    QString results;
+    query_results.evaluateTo(&results);
+    file.close();
+    return results;
+}
+
+QString SRCMLHandler::getEscapedUnitBody(QString unit_filename) const {
+    QString result = getUnitBody(unit_filename);
+
+    result.replace("&lt;", "<");
+    result.replace("&gt;", ">");
+    //result.replace("&quot;", '"');
+    //result.replace("&apos;", "'");
+    result.replace("&amp;", "&");
+
+
+    return result;
 }
 
 

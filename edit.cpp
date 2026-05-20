@@ -13,3 +13,14 @@
 #include "edit.h"
 
 Edit::Edit() {}
+
+Edit::Edit(char** argv) {
+    edit_id = QString(argv[0]);
+    source_file_path = QString(argv[2]);
+    text_event_start_timestamp = QString(argv[3]).toLongLong();
+    text_event_end_timestamp = QString(argv[4]).toLongLong();
+    duration = QString(argv[6]).toInt();
+    starting_text = QString(argv[7]);
+    ending_text = QString(argv[8]);
+    category = QString(argv[9]);
+}

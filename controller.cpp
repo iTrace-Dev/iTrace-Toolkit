@@ -12,7 +12,6 @@
 #include "controller.h"
 #include "edit.h"
 #include "editalgorithm.h"
-#include "helperfunctions.h"
 
 /////////////////////////////////////////
 // HELPERS
@@ -87,6 +86,17 @@ QString getFilenameFromXpath(QString xpath) {
     QString filename = xpath.mid(start,end-start+1);
     filename = filename.mid(filename.length() - filename.lastIndexOf("/"));
     return filename;
+}
+
+QString escapeBackslashCharacters(QString text) {
+    text.replace("\\n","\n");
+    text.replace("\\r","\r");
+    text.replace("\\t","\t");
+    text.replace("\\r","\r");
+    text.replace("\\\"","\"");
+    text.replace("\\'","'");
+
+    return text;
 }
 
 /////////////////////////////////////////
@@ -403,7 +413,7 @@ void Controller::importPluginXML(const QString& file_path) {
             idb.insertIDEContext(plugin_file.getElementAttribute("event_id"),session_id,plugin_file.getElementAttribute("plugin_time"),ide_plugin_type,plugin_file.getElementAttribute("gaze_target"),plugin_file.getElementAttribute("gaze_target_type"),plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("editor_line_height"),plugin_file.getElementAttribute("editor_font_height"),plugin_file.getElementAttribute("editor_line_base_x"),plugin_file.getElementAttribute("editor_line_base_y"),"","","","",plugin_file.getElementAttribute("x"),plugin_file.getElementAttribute("y"));
             all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
-        else if(element == "edit") {
+        else if(element == "text_event") {
 
             // if data is similarly close to last one, combine
             if (plugin_file.getElementAttribute("timestamp").toLongLong() - timestamp.toLongLong() <= 10 && source_file_line == plugin_file.getElementAttribute("source_file_line") &&
@@ -424,7 +434,7 @@ void Controller::importPluginXML(const QString& file_path) {
             }
             // insert text_event
             else {
-                idb.insertTextEvent(plugin_file.getElementAttribute("timestamp"),session_id,plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),plugin_file.getElementAttribute("inserted"),plugin_file.getElementAttribute("deleted"));
+                idb.insertTextEvent(plugin_file.getElementAttribute("timestamp"),session_id,plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),escapeBackslashCharacters(plugin_file.getElementAttribute("inserted")),escapeBackslashCharacters(plugin_file.getElementAttribute("deleted")));
             }
 
             timestamp = plugin_file.getElementAttribute("timestamp");
@@ -560,15 +570,16 @@ void Controller::generateEditData(QVector<QString> tasks, QString algSettings, Q
 
     for(auto session_id : sessions) {
         QVector<TextEvent> session_text_events = idb.getTextEventsFromSession(session_id);
-        if (session_text_events.length() == 0) {
-            continue;
-        }
+        QVector<QString> text_event_files = idb.getFilesFromTextEventsFromSession(session_id);
 
         EditAlgorithm* algorithm;
         if (algSettings == "Naive") {
-            algorithm = new NaiveAlgorithm(session_text_events, SRCMLHandler(file_path));
+            algorithm = new NaiveAlgorithm(session_text_events, SRCMLHandler(file_path), text_event_files);
         }
-        else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + algSettings); return; } // Error handler
+        else if (algSettings == "Dynamic Temporal Gap") {
+            algorithm = new DynamicTemporalGapAlgorithm(session_text_events, SRCMLHandler(file_path), text_event_files, 2);
+        }
+        else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + algSettings); return; } // Handle incorrectly passed alg settings
 
         algorithm->generateEdits();
         QVector<Edit> session_edits = algorithm->getEdits();
@@ -581,7 +592,7 @@ void Controller::generateEditData(QVector<QString> tasks, QString algSettings, Q
         for (Edit edit : session_edits) {
             QString edit_id = QUuid::createUuid().toString();
             edit_id.remove("{"); edit_id.remove("}");
-            idb.insertEdit(edit_id, edit_run_id, QString::number(edit.text_event_start_timestamp), QString::number(edit.text_event_end_timestamp), QString::number(edit.category == "init" ? 0 : i++), QString::number(edit.duration), edit.starting_text, edit.ending_text, edit.category);
+            idb.insertEdit(edit_id, edit_run_id, edit.source_file_path, QString::number(edit.text_event_start_timestamp), QString::number(edit.text_event_end_timestamp), QString::number(edit.category == "init" ? 0 : i++), QString::number(edit.duration), edit.starting_text, edit.ending_text, edit.category);
             for (TextEvent edit_text_event : edit.text_event_vec) {
                 idb.insertEditTextEvent(edit_id,QString::number(edit_text_event.timestamp));
             }
@@ -599,10 +610,14 @@ void Controller::generateEditData(QVector<QString> tasks, QString algSettings, Q
 }
 
 void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool overwrite = true, QString editAlgorithm = "", bool process_edits = false) {
-    if (process_edits) {
-        generateEditData(tasks, editAlgorithm, srcml_file_path);
-    }
 
+    generateEditData(tasks, editAlgorithm, srcml_file_path);
+
+    // Add srcML Archive to Files table
+    changeFilePathOS(srcml_file_path);
+    if(!idb.fileExists(QCryptographicHash::hash(srcml_file_path.toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
+        idb.insertFile(QCryptographicHash::hash(srcml_file_path.toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml_file_path,"srcml_archive");
+    }
 
     QElapsedTimer timer;
     timer.start();
@@ -615,67 +630,97 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
         }
     }
 
-    changeFilePathOS(srcml_file_path);
-
-    SRCMLHandler srcml(srcml_file_path);
-    if(!srcml.isPositional()) {
-        emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
-        return;
-    }
-
-    // Add srcML Archive to Files table
-    if(!idb.fileExists(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex())) {
-        idb.insertFile(QCryptographicHash::hash(srcml.getFilePath().toUtf8().constData(),QCryptographicHash::Sha1).toHex(),"null",srcml.getFilePath(),"srcml_archive");
-    }
-    QVector<QString> all_files = srcml.getAllFilenames();
 
     idb.startTransaction();
 
-    QVector<std::pair<QString,QString>> files_viewed = idb.getFilesViewed();
+    emit startProgressBar(0,1);
 
-    emit startProgressBar(0,files_viewed.size());
-    int counter = 1;
-    emit outputToScreen("black","Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
-    emit outputToScreen("black","This could take a while. Please wait.");
-
-    QString warn = "";
     SRCMLMapper mapper(idb);
-    for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
+
+    for (QString session_id : sessions) {
+        QVector<QString> gaze_targets = idb.getGazeTargetPathsFromSession(session_id);
+
         QElapsedTimer inner_timer;
         inner_timer.start();
-        if(!file->second.isNull() && !file->second.isEmpty()) {
-            QString unit_path = findMatchingPath(all_files,file->second);
-            if(unit_path == "") {
-                warn += "\n" + file->second;
-                emit outputToScreen("#F55904",QString("Target %1 skipped - no valid unit.").arg(counter));
-                emit setProgressBarValue(counter); ++counter;
-                continue;
-            }
 
-            mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
-            mapper.mapToken(srcml,unit_path,file->second,overwrite,sessions);
+        for (QString gaze_target : gaze_targets) {
+
+            QVector<Edit> edits = idb.getEditsOfFileFromSession(gaze_target,session_id);
+            QVector<Gaze> gazes = idb.getGazesFromSessionAndFilePath(session_id,gaze_target);
+
+            mapper.mapSyntax(edits, gazes, gaze_target);
+
+            // Refresh gazes to get new syntactic context info
+            gazes = idb.getGazesFromSessionAndFilePath(session_id,gaze_target);
+            mapper.mapToken(edits, gazes, gaze_target);
         }
-        emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
-        emit setProgressBarValue(counter); ++counter;
-        QApplication::processEvents();
     }
 
     idb.commit();
     emit stopProgressBar();
     emit outputToScreen("black",QString("Token Mapping done. Time elasped: %1").arg(timer.elapsed() / 1000.0));
-    if(warn != "") {
-        warn = "The following gaze targets had no matching unit:" + warn;
-        emit warning("Token Mapping Error",warn);
-    }
-    else {
-        QApplication::beep();
-    }
+
+
+
+
+//    SRCMLHandler srcml(srcml_file_path);
+//    if(!srcml.isPositional()) {
+//        emit warning("srcML Error","The provided srcML File does not contain positional data. Tokens will not be mapped without it. Re-generate the srcML Archive file with the --position flag");
+//        return;
+//    }
+
+
+
+
+//    QVector<QString> all_files = srcml.getAllFilenames();
+
+//    idb.startTransaction();
+
+//    QVector<std::pair<QString,QString>> files_viewed = idb.getFilesViewed();
+
+//    emit startProgressBar(0,files_viewed.size());
+//    int counter = 1;
+//    emit outputToScreen("black","Mapping tokens for "+QString::number(files_viewed.size())+" gaze targets.");
+//    emit outputToScreen("black","This could take a while. Please wait.");
+
+//    QString warn = "";
+//    SRCMLMapper mapper(idb);
+//    for(auto file = files_viewed.begin(); file != files_viewed.end(); file++) {
+//        QElapsedTimer inner_timer;
+//        inner_timer.start();
+//        if(!file->second.isNull() && !file->second.isEmpty()) {
+//            QString unit_path = findMatchingPath(all_files,file->second);
+//            if(unit_path == "") {
+//                warn += "\n" + file->second;
+//                emit outputToScreen("#F55904",QString("Target %1 skipped - no valid unit.").arg(counter));
+//                emit setProgressBarValue(counter); ++counter;
+//                continue;
+//            }
+
+//            mapper.mapSyntax(srcml,unit_path,file->second,overwrite,sessions);
+//            mapper.mapToken(srcml,unit_path,file->second,overwrite,sessions);
+//        }
+//        emit outputToScreen("black",QString("%1 / %2 Targets Mapped. Time elasped: %3").arg(counter).arg(files_viewed.size()).arg(inner_timer.elapsed() / 1000.0));
+//        emit setProgressBarValue(counter); ++counter;
+//        QApplication::processEvents();
+//    }
+
+//    idb.commit();
+//    emit stopProgressBar();
+//    emit outputToScreen("black",QString("Token Mapping done. Time elasped: %1").arg(timer.elapsed() / 1000.0));
+//    if(warn != "") {
+//        warn = "The following gaze targets had no matching unit:" + warn;
+//        emit warning("Token Mapping Error",warn);
+//    }
+//    else {
+//        QApplication::beep();
+//    }
 }
 
 
 
 
-void Controller::highlightFixations(QString dir, QString srcml_file_path) {
+void Controller::highlightFixations(QString , QString ) {
     /*if(!idb.isDatabaseOpen()) {
         emit warning("Database Error","There is no Database currently loaded.");
         return;
@@ -694,7 +739,7 @@ void Controller::highlightFixations(QString dir, QString srcml_file_path) {
 }
 
 // WIP
-void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandler srcml, QString dir, QString run_id) {
+void Controller::highlightTokens(QVector<QVector<QString>> , SRCMLHandler , QString , QString ) {
     /*//xpath -> [source_file_line,source_file_col,token]
     //mkdir((dir+"/"+run_id).toUtf8().constData());
 
@@ -722,7 +767,7 @@ void Controller::highlightTokens(QVector<QVector<QString>> fixations, SRCMLHandl
 }
 
 // TODO - NOT YET DONE
-void Controller::generateHighlightedFile(QString dir, QString filename, QStringList source_contents, QVector<QVector<QString>> locations) {
+void Controller::generateHighlightedFile(QString , QString , QStringList , QVector<QVector<QString>> ) {
     /*emit outputToScreen("Processing: " + filename);
 
     std::set<QString> set_keys;

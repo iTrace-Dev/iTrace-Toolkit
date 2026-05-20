@@ -16,13 +16,15 @@
 #include <QXmlQuery>
 #include <QXmlStreamReader>
 #include <QFile>
+#include <QTemporaryFile>
 
 
 class SRCMLHandler {
 
 public:
     SRCMLHandler() {};
-    SRCMLHandler(QString);
+    SRCMLHandler(const QString&);
+    SRCMLHandler(const QString&, const QString&);
 
     bool isPositional() const;
 
@@ -31,11 +33,16 @@ public:
     QVector<QString> getAllFilenames() const;
 
     QString getUnitText(QString) const;
-    QString getUnitBody(QString) const ;
+    QString getSoleUnitText() const;
+    QString getUnitBody(QString) const;
+    QString getSoleUnitBody() const;
+    QString getEscapedUnitBody(QString) const;
 
 
 private:
-    QString file_path;
+    QString file_path = "";
+    QString raw_srcml_string = "";
+    QTemporaryFile temp_file;
 };
 
 #endif // SRCMLHANDLER_H

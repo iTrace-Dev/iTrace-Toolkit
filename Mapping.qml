@@ -78,7 +78,7 @@ Popup {
         }
         ComboBox {
             id: editAlgSelectionBox
-            model: ["Naive"]
+            model: ["Naive","Dynamic Temporal Gap"]
             currentIndex: 0
             enabled: calculateEditsCheck.checked
         }

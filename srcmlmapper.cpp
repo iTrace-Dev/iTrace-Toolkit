@@ -10,6 +10,7 @@
 ********************************************************************************************************************************************************/
 
 #include "srcmlmapper.h"
+#include "helperfunctions.h"
 
 void setLineTextToken(QString source_line, int col, QString syntactic_context, QString& token, QString& /*token_type*/) {
     // token_type is currently unused?
@@ -57,6 +58,196 @@ void setLineTextToken(QString source_line, int col, QString syntactic_context, Q
     }
 }
 
+QVector<QDomElement> getQDomElementsFromSourceCode(SRCMLHandler* srcml, QString path) {
+    QString unit_data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + srcml->getSoleUnitText() + "\n</xml>";
+
+    QDomDocument unit;
+    unit.setContent(unit_data,false);
+
+    QVector<QDomElement> elements;
+    elements.append(unit.documentElement());
+    QDomElement first = unit.documentElement().firstChildElement();
+
+    QVector<QDomElement> parents; parents.push_back(first);
+
+
+    while(parents.size() != 0) {
+        QDomElement crnt = parents[parents.size() - 1];
+
+        elements.push_back(crnt);
+
+        if(!crnt.firstChildElement().isNull()) {
+            parents.push_back(crnt.firstChildElement());
+        }
+        else if(!crnt.nextSiblingElement().isNull()) {
+            parents[parents.size() - 1] = crnt.nextSiblingElement();
+        }
+        else {
+            while(parents.size() != 0 && parents[parents.size() - 1].nextSiblingElement().isNull()) {
+                parents.pop_back();
+            }
+            if(parents.size() != 0) { parents[parents.size() - 1] = parents[parents.size() - 1].nextSiblingElement(); }
+        }
+        QApplication::processEvents();
+    }
+
+    return elements;
+}
+
+void SRCMLMapper::mapSyntax(QVector<Edit> edits, QVector<Gaze> gazes, QString gaze_target) {
+    //QString unit_data = getSRCMLOutputFromCLI(edits[0].ending_text, gaze_target)
+
+    // Get init edit of source code as starting point
+    SRCMLHandler* srcml = new SRCMLHandler("", getSRCMLOutputFromCLI(edits[0].ending_text,gaze_target));
+    int current_index = 0;
+    QVector<QDomElement> elements = getQDomElementsFromSourceCode(srcml,gaze_target);
+
+    for (Gaze gaze : gazes) {
+
+
+
+        // calculate if the current edit is outdated and the srcml needs updating
+        if (current_index == edits.length() - 1) {
+            // Do nothing - no more edits to update to!
+        }
+        else if (gaze.system_time >= edits[current_index+1].text_event_start_timestamp) {
+            ++current_index;
+            delete srcml;
+            srcml = new SRCMLHandler("",getSRCMLOutputFromCLI(edits[current_index].ending_text,gaze_target));
+            elements = getQDomElementsFromSourceCode(srcml,gaze_target);
+        }
+
+        if (gaze.source_file_line == -1 || gaze.source_file_col == -1) {
+            idb.updateGazeWithEditInfo(QString::number(gaze.event_time), edits[current_index].edit_id);
+            continue;
+        }
+
+        int res_line = gaze.source_file_line;
+        int res_col = gaze.source_file_col;
+
+        QVector<QDomElement> element_list;
+        for(auto srcml_element : elements) {
+            QString tagname = srcml_element.tagName();
+            if(srcml_element.tagName() == "unit") {
+                element_list.push_back(srcml_element);
+                continue;
+            }
+            int element_start_line = -1,
+                element_start_col = -1,
+                element_end_line = -1,
+                element_end_col = -1;
+
+            QDomAttr start = srcml_element.attributeNode("pos:start"),
+                end = srcml_element.attributeNode("pos:end");
+
+            //Get pos elements from scrml tag
+            if(!start.isNull() && !end.isNull()) {
+                if(start.value().contains(":") && !start.value().contains("INVALID_POS")) {
+                    element_start_line = start.value().split(":")[0].toInt();
+                    element_start_col = start.value().split(":")[1].toInt();
+                }
+                if(end.value().contains(":") && !end.value().contains("INVALID_POS")) {
+                    element_end_line = end.value().split(":")[0].toInt();
+                    element_end_col = end.value().split(":")[1].toInt();
+                }
+            }
+            else { continue; } // element doesn't have position info
+
+            // Check for bugs in srcml
+            if(element_end_line < element_start_line || element_end_line < 0 || element_start_line < 0) { continue; }
+            // No more tags can encompass the token
+            if(element_start_line > res_line) { break; }
+            // No tags on this line can encompass token
+            if(res_line == element_start_line && element_start_col > res_col) { break; }
+            // Skip this tag since it can't encompass token
+            if(res_line > element_start_line && res_line > element_end_line) { continue; }
+            // In between multiple lines
+            if(res_line >= element_start_line && res_line < element_end_line) {
+                element_list.push_back(srcml_element);
+            }
+            else if(res_line >= element_start_line && res_line == element_end_line) {
+                if(res_col <= element_end_col) { element_list.push_back(srcml_element);  }
+                else { continue; }
+            }
+            QApplication::processEvents();
+        }
+
+        QString syntactic_context = "",
+            xpath = "/";
+
+        for(auto element : element_list) {
+            if(element.namespaceURI() == "") {
+                xpath += "/src:"+element.tagName();
+            }
+            else {
+                xpath += "/" + element.tagName();
+            }
+
+            if(element.tagName() == "unit") {
+                xpath += "[@filename=\"" + gaze_target +"\"]";
+            }
+            QDomAttr start = element.attributeNode("pos:start"),
+                end = element.attributeNode("pos:end");
+            if(!start.isNull() && !end.isNull()) {
+                xpath += "[@pos:start=\""+start.value()+"\" and ";
+                xpath += "@pos:end=\""+end.value()+"\"]";
+            }
+            if(syntactic_context != "") {
+                syntactic_context += "->"+element.tagName();
+            }
+            else {
+                syntactic_context = element.tagName();
+            }
+            QApplication::processEvents();
+        }
+        idb.updateGazeWithSyntacticInfo(QString::number(gaze.event_time), xpath, syntactic_context);
+        idb.updateGazeWithEditInfo(QString::number(gaze.event_time), edits[current_index].edit_id);
+    }
+    delete srcml;
+}
+
+void SRCMLMapper::mapToken(QVector<Edit> edits, QVector<Gaze> gazes, QString gaze_target) {
+    // Get init edit of source code as starting point
+    SRCMLHandler* srcml = new SRCMLHandler("", getSRCMLOutputFromCLI(edits[0].ending_text,gaze_target));
+    int current_index = 0;
+    QStringList unit_body = srcml->getSoleUnitBody().split("\n");
+
+    for(Gaze gaze : gazes) {
+        if (gaze.source_file_line == -1 || gaze.source_file_col == -1) {
+            continue;
+        }
+
+        // calculate if the current edit is outdated and the srcml needs updating
+        if (current_index == edits.length() - 1) {
+            // Do nothing - no more edits to update to!
+        }
+        else if (gaze.system_time >= edits[current_index+1].text_event_start_timestamp) {
+            ++current_index;
+            delete srcml;
+            srcml = new SRCMLHandler("",getSRCMLOutputFromCLI(edits[current_index].ending_text,gaze_target));
+            unit_body = srcml->getSoleUnitBody().split("\n");
+        }
+
+        int res_line = gaze.source_file_line - 1;
+        int res_col = gaze.source_file_col - 1;
+
+        QString token = "";
+        QString token_type = "";
+
+        if(!(res_line < unit_body.size()) || !(res_col < unit_body[res_line].size())) {
+            token = "WHITESPACE";
+            idb.updateGazeWithTokenInfo(QString::number(gaze.event_time),token,token_type);
+            QApplication::processEvents();
+            continue;
+        }
+        setLineTextToken(unit_body[res_line],res_col,gaze.source_token_syntatic_context,token,token_type);
+        idb.updateGazeWithTokenInfo(QString::number(gaze.event_time),token,token_type);
+        QApplication::processEvents();
+    }
+
+    delete srcml;
+
+}
 
 void SRCMLMapper::mapSyntax(SRCMLHandler& srcml, QString unit_path, QString project_path, bool overwrite, QVector<QString> valid_sessions) {
     QVector<QVector<QString>> responses = idb.getGazesForSyntacticMapping(project_path,overwrite);
