@@ -20,9 +20,6 @@
 
 #include <cstdio>
 
-//#include <srcml.h>
-
-// This should probably be a helper function
 QString findMatchingPath(QVector<QString> all_files, QString file) {
     file.replace("\\","/");
     file = file.toLower();

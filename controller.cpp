@@ -370,8 +370,8 @@ void Controller::importPluginXML(const QString& file_path) {
             source_file_path = "",
             source_file_line = "0",
             source_file_col = "0",
-            inserted = "",
-            deleted = "";
+            last_inserted = "",
+            last_deleted = "";
 
     // Used for checking for duplicate data
     QVector<QString> all_ids;// = idb.getAllIDEContextIDs();
@@ -414,18 +414,24 @@ void Controller::importPluginXML(const QString& file_path) {
             all_ids.push_back(plugin_file.getElementAttribute("event_id"));
         }
         else if(element == "text_event") {
+            long long temp = plugin_file.getElementAttribute("timestamp").toLongLong();
+
+            QString insert_text = escapeBackslashCharacters(plugin_file.getElementAttribute("inserted"));
+            QString delete_text = escapeBackslashCharacters(plugin_file.getElementAttribute("deleted"));
+            insert_text.replace("\"","\"\""); // escape quotes so they can be used in SQL statement
+            delete_text.replace("\"","\"\"");
 
             // if data is similarly close to last one, combine
             if (plugin_file.getElementAttribute("timestamp").toLongLong() - timestamp.toLongLong() <= 10 && source_file_line == plugin_file.getElementAttribute("source_file_line") &&
                 source_file_col == plugin_file.getElementAttribute("source_file_col") && source_file_path == plugin_file.getElementAttribute("source_file_path") &&
-                ( (inserted == "") ^ (deleted == "") ) && ( (plugin_file.getElementAttribute("inserted") == "") ^ (plugin_file.getElementAttribute("deleted") == "") )) {
+                ( (last_inserted == "") ^ (last_deleted == "") ) && ( (insert_text == "") ^ (delete_text == "") )) {
 
                 // if
-                if (inserted == "" && deleted != "" && plugin_file.getElementAttribute("inserted") != "" && plugin_file.getElementAttribute("deleted") == "") {
-                    idb.updateTextEventWithInsertedText(timestamp, plugin_file.getElementAttribute("inserted"));
+                if (last_inserted == "" && last_deleted != "" && insert_text != "" && delete_text == "") {
+                    idb.updateTextEventWithInsertedText(timestamp, insert_text);
                 }
-                else if (inserted != "" && deleted == "" && plugin_file.getElementAttribute("inserted") == "" && plugin_file.getElementAttribute("deleted") != "") {
-                    idb.updateTextEventWithDeletedText(timestamp, plugin_file.getElementAttribute("deleted"));
+                else if (last_inserted != "" && last_deleted == "" && insert_text == "" && delete_text != "") {
+                    idb.updateTextEventWithDeletedText(timestamp, delete_text);
                 }
                 else {
                     // log
@@ -434,15 +440,16 @@ void Controller::importPluginXML(const QString& file_path) {
             }
             // insert text_event
             else {
-                idb.insertTextEvent(plugin_file.getElementAttribute("timestamp"),session_id,plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),escapeBackslashCharacters(plugin_file.getElementAttribute("inserted")),escapeBackslashCharacters(plugin_file.getElementAttribute("deleted")));
+
+                idb.insertTextEvent(plugin_file.getElementAttribute("timestamp"),session_id,plugin_file.getElementAttribute("source_file_path"),plugin_file.getElementAttribute("source_file_line"),plugin_file.getElementAttribute("source_file_col"),insert_text,delete_text);
             }
 
             timestamp = plugin_file.getElementAttribute("timestamp");
             source_file_path = plugin_file.getElementAttribute("source_file_path");
             source_file_line = plugin_file.getElementAttribute("source_file_line");
             source_file_col = plugin_file.getElementAttribute("source_file_col");
-            inserted = plugin_file.getElementAttribute("inserted");
-            deleted = plugin_file.getElementAttribute("deleted");
+            last_inserted = insert_text;
+            last_deleted = delete_text;
 
         }
 
@@ -645,7 +652,7 @@ void Controller::mapTokens(QString srcml_file_path, QVector<QString> tasks, bool
 
         for (QString gaze_target : gaze_targets) {
 
-            QVector<Edit> edits = idb.getEditsOfFileFromSession(gaze_target,session_id);
+            QVector<Edit> edits = idb.getEditsOfFileFromSession(gaze_target,session_id); // TODO - This gets ALL edits - needs to get the most recent set of edits
             QVector<Gaze> gazes = idb.getGazesFromSessionAndFilePath(session_id,gaze_target);
 
             mapper.mapSyntax(edits, gazes, gaze_target);
