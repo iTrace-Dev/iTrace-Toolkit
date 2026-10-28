@@ -431,37 +431,36 @@ void Controller::generateFixationData(QVector<QString> tasks, QString algSetting
     counter = 1;
 
     for(auto session_id : sessions) {
-        //std::cout << "?" << std::endl;
         QVector<Fixation> session_fixations;
-        QVector<QString> gaze_targets = idb.getGazeTargetsFromSession(session_id);
         QString fixation_filter_settings;
-        for(auto gaze_target : gaze_targets) {
-            //emit outputToScreen("black","Generating fixations for gaze_target: "+gaze_target);
-            QVector<Gaze> gazes = idb.getGazesFromSessionAndTarget(session_id,gaze_target);
-            if(gazes.length() == 0) {
-                continue;
-            }
-            FixationAlgorithm* algorithm;
-            QStringList settings = algSettings.split("-");
-            if(settings[0] == "BASIC") {
-                //BASIC-4-35-40 = BASIC-window_size-radius-peak
-                algorithm = new BasicAlgorithm(gazes,settings[window_size].toInt(),settings[radius].toInt(),settings[peak].toInt());
-            }
-            else if(settings[0] == "IDT") {
-                //IDT-10-125 = IDT-duration_window-dispersion
-                algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt(),settings[max_gaze_span].toInt());
-            }
-            else if(settings[0] == "IVT") {
-                //IVT-50-80 = IVT-velocity-duration
-                algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
-            }
-            else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
-            session_fixations.append(algorithm->generateFixations());
-            fixation_filter_settings = algorithm->generateFixationSettings();
-            emit setProgressBarValue(counter); ++counter;
-            QApplication::processEvents();
-            delete algorithm;
+
+        // Get all gazes from session and process them through the fixation filter.
+        // This used to calculate the gazes per-target, but this caused problems with some fixation algorithms and was technically incorrect
+        QVector<Gaze> gazes = idb.getGazesFromSession(session_id);
+        if(gazes.length() == 0) {
+            continue;
         }
+        FixationAlgorithm* algorithm;
+        QStringList settings = algSettings.split("-");
+        if(settings[0] == "BASIC") {
+            //BASIC-4-35-40 = BASIC-window_size-radius-peak
+            algorithm = new BasicAlgorithm(gazes,settings[window_size].toInt(),settings[radius].toInt(),settings[peak].toInt());
+        }
+        else if(settings[0] == "IDT") {
+            //IDT-10-125 = IDT-duration_window-dispersion
+            algorithm = new IDTAlgorithm(gazes,settings[duration_window].toInt(),settings[dispersion].toInt(),settings[max_gaze_span].toInt());
+        }
+        else if(settings[0] == "IVT") {
+            //IVT-50-80 = IVT-velocity-duration
+            algorithm = new IVTAlgorithm(gazes,settings[velocity].toInt(),settings[duration].toInt());
+        }
+        else { emit warning("Algorithm Error","An invalid algorithm type was supplied: " + settings[0]); return; } // Error handler
+        session_fixations.append(algorithm->generateFixations());
+        fixation_filter_settings = algorithm->generateFixationSettings();
+        emit setProgressBarValue(counter); ++counter;
+        QApplication::processEvents();
+        delete algorithm;
+
         for(auto item = session_fixations.begin(); item != session_fixations.end(); ++item) {
             item->calculateDatabaseFields();
         }
